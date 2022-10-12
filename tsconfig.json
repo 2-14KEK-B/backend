@@ -1,0 +1,68 @@
+{
+  "compilerOptions": {
+    "sourceMap": true,
+    "target": "esnext",
+    "module": "commonjs",
+    "outDir": "./dist",
+    "baseUrl": ".",
+    "alwaysStrict": true,
+    "noImplicitAny": true,
+    "importHelpers": true,
+    "experimentalDecorators": true,
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "emitDecoratorMetadata": true,
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "types": [
+      "node",
+      "jest",
+    ],
+    "rootDir": "./src",
+    "typeRoots": [
+      "node_modules/@types"
+    ],
+    "paths": {
+      "@interfaces/*": [
+        "src/interfaces/*"
+      ],
+      "@models/*": [
+        "src/models/*"
+      ],
+      "@schemas/*": [
+        "src/schemas/*"
+      ],
+      "@auth/*": [
+        "src/auth/*"
+      ],
+      "@controllers/*": [
+        "src/controllers/*"
+      ],
+      "@utils/*": [
+        "src/utils/*"
+      ],
+      "@middlewares/*": [
+        "src/middlewares/*"
+      ],
+      "@validators/*": [
+        "src/validators/*"
+      ],
+      "@exceptions/*": [
+        "src/exceptions/*"
+      ]
+    }
+  },
+  "ts-node": {
+    "require": [
+      "tsconfig-paths/register"
+    ]
+  },
+  "include": [
+    "src/**/*.ts",
+    "**/test/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}
