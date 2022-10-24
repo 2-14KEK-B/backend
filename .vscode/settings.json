@@ -17,6 +17,7 @@
     "editor.codeActionsOnSave": {
         "source.fixAll.eslint": true
     },
+    "prettier.printWidth": 150,
     "git.enableSmartCommit": true,
     "git.confirmSync": false,
     "git.autofetch": true,

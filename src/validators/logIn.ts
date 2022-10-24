@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { IsString } from "class-validator";
 
-export default class LogInDto {
+export default class LoginDto {
     @IsString()
     public email: string;
 

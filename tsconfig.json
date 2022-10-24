@@ -14,15 +14,18 @@
     "emitDecoratorMetadata": true,
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
     "types": [
       "node",
-      "jest",
+      "jest"
     ],
-    "rootDir": "./src",
     "typeRoots": [
       "node_modules/@types"
     ],
     "paths": {
+      "@src/*": [
+        "src/*"
+      ],
       "@interfaces/*": [
         "src/interfaces/*"
       ],
@@ -59,7 +62,8 @@
   },
   "include": [
     "src/**/*.ts",
-    "**/test/**/*.ts"
+    "**/test/**/*.ts",
+    "jest.config.ts"
   ],
   "exclude": [
     "node_modules",

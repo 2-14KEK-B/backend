@@ -2,8 +2,8 @@
 :BEGIN
 CLS
 
-SET db=BackendTemplateDB
-:: titles, posts, users, identitycounters
+SET db=bookswap
+:: users
 
 SET import="%MONGO%\mongoimport.exe"
 SET export="%MONGO%\mongoexport.exe"
@@ -19,7 +19,6 @@ IF ERRORLEVEL ==1 GOTO IMPORT
 SET /P AREYOUSURE=Are you sure (Y/[N])?
 IF /I "%AREYOUSURE%" NEQ "Y" GOTO END
 ECHO ---------- Importing to the local database ----------
-%import% --uri=%local%  --collection=posts --drop --file=posts.json --jsonArray
 %import% --uri=%local%  --collection=users --drop --file=users.json --jsonArray
 GOTO END
 
@@ -27,7 +26,6 @@ GOTO END
 SET /P AREYOUSURE=Are you sure (Y/[N])?
 IF /I "%AREYOUSURE%" NEQ "Y" GOTO END
 ECHO ---------- Exporting from the local database ----------
-%export% --uri=%local% --collection=posts --out=posts.json --jsonArray --pretty
 %export% --uri=%local% --collection=users --out=users.json --jsonArray --pretty
 GOTO END
 
