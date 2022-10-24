@@ -1,19 +1,51 @@
-
 {
-    "version": "0.2.0",
-    "configurations": [
-      {
-        "name": "Debug in VS Code",
-        "type": "node",
-        "request": "launch",
-        "runtimeExecutable": "node",
-        "runtimeArgs": ["--nolazy", "-r", "ts-node/register/transpile-only"],
-  
-        "args": ["src/server.ts"],
-        
-        "cwd": "${workspaceRoot}",
-        "internalConsoleOptions": "openOnSessionStart",
-        "skipFiles": ["<node_internals>/**", "node_modules/**"]
-      }
-    ]
-  }
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug in VS Code",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "--nolazy",
+        "-r",
+        "ts-node/register/transpile-only"
+      ],
+      "env": {
+        "NODE_ENV": "production"
+      },
+      "args": [
+        "src/server.ts"
+      ],
+      "cwd": "${workspaceRoot}",
+      "internalConsoleOptions": "openOnSessionStart",
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**"
+      ]
+    },
+    {
+      "name": "Dev Debug in VS Code",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "--nolazy",
+        "-r",
+        "ts-node/register/transpile-only"
+      ],
+      "args": [
+        "src/server.ts"
+      ],
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "cwd": "${workspaceRoot}",
+      "internalConsoleOptions": "openOnSessionStart",
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**"
+      ]
+    }
+  ]
+}
