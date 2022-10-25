@@ -1,42 +1,63 @@
 [
     {
         "_id": {
-            "$oid": "61b5f0c1f39e4edcf5b8a3d8"
+            "$oid": "6357b544447026c9b91950fd"
         },
-        "email": "student005@jedlik.eu",
-        "name": "student005",
-        "password": "$2b$10$HBH36EkxhwwOcI7UM/Km3uHUcgwPJjleZYS9fqOgjIr.qmvTUlGPu"
+        "created_on": {
+            "$date": "2022-10-25T10:06:32.453Z"
+        },
+        "updated_on": {
+            "$date": "2022-10-25T10:06:32.453Z"
+        },
+        "password": "$2b$10$VfmyHNA42h2KdsKJ5SZhnePV24GT9zQsgZjJdamZ0jPczVAQNSlSq",
+        "email": "test@test.com",
+        "email_is_verified": false,
+        "locale": "hu-HU",
+        "books": [
+            {
+                "$oid": "6357d9e43441ea127321696d"
+            },
+            {
+                "$oid": "6357da8b3441ea1273216971"
+            }
+        ],
+        "messages": [
+            {
+                "$oid": "635803e76fe4028063397763"
+            }
+        ],
+        "borrows": [
+            {
+                "$oid": "6357f9bf7b60ee488385f955"
+            }
+        ],
+        "user_ratings": []
     },
     {
         "_id": {
-            "$oid": "61b5f048f39e4edcf5b8a3ca"
+            "$oid": "6357b59c447026c9b9195100"
         },
-        "email": "student003@jedlik.eu",
-        "name": "student003",
-        "password": "$2b$10$WTvhxEncr.YdgIquNpob8OpWqf5hNWEynKNFyQukvmtM/DzRt9ulW"
-    },
-    {
-        "_id": {
-            "$oid": "61b5ea14f39e4edcf5b8a3bd"
+        "created_on": {
+            "$date": "2022-10-25T11:06:32.453Z"
         },
-        "email": "student002@jedlik.eu",
-        "name": "student002",
-        "password": "$2b$10$Rp5avm47rbRHxJxy8sEVueBTLYFAyrVIFiAebUAJDMKlM5raFnwpi"
-    },
-    {
-        "_id": {
-            "$oid": "61b5e9c0f39e4edcf5b8a3b9"
+        "updated_on": {
+            "$date": "2022-10-25T11:06:32.453Z"
         },
-        "email": "student001@jedlik.eu",
-        "name": "student001",
-        "password": "$2b$10$9Czj8XCCZ6Wg5h9HSngl2eMqAO0Pk/LFmf.LrfeLKDXsBQaI07Pv."
-    },
-    {
-        "_id": {
-            "$oid": "61b5f09cf39e4edcf5b8a3d4"
-        },
-        "email": "student004@jedlik.eu",
-        "name": "student004",
-        "password": "$2b$10$saCo0rqdGbIiacjcZ60CGuGw8QhA8tgh3gfn0w.LFaVlyPJzd9zA6"
+        "password": "$2b$10$933CxPbXlAj47L2ssgMw/OcnQB0q/YvjzplELbj8yxbR22ZBF.OLC",
+        "email": "test2@test.com",
+        "email_is_verified": false,
+        "locale": "hu-HU",
+        "books": [],
+        "messages": [
+            {
+                "$oid": "635803e76fe4028063397763"
+            }
+        ],
+        "borrows": [
+            {
+                "$oid": "6357f9bf7b60ee488385f955"
+            }
+        ],
+        "user_ratings": []
     }
 ]

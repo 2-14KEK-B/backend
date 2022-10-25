@@ -1,7 +1,7 @@
-import { Document, Types } from "mongoose";
-import Book from "./books";
+import { Types } from "mongoose";
+import Book from "./book";
 
-export default interface Borrow extends Document {
+export default interface Borrow {
     _id?: Types.ObjectId;
     time: Date;
     from_id: Types.ObjectId;

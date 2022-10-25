@@ -1,12 +1,25 @@
-import { IsString } from "class-validator";
+import { IsEmail, IsOptional, IsString, IsUrl } from "class-validator";
 
 export default class RegisterDto {
     @IsString()
+    @IsOptional()
+    public username: string;
+
+    @IsString()
+    @IsOptional()
+    public fullname: string;
+
+    @IsEmail()
     public email: string;
 
     @IsString()
     public password: string;
 
     @IsString()
-    public name: string;
+    @IsOptional()
+    public locale: string;
+
+    @IsUrl()
+    @IsOptional()
+    public picture: string;
 }

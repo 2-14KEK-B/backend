@@ -39,7 +39,7 @@ export default class RegisterController implements Controller {
 
             res.send(`user created with ${newUser.email}`);
         } catch (error) {
-            next(new HttpError(400, (error as Error).message));
+            next(new HttpError((error as Error).message));
         }
     };
 }

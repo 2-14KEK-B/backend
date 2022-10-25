@@ -1,5 +1,3 @@
-import { Document } from "mongoose";
-
 export interface BookRating {
     _id: string;
     from_id: string;
@@ -7,10 +5,10 @@ export interface BookRating {
     rating: number;
 }
 
-export default interface Book extends Document {
+export default interface Book {
     _id?: string;
-    created_on: Date;
-    updated_on: Date;
+    created_on?: Date;
+    updated_on?: Date;
     author: string;
     title: string;
     picture: string;

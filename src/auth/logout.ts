@@ -16,11 +16,13 @@ export default class LogoutController implements Controller {
         this.router.post(`${this.path}/logout`, this.logout);
     }
 
-    private logout = async (_req: Request, res: Response, next: NextFunction) => {
+    private logout = async (req: Request, res: Response, next: NextFunction) => {
         try {
+            req.session.userId = null;
+            req.session.destroy(err => next(err));
             res.send("logout successfully");
         } catch (error) {
-            next(new HttpError(400, (error as Error).message));
+            next(new HttpError((error as Error).message));
         }
     };
 }

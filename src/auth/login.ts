@@ -36,9 +36,14 @@ export default class LoginController implements Controller {
             if (!isPasswordMatching) return next(new WrongCredentialsException());
 
             user.password = undefined;
+
+            req.session.userId = user._id.toString();
+            req.session.save(function (err) {
+                if (err) return next(err);
+            });
             res.send(user);
         } catch (error) {
-            next(new HttpError(400, (error as Error).message));
+            next(new HttpError((error as Error).message));
         }
     };
 }

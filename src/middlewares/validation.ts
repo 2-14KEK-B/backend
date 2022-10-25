@@ -8,7 +8,7 @@ export default function validationMiddleware(type: ClassConstructor<unknown>, sk
         validate(plainToInstance(type, [req.body]), { skipMissingProperties }).then((errors: ValidationError[]) => {
             if (errors.length > 0) {
                 const message = errors.map((error: ValidationError) => Object.values(error.constraints)).join(", ");
-                next(new HttpError(400, message));
+                next(new HttpError(message));
             } else {
                 next();
             }

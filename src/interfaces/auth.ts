@@ -5,5 +5,4 @@ export interface LoginCred {
 export interface RegisterCred {
     email: string;
     password: string;
-    name: string;
 }
