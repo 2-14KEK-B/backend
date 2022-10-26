@@ -303,7 +303,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"from_id\": \"6357b59c447026c9b9195100\",\r\n  \"to_id\": \"6357b544447026c9b91950fd\",\r\n  \"content\": \"szia uram\"\r\n}",
+							"raw": "{\r\n  \"from_id\": \"6357b544447026c9b91950fd\",\r\n  \"to_id\": \"6357b59c447026c9b9195100\",\r\n  \"content\": \"szevasz\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"

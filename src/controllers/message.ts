@@ -59,23 +59,37 @@ export default class MessageController implements Controller {
 
             if (messages) {
                 messages.message_contents.push(newMessageContent);
-                await messages
-                    .save()
-                    .then(() => res.send(newMessageContent))
-                    .catch(() => next(new HttpError("Failed to create message")));
+                const newMessage = await messages.save();
+                if (!newMessage) return next(new HttpError("Failed to create message"));
+                // await messages
+                //     .save()
+                //     .then(() => res.send(newMessageContent))
+                //     .catch(() => next(new HttpError("Failed to create message")));
             } else {
-                const newMessage = new this.message({
+                const newMessage = await new this.message({
                     users: [new Types.ObjectId(messageData.from_id), new Types.ObjectId(messageData.to_id)],
                     message_contents: [newMessageContent],
-                });
-                newMessage
-                    .save()
-                    .then(async doc => {
-                        await this.user.findByIdAndUpdate(messageData.from_id, { $push: { messages: doc._id } });
-                        await this.user.findByIdAndUpdate(messageData.to_id, { $push: { messages: doc._id } });
-                    })
-                    .then(() => res.send(newMessageContent))
-                    .catch(() => next(new HttpError("Failed to create message")));
+                }).save();
+                if (!newMessage) return next(new HttpError("Failed to create message"));
+
+                const { acknowledged } = await this.user.updateMany(
+                    { _id: { $in: [messageData.from_id, messageData.to_id] } },
+                    { $push: { messages: { _id: newMessage._id } } },
+                );
+                if (!acknowledged) return next(new HttpError("Failed to update users"));
+                // newMessage
+                //     .save()
+                //     .then(async doc => {
+                //         // await this.user.findByIdAndUpdate(messageData.from_id, { $push: { messages: doc._id } });
+                //         // await this.user.findByIdAndUpdate(messageData.to_id, { $push: { messages: doc._id } });
+
+                //         await this.user.updateMany(
+                //             { _id: { $in: [messageData.from_id, messageData.to_id] } },
+                //             { $push: { messages: { _id: doc._id } } },
+                //         );
+                //     })
+                //     .then(() => res.send(newMessageContent))
+                //     .catch(() => next(new HttpError("Failed to create message")));
             }
 
             res.send(newMessageContent);
@@ -89,8 +103,14 @@ export default class MessageController implements Controller {
             const messageId: string = req.params.id;
             if (!Types.ObjectId.isValid(messageId)) return next(new IdNotValidException(messageId));
 
+            const { users } = await this.message.findById(messageId);
+            if (!users) return next(new HttpError("Failed to get ids from messages"));
+
             const response = await this.message.findByIdAndDelete(messageId);
             if (!response) return next(new HttpError(`Failed to delete message by id ${messageId}`));
+
+            const { acknowledged } = await this.user.updateMany({ _id: { $in: users } }, { $pull: { messages: messageId } });
+            if (!acknowledged) return next(new HttpError("Failed to update users"));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
