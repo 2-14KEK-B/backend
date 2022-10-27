@@ -1,14 +1,14 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { Types } from "mongoose";
+import authMiddleware from "@middlewares/auth";
 import validationMiddleware from "@middlewares/validation";
 import userModel from "@models/user";
-import UserDto from "@validators/user";
+import ModifyUserDto from "@validators/user";
+import isIdValid from "@utils/idChecker";
 import StatusCode from "@utils/statusCodes";
 import UserNotFoundException from "@exceptions/UserNotFound";
-import IdNotValidException from "@exceptions/IdNotValid";
 import HttpError from "@exceptions/Http";
 import Controller from "@interfaces/controller";
-import User from "@interfaces/user";
+import { ModifyUser } from "@interfaces/user";
 
 export default class UserController implements Controller {
     path = "/users";
@@ -20,10 +20,10 @@ export default class UserController implements Controller {
     }
 
     private initializeRoutes() {
-        this.router.get(this.path, this.getAllUsers);
-        this.router.get(`${this.path}/:id`, this.getUserById);
-        this.router.patch(`${this.path}/:id`, [validationMiddleware(UserDto, true)], this.modifyUserById);
-        this.router.delete(`${this.path}/:id`, this.deleteUserById);
+        this.router.get(this.path, authMiddleware, this.getAllUsers);
+        this.router.get(`${this.path}/:id`, authMiddleware, this.getUserById);
+        this.router.patch(`${this.path}/:id`, [authMiddleware, validationMiddleware(ModifyUserDto, true)], this.modifyUserById);
+        this.router.delete(`${this.path}/:id`, authMiddleware, this.deleteUserById);
     }
 
     private getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
@@ -38,7 +38,7 @@ export default class UserController implements Controller {
     private getUserById = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const userId = req.params.id;
-            if (!Types.ObjectId.isValid(userId)) return next(new IdNotValidException(userId));
+            if (!(await isIdValid(this.user, [userId], next))) return;
 
             const user = await this.user.findById(userId);
             if (!user) return next(new UserNotFoundException(userId));
@@ -51,12 +51,12 @@ export default class UserController implements Controller {
 
     private modifyUserById = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const id = req.params.id;
-            if (!Types.ObjectId.isValid(id)) return next(new IdNotValidException(id));
+            const userId = req.params.id;
+            if (!(await isIdValid(this.user, [userId], next))) return;
 
-            const userData: User = req.body;
-            const user = await this.user.findByIdAndUpdate(id, userData, { new: true });
-            if (!user) return next(new UserNotFoundException(id));
+            const userData: ModifyUser = req.body;
+            const user = await this.user.findByIdAndUpdate(userId, userData, { returnDocument: "after" });
+            if (!user) return next(new HttpError("Failed to update user"));
 
             res.send(user);
         } catch (error) {
@@ -66,11 +66,11 @@ export default class UserController implements Controller {
 
     private deleteUserById = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const id = req.params.id;
-            if (!Types.ObjectId.isValid(id)) return next(new IdNotValidException(id));
+            const userId = req.params.id;
+            if (!(await isIdValid(this.user, [userId], next))) return;
 
-            const successResponse = await this.user.findByIdAndDelete(id);
-            if (!successResponse) return next(new UserNotFoundException(id));
+            const successResponse = await this.user.findByIdAndDelete(userId);
+            if (!successResponse) return next(new UserNotFoundException(userId));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {

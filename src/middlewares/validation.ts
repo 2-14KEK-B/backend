@@ -3,7 +3,13 @@ import { ClassConstructor, plainToInstance } from "class-transformer";
 import { validate, ValidationError } from "class-validator";
 import HttpError from "@exceptions/Http";
 
-export default function validationMiddleware(type: ClassConstructor<unknown>, skipMissingProperties = false): RequestHandler {
+/**
+ * Checks input from req.data by Dto-s
+ * @param type ClassConstructor<T>
+ * @param skipMissingProperties boolean
+ * @returns RequestHandler
+ */
+export default function validationMiddleware<T>(type: ClassConstructor<T>, skipMissingProperties = false): RequestHandler {
     return (req: Request, _res: Response, next: NextFunction) => {
         validate(plainToInstance(type, [req.body]), { skipMissingProperties }).then((errors: ValidationError[]) => {
             if (errors.length > 0) {

@@ -4,7 +4,7 @@ import { Model } from "mongoose";
 import validationMiddleware from "@middlewares/validation";
 import LoginDto from "@validators/login";
 import Controller from "@interfaces/controller";
-import User from "@interfaces/user";
+import { User } from "@interfaces/user";
 import { LoginCred } from "@interfaces/auth";
 import HttpError from "@exceptions/Http";
 import WrongCredentialsException from "@exceptions/WrongCredentials";

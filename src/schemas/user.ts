@@ -1,5 +1,5 @@
 import { Schema } from "mongoose";
-import User from "@interfaces/user";
+import { User } from "@interfaces/user";
 
 const now = new Date();
 

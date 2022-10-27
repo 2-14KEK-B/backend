@@ -11,6 +11,26 @@
 			"item": [
 				{
 					"name": "login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [],
@@ -119,7 +139,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"author\": \"Turbó Titán\",\r\n  \"title\": \"A lét elviselhetetlen könnyűsége. 2\",\r\n  \"picture\": \"https://smartmobilestudio.com/wp-content/uploads/2012/06/leather-book-preview.png\",\r\n  \"for_borrow\": true\r\n}",
+							"raw": "{\r\n  \"author\": \"Turbó Titán\",\r\n  \"title\": \"A lét elviselhetetlen könnyűsége. 4\",\r\n  \"picture\": \"https://smartmobilestudio.com/wp-content/uploads/2012/06/leather-book-preview.png\",\r\n  \"for_borrow\": true\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -211,7 +231,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"from_id\": \"6357b544447026c9b91950fd\",\r\n  \"books\": [\"6357d9e43441ea127321696d\"]\r\n}",
+							"raw": "{\r\n  \"from_id\": \"6357b544447026c9b91950fd\",\r\n  \"books\": [\"6357da8b3441ea1273216971\"]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -234,6 +254,26 @@
 				},
 				{
 					"name": "get all",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -257,7 +297,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:3000/borrows/6357f9bf7b60ee488385f955",
+							"raw": "http://localhost:3000/borrows/6357f9bf7b60ee488385f95",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -265,7 +305,7 @@
 							"port": "3000",
 							"path": [
 								"borrows",
-								"6357f9bf7b60ee488385f955"
+								"6357f9bf7b60ee488385f95"
 							]
 						}
 					},
@@ -303,7 +343,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"from_id\": \"6357b544447026c9b91950fd\",\r\n  \"to_id\": \"6357b59c447026c9b9195100\",\r\n  \"content\": \"szevasz\"\r\n}",
+							"raw": "{\r\n  \"from_id\": \"6357b544447026c9b91950fd\",\r\n  \"to_id\": \"6357b59c447026c9b9195100\",\r\n  \"content\": \"mizu\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"

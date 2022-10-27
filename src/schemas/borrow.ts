@@ -1,5 +1,5 @@
 import { Schema } from "mongoose";
-import Borrow from "@interfaces/borrow";
+import { Borrow } from "@interfaces/borrow";
 
 const borrowSchema = new Schema<Borrow>(
     {

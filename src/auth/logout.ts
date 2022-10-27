@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response, Router } from "express";
 import Controller from "@interfaces/controller";
 import HttpError from "@exceptions/Http";
+import authMiddleware from "@middlewares/auth";
 
 export default class LogoutController implements Controller {
     path: string;
@@ -13,13 +14,13 @@ export default class LogoutController implements Controller {
     }
 
     private initializeRoute() {
-        this.router.post(`${this.path}/logout`, this.logout);
+        this.router.post(`${this.path}/logout`, authMiddleware, this.logout);
     }
 
     private logout = async (req: Request, res: Response, next: NextFunction) => {
         try {
             req.session.userId = null;
-            req.session.destroy(err => next(err));
+            req.session.destroy(error => next(new HttpError((error as Error).message)));
             res.send("logout successfully");
         } catch (error) {
             next(new HttpError((error as Error).message));

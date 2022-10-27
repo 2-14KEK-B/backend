@@ -1,11 +1,11 @@
-export interface BookRating {
+interface BookRating {
     _id: string;
     from_id: string;
     comment?: string;
     rating: number;
 }
 
-export default interface Book {
+interface Book {
     _id?: string;
     created_on?: Date;
     updated_on?: Date;
@@ -19,3 +19,25 @@ export default interface Book {
     ratings?: BookRating[];
     __v?: number;
 }
+
+interface CreateBook {
+    author: string;
+    title: string;
+    picture: string;
+    category: string[];
+    price?: number;
+    for_borrow: boolean;
+}
+
+interface ModifyBook {
+    author?: string;
+    title?: string;
+    picture?: string;
+    category?: string[];
+    price?: number;
+    for_borrow?: boolean;
+    available?: boolean;
+    ratings?: BookRating[];
+}
+
+export { Book, BookRating, CreateBook, ModifyBook };

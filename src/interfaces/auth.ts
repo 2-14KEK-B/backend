@@ -1,8 +1,10 @@
-export interface LoginCred {
+interface LoginCred {
     email: string;
     password: string;
 }
-export interface RegisterCred {
+interface RegisterCred {
     email: string;
     password: string;
 }
+
+export { LoginCred, RegisterCred };

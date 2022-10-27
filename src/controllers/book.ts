@@ -1,13 +1,20 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { Types } from "mongoose";
+import authMiddleware from "@middlewares/auth";
+import validationMiddleware from "@middlewares/validation";
 import bookModel from "@models/book";
 import userModel from "@models/user";
+import {
+    CreateBookDto,
+    // ModifyBookDto,
+} from "@validators/book";
+import isIdValid from "@utils/idChecker";
 import StatusCode from "@utils/statusCodes";
 import HttpError from "@exceptions/Http";
-import IdNotValidException from "@exceptions/IdNotValid";
 import Controller from "@interfaces/controller";
-import Book from "@interfaces/book";
-import authMiddleware from "@middlewares/auth";
+import {
+    CreateBook,
+    // ModifyBook
+} from "@interfaces/book";
 
 export default class BookController implements Controller {
     path = "/books";
@@ -22,9 +29,10 @@ export default class BookController implements Controller {
 
     private initializeRoutes() {
         this.router.get(this.path, authMiddleware, this.getAllBooks);
-        this.router.get(`${this.path}/:id`, this.getBookById);
-        this.router.post(this.path, authMiddleware, this.createBook);
-        this.router.delete(`${this.path}/:id`, this.deleteBookById);
+        this.router.get(`${this.path}/:id`, authMiddleware, this.getBookById);
+        this.router.post(this.path, [authMiddleware, validationMiddleware(CreateBookDto)], this.createBook);
+        // this.router.patch(`${this.path}/:id`, [authMiddleware, validationMiddleware(ModifyBookDto), true], this.modifyBookById);  VERSIONING NEEDED!!!!!!!!!!
+        this.router.delete(`${this.path}/:id`, authMiddleware, this.deleteBookById);
     }
 
     private getAllBooks = async (req: Request, res: Response, next: NextFunction) => {
@@ -39,7 +47,7 @@ export default class BookController implements Controller {
     private getBookById = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const bookId: string = req.params.id;
-            if (!Types.ObjectId.isValid(bookId)) return next(new IdNotValidException(bookId));
+            if (!(await isIdValid(this.book, [bookId], next))) return;
 
             const book = await this.book.findById(bookId);
             if (!book) return next(new HttpError(`Failed to get book by id ${bookId}`));
@@ -54,11 +62,11 @@ export default class BookController implements Controller {
         try {
             const userId = req.session.userId;
             const now = new Date();
-            const bookData: Book = req.body;
+            const bookData: CreateBook = req.body;
             const newBook = await this.book.create({ ...bookData, created_on: now, updated_on: now });
             if (!newBook) return next(new HttpError("Failed to create book"));
 
-            await this.user.findById(userId).update({ $push: { books: { _id: newBook._id } } });
+            await this.user.findByIdAndUpdate(userId, { $push: { books: { _id: newBook._id } } });
 
             res.send(newBook);
         } catch (error) {
@@ -66,10 +74,32 @@ export default class BookController implements Controller {
         }
     };
 
+    /**
+     * TODO: Versioning
+     */
+    // private modifyBookById = async (req: Request, res: Response, next: NextFunction) => {
+    //     try {
+    //         const userId = req.session.userId;
+    //         const bookId: string = req.params.id;
+    //         if (!(await isIdValid(this.book, [bookId], next))) return;
+
+    //         const now = new Date();
+    //         const bookData: ModifyBook = req.body;
+    //         const newBook = await this.book.findByIdAndUpdate(bookId, { ...bookData, updated_on: now }, { returnDocument: "after" });
+    //         if (!newBook) return next(new HttpError("Failed to update book"));
+
+    //         await this.user.findByIdAndUpdate(userId, { $push: { books: { _id: newBook._id } } });
+
+    //         res.send(newBook);
+    //     } catch (error) {
+    //         next(new HttpError(error.message));
+    //     }
+    // };
+
     private deleteBookById = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const bookId: string = req.params.id;
-            if (!Types.ObjectId.isValid(bookId)) return next(new IdNotValidException(bookId));
+            if (!(await isIdValid(this.book, [bookId], next))) return;
 
             const response = await this.book.findByIdAndDelete(bookId);
             if (!response) return next(new HttpError(`Failed to delete book by id ${bookId}`));

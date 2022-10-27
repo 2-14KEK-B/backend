@@ -1,7 +1,7 @@
 import { Types } from "mongoose";
-import Book from "./book";
+import { Book } from "./book";
 
-export default interface Borrow {
+interface Borrow {
     _id?: Types.ObjectId;
     time: Date;
     from_id: Types.ObjectId;
@@ -17,3 +17,20 @@ export default interface Borrow {
         },
     ];
 }
+
+interface CreateBorrow {
+    from_id: string;
+    books: string[];
+}
+
+interface ModifyBorrow {
+    books?: string[];
+    verified?: boolean;
+}
+
+interface UserRating {
+    rating: boolean;
+    comment?: string;
+}
+
+export { Borrow, CreateBorrow, ModifyBorrow, UserRating };
