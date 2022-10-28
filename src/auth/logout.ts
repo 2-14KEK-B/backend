@@ -20,7 +20,9 @@ export default class LogoutController implements Controller {
     private logout = async (req: Request, res: Response, next: NextFunction) => {
         try {
             req.session.userId = null;
-            req.session.destroy(error => next(new HttpError((error as Error).message)));
+            req.session.destroy(err => {
+                if (process.env.NODE_ENV == "development") console.log(err);
+            });
             res.send("logout successfully");
         } catch (error) {
             next(new HttpError((error as Error).message));
