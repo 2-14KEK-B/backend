@@ -1,7 +1,7 @@
 import { Schema } from "mongoose";
-import Book from "@interfaces/books";
+import { Book } from "@interfaces/book";
 
-const now = Date.now();
+const now = new Date();
 
 const bookSchema = new Schema<Book>({
     created_on: { type: Date, default: now },
@@ -10,8 +10,8 @@ const bookSchema = new Schema<Book>({
     title: { type: String, required: true },
     picture: { type: String, required: true },
     category: [{ type: String, required: true }],
-    price: Number,
-    available: Boolean,
+    price: { type: Number, default: 0 },
+    available: { type: Boolean, default: true },
     for_borrow: { type: Boolean, required: true },
     ratings: [
         {

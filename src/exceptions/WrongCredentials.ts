@@ -1,7 +1,8 @@
 import HttpError from "./Http";
+import StatusCode from "@utils/statusCodes";
 
 export default class WrongCredentialsException extends HttpError {
     constructor() {
-        super(401, "Wrong credentials provided");
+        super("Wrong credentials provided", StatusCode.Unauthorized);
     }
 }

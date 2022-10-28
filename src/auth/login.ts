@@ -4,7 +4,7 @@ import { Model } from "mongoose";
 import validationMiddleware from "@middlewares/validation";
 import LoginDto from "@validators/login";
 import Controller from "@interfaces/controller";
-import User from "@interfaces/user";
+import { User } from "@interfaces/user";
 import { LoginCred } from "@interfaces/auth";
 import HttpError from "@exceptions/Http";
 import WrongCredentialsException from "@exceptions/WrongCredentials";
@@ -36,9 +36,14 @@ export default class LoginController implements Controller {
             if (!isPasswordMatching) return next(new WrongCredentialsException());
 
             user.password = undefined;
+
+            req.session.userId = user._id.toString();
+            req.session.save(function (err) {
+                if (err) return next(err);
+            });
             res.send(user);
         } catch (error) {
-            next(new HttpError(400, (error as Error).message));
+            next(new HttpError((error as Error).message));
         }
     };
 }

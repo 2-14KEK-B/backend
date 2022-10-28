@@ -1,12 +1,22 @@
-import { IsString } from "class-validator";
+import { ModifyUser } from "@interfaces/user";
+import { IsEmail, IsString, IsUrl } from "class-validator";
 
-export default class CreateUserDto {
+export default class ModifyUserDto implements ModifyUser {
     @IsString()
-    public name: string;
+    public username: string;
 
     @IsString()
+    public fullname: string;
+
+    @IsEmail()
     public email: string;
 
     @IsString()
     public password: string;
+
+    @IsString()
+    public locale: string;
+
+    @IsUrl()
+    public picture: string;
 }

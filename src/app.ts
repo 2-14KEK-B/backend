@@ -1,5 +1,6 @@
 import express, { Express, json } from "express";
 import { connect, connection } from "mongoose";
+import session from "express-session";
 import cors from "cors";
 import errorMiddleware from "@middlewares/error";
 import loggerMiddleware from "@middlewares/logger";
@@ -30,6 +31,7 @@ export default class App {
             }),
         );
         this.app.use(loggerMiddleware);
+        this.app.use(session({ secret: process.env.SECRET, saveUninitialized: false, resave: true }));
     }
 
     private initializeErrorHandling() {
@@ -68,9 +70,8 @@ export default class App {
     }
 
     public listen(): void {
-        // const port = process.env.NODE_ENV === "test" ? process.env.PORT + 1 : process.env.PORT;
-        this.app.listen(process.env.NODE_ENV, () => {
-            console.log(`App listening on the port ${process.env.NODE_ENV}`);
+        this.app.listen(process.env.PORT, () => {
+            console.log(`App listening on the port ${process.env.PORT}`);
         });
     }
 }

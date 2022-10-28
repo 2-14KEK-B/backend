@@ -1,7 +1,8 @@
 import HttpError from "./Http";
+import StatusCode from "@utils/statusCodes";
 
 export default class IdNotValidException extends HttpError {
-    constructor(id: string) {
-        super(404, `This ${id} id is not valid.`);
+    constructor(id: string | string[]) {
+        super(typeof id === "string" ? `This ${id} id is not valid.` : "Not valid ids.", StatusCode.NotFound);
     }
 }

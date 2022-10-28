@@ -4,7 +4,7 @@ import { Model } from "mongoose";
 import validationMiddleware from "@middlewares/validation";
 import RegisterDto from "@validators/register";
 import Controller from "@interfaces/controller";
-import User from "@interfaces/user";
+import { User } from "@interfaces/user";
 import { RegisterCred } from "@interfaces/auth";
 import HttpError from "@exceptions/Http";
 import UserAlreadyExistsException from "@exceptions/UserAlreadyExists";
@@ -39,7 +39,7 @@ export default class RegisterController implements Controller {
 
             res.send(`user created with ${newUser.email}`);
         } catch (error) {
-            next(new HttpError(400, (error as Error).message));
+            next(new HttpError((error as Error).message));
         }
     };
 }

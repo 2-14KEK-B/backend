@@ -1,0 +1,42 @@
+[
+    {
+        "_id": {
+            "$oid": "6357d9e43441ea127321696d"
+        },
+        "created_on": {
+            "$date": "2022-10-25T12:40:39.138Z"
+        },
+        "updated_on": {
+            "$date": "2022-10-25T12:40:39.138Z"
+        },
+        "author": "Turbó Titán",
+        "title": "A lét elviselhetetlen könnyűsége.",
+        "picture": "https://smartmobilestudio.com/wp-content/uploads/2012/06/leather-book-preview.png",
+        "category": [],
+        "price": 0,
+        "available": true,
+        "for_borrow": true,
+        "ratings": [],
+        "__v": 0
+    },
+    {
+        "_id": {
+            "$oid": "6357da8b3441ea1273216971"
+        },
+        "created_on": {
+            "$date": "2022-10-25T13:40:39.138Z"
+        },
+        "updated_on": {
+            "$date": "2022-10-25T13:40:39.138Z"
+        },
+        "author": "Turbó Titán",
+        "title": "A lét elviselhetetlen könnyűsége. 2",
+        "picture": "https://smartmobilestudio.com/wp-content/uploads/2012/06/leather-book-preview.png",
+        "category": [],
+        "price": 0,
+        "available": true,
+        "for_borrow": true,
+        "ratings": [],
+        "__v": 0
+    }
+]
