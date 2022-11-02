@@ -11,12 +11,12 @@ import isIdValid from "@utils/idChecker";
  * @param next NextFunction
  * @returns void
  */
-export default async function authMiddleware(req: Request, _res: Response, next: NextFunction): Promise<void> {
-    // console.log(req.session);
+export default async function authenticationMiddleware(req: Request, _res: Response, next: NextFunction): Promise<void> {
     const userId = req.session.userId;
     if (!userId) return next(new HttpError("Unauthorized", StatusCode.Unauthorized));
 
     const user = await isIdValid(userModel, [userId], next);
     if (!user) return next(new HttpError("Unauthorized", StatusCode.Unauthorized));
+    req.user = await userModel.findById(userId, "-password");
     next();
 }

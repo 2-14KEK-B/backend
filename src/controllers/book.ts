@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from "express";
-import authMiddleware from "@middlewares/auth";
-import validationMiddleware from "@middlewares/validation";
+import authentication from "@middlewares/authentication";
+import validation from "@middlewares/validation";
 import bookModel from "@models/book";
 import userModel from "@models/user";
 import {
@@ -17,7 +17,7 @@ import {
 } from "@interfaces/book";
 
 export default class BookController implements Controller {
-    path = "/books";
+    path = "/book";
     router = Router();
     badRequest = StatusCode.BadRequest;
     private book = bookModel;
@@ -28,17 +28,32 @@ export default class BookController implements Controller {
     }
 
     private initializeRoutes() {
-        this.router.get(this.path, authMiddleware, this.getAllBooks);
-        this.router.get(`${this.path}/:id`, authMiddleware, this.getBookById);
-        this.router.post(this.path, [authMiddleware, validationMiddleware(CreateBookDto)], this.createBook);
-        // this.router.patch(`${this.path}/:id`, [authMiddleware, validationMiddleware(ModifyBookDto), true], this.modifyBookById);  VERSIONING NEEDED!!!!!!!!!!
-        this.router.delete(`${this.path}/:id`, authMiddleware, this.deleteBookById);
+        this.router.get(`${this.path}/all`, this.getAllBooks);
+        this.router.get(this.path, authentication, this.getUserBooks);
+        this.router.get(`${this.path}/:id`, authentication, this.getBookById);
+        this.router.post(this.path, [authentication, validation(CreateBookDto)], this.createBook);
+        // this.router.patch(`${this.path}/:id`, [authentication, validation(ModifyBookDto), true], this.modifyBookById);  VERSIONING NEEDED!!!!!!!!!!
+        this.router.delete(`${this.path}/:id`, authentication, this.deleteBookById);
     }
 
     private getAllBooks = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const books = await this.book.find();
             res.send(books);
+        } catch (error) {
+            next(new HttpError(error.message));
+        }
+    };
+
+    private getUserBooks = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const userId = req.user._id.toString();
+            if (!(await isIdValid(this.user, [userId], next))) return;
+
+            const user = await this.user.findOne({ _id: userId }).populate("books");
+            if (!user) return next(new HttpError(`Failed to get user by id ${userId}`));
+
+            res.send(user.books);
         } catch (error) {
             next(new HttpError(error.message));
         }

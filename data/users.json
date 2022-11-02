@@ -13,6 +13,7 @@
         "email": "test@test.com",
         "email_is_verified": false,
         "locale": "hu-HU",
+        "role": "admin",
         "books": [
             {
                 "$oid": "6357d9e43441ea127321696d"

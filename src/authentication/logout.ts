@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response, Router } from "express";
 import Controller from "@interfaces/controller";
 import HttpError from "@exceptions/Http";
-import authMiddleware from "@middlewares/auth";
+import authMiddleware from "@middlewares/authentication";
 
 export default class LogoutController implements Controller {
     path: string;

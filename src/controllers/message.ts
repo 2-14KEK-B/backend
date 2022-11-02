@@ -1,18 +1,19 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { Types } from "mongoose";
 import messageModel from "@models/message";
+import authentication from "@middlewares/authentication";
+import authorization from "@middlewares/authorization";
+import validation from "@middlewares/validation";
 import userModel from "@models/user";
 import StatusCode from "@utils/statusCodes";
+import isIdValid from "@utils/idChecker";
+import CreateMessageDto from "@validators/message";
 import HttpError from "@exceptions/Http";
 import { CreateMessage, MessageContent } from "@interfaces/message";
 import Controller from "@interfaces/controller";
-import isIdValid from "@utils/idChecker";
-import authMiddleware from "@middlewares/auth";
-import validationMiddleware from "@middlewares/validation";
-import CreateMessageDto from "@validators/message";
 
 export default class MessageController implements Controller {
-    path = "/messages";
+    path = "/message";
     router = Router();
     private message = messageModel;
     private user = userModel;
@@ -22,10 +23,11 @@ export default class MessageController implements Controller {
     }
 
     private initializeRoutes() {
-        this.router.get(this.path, authMiddleware, this.getAllMessages);
-        this.router.get(`${this.path}/:id`, authMiddleware, this.getMessageById);
-        this.router.post(this.path, [authMiddleware, validationMiddleware(CreateMessageDto)], this.createMessage);
-        this.router.delete(`${this.path}/:id`, authMiddleware, this.deleteMessageById);
+        this.router.all("*", authentication);
+        this.router.get(`${this.path}/all`, authorization(["admin"]), this.getAllMessages);
+        this.router.get(`${this.path}/:id`, this.getMessageById);
+        this.router.post(this.path, validation(CreateMessageDto), this.createMessage);
+        this.router.delete(`${this.path}/:id`, authorization(["admin"]), this.deleteMessageById);
     }
 
     private getAllMessages = async (req: Request, res: Response, next: NextFunction) => {

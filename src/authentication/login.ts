@@ -5,7 +5,7 @@ import validationMiddleware from "@middlewares/validation";
 import LoginDto from "@validators/login";
 import Controller from "@interfaces/controller";
 import { User } from "@interfaces/user";
-import { LoginCred } from "@interfaces/auth";
+import { LoginCred } from "@interfaces/authentication";
 import HttpError from "@exceptions/Http";
 import WrongCredentialsException from "@exceptions/WrongCredentials";
 
@@ -29,7 +29,7 @@ export default class LoginController implements Controller {
         try {
             const userData: LoginCred = req.body;
 
-            const user = await this.userModel.findOne({ email: userData.email });
+            const user = await this.userModel.findOne({ email: userData.email }).populate(["books", "borrows", "messages"]);
             if (!user) return next(new WrongCredentialsException());
 
             const isPasswordMatching = await compare(userData.password, user.password);

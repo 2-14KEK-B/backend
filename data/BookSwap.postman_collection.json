@@ -105,7 +105,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"email\": \"test@test.com\",\r\n  \"password\": \"1234\"\r\n}",
+							"raw": "{\r\n  \"email\": \"test3@test.com\",\r\n  \"password\": \"1234\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -147,14 +147,14 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:3000/books",
+							"raw": "http://localhost:3000/book",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
 							"port": "3000",
 							"path": [
-								"books"
+								"book"
 							]
 						}
 					},
@@ -166,14 +166,15 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:3000/books",
+							"raw": "http://localhost:3000/book/all",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
 							"port": "3000",
 							"path": [
-								"books"
+								"book",
+								"all"
 							]
 						}
 					},
@@ -185,15 +186,34 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:3000/books/6357d9e43441ea127321696d",
+							"raw": "http://localhost:3000/book/6357d9e43441ea127321696d",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
 							"port": "3000",
 							"path": [
-								"books",
+								"book",
 								"6357d9e43441ea127321696d"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get of logged user",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3000/book",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"book"
 							]
 						}
 					},
@@ -205,14 +225,14 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:3000/books/6357d9e43441ea127321696d",
+							"raw": "http://localhost:3000/book/6357d9e43441ea127321696d",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
 							"port": "3000",
 							"path": [
-								"books",
+								"book",
 								"6357d9e43441ea127321696d"
 							]
 						}
@@ -239,14 +259,14 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:3000/borrows",
+							"raw": "http://localhost:3000/borrow",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
 							"port": "3000",
 							"path": [
-								"borrows"
+								"borrow"
 							]
 						}
 					},
@@ -278,14 +298,15 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:3000/borrows",
+							"raw": "http://localhost:3000/borrow/all",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
 							"port": "3000",
 							"path": [
-								"borrows"
+								"borrow",
+								"all"
 							]
 						}
 					},
@@ -297,14 +318,14 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:3000/borrows/6357f9bf7b60ee488385f95",
+							"raw": "http://localhost:3000/borrow/6357f9bf7b60ee488385f95",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
 							"port": "3000",
 							"path": [
-								"borrows",
+								"borrow",
 								"6357f9bf7b60ee488385f95"
 							]
 						}
@@ -351,14 +372,14 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:3000/messages",
+							"raw": "http://localhost:3000/message",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
 							"port": "3000",
 							"path": [
-								"messages"
+								"message"
 							]
 						}
 					},
@@ -370,14 +391,15 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:3000/messages",
+							"raw": "http://localhost:3000/message/all",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
 							"port": "3000",
 							"path": [
-								"messages"
+								"message",
+								"all"
 							]
 						}
 					},
@@ -389,14 +411,14 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:3000/messages/635803e76fe4028063397763",
+							"raw": "http://localhost:3000/message/635803e76fe4028063397763",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
 							"port": "3000",
 							"path": [
-								"messages",
+								"message",
 								"635803e76fe4028063397763"
 							]
 						}
@@ -434,14 +456,35 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:3000/users",
+							"raw": "http://localhost:3000/user/all",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
 							"port": "3000",
 							"path": [
-								"users"
+								"user",
+								"all"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete by id",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3000/user/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"user",
+								""
 							]
 						}
 					},

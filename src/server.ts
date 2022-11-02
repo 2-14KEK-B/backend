@@ -1,6 +1,6 @@
 import { config } from "dotenv";
 import App from "./app";
-import AuthenticationController from "@auth/index";
+import AuthenticationController from "@authentication/index";
 import UserController from "@controllers/user";
 import BookController from "@controllers/book";
 import BorrowController from "@controllers/borrow";
