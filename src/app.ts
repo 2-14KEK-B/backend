@@ -1,6 +1,8 @@
 import express, { Express, json } from "express";
 import { connect, connection } from "mongoose";
-import session from "express-session";
+import session, { SessionOptions } from "express-session";
+import MongoStore from "connect-mongo";
+import { MongoClient } from "mongodb";
 import cors from "cors";
 import errorMiddleware from "@middlewares/error";
 import loggerMiddleware from "@middlewares/logger";
@@ -8,10 +10,11 @@ import Controller from "@interfaces/controller";
 
 export default class App {
     public app: Express;
+    private mongoClient: MongoClient;
 
     constructor(controllers: Controller[]) {
         this.app = express();
-        this.connectToTheDatabase();
+        this.mongoClient = this.connectToTheDatabase();
         this.initializeMiddlewares();
         this.initializeControllers(controllers);
         this.initializeErrorHandling();
@@ -31,7 +34,7 @@ export default class App {
             }),
         );
         this.app.use(loggerMiddleware);
-        this.app.use(session({ secret: process.env.SECRET, saveUninitialized: false, resave: true }));
+        this.initSession();
     }
 
     private initializeErrorHandling() {
@@ -44,7 +47,7 @@ export default class App {
         });
     }
 
-    private async connectToTheDatabase() {
+    private connectToTheDatabase() {
         let connectionString: string;
 
         if (process.env.NODE_ENV === "development") {
@@ -67,6 +70,41 @@ export default class App {
         connection.on("connected", () => {
             console.log(`Connected to MongoDB server. :: ${connectionString}`);
         });
+
+        return connection.getClient();
+    }
+
+    private initSession() {
+        // const TOUCH_AFTER = 60 * 10; // 10mins
+        const MAX_AGE = 1000 * 60 * 30; // 30mins
+
+        const sessionStore = MongoStore.create({
+            client: this.mongoClient,
+            ttl: MAX_AGE,
+            // touchAfter: TOUCH_AFTER
+        });
+
+        const options: SessionOptions = {
+            secret: process.env.SECRET,
+            name: "session-id",
+            cookie: {
+                maxAge: MAX_AGE,
+                httpOnly: true,
+                signed: true,
+                sameSite: "strict",
+                secure: false,
+            },
+            saveUninitialized: false,
+            resave: true,
+            store: sessionStore,
+        };
+
+        if (process.env.NODE_ENV != "development") {
+            this.app.set("trust proxy", 1); // trust first proxy
+            options.cookie.secure = true; // serve secure cookies
+        }
+
+        this.app.use(session(options));
     }
 
     public listen(): void {

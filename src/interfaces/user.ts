@@ -14,6 +14,7 @@ interface User {
     password: string;
     locale?: string;
     picture?: string;
+    role?: string;
     books: Book[];
     messages: Message[];
     user_ratings: Types.ObjectId[];

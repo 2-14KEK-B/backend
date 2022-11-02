@@ -14,6 +14,7 @@ const userSchema = new Schema<User>(
         email_is_verified: { type: Boolean, default: false },
         locale: { type: String, default: "hu-HU" },
         picture: { type: String },
+        role: { type: String },
         books: [{ type: Schema.Types.ObjectId, ref: "Book" }],
         messages: [{ type: Schema.Types.ObjectId, ref: "Message" }],
         borrows: [{ type: Schema.Types.ObjectId, ref: "Borrow" }],

@@ -1,4 +1,4 @@
-import { LoginCred } from "@interfaces/auth";
+import { LoginCred } from "@interfaces/authentication";
 import { IsEmail, IsString } from "class-validator";
 
 export default class LoginDto implements LoginCred {

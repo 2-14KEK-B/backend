@@ -5,7 +5,7 @@ import "dotenv/config";
 import App from "../../app";
 import validateEnv from "@utils/validateEnv";
 import userModel from "@models/user";
-import AuthenticationController from "@auth/index";
+import AuthenticationController from "@authentication/index";
 import StatusCode from "@utils/statusCodes";
 
 validateEnv("test");
@@ -30,11 +30,14 @@ describe("POST /login", () => {
         await userModel.collection.drop();
         const password = await hash("test1234", 10);
         const userData = { email: "test@test.com", password: password };
-        await userModel.create(userData);
+        await userModel.create(userData).then(doc => {
+            console.log(doc);
+        });
         const res: Response = await request(server).post("/auth/login").send({
             email: "test@test.com",
             password: "test1234",
         });
+        console.log(res);
         expect(res.statusCode).toEqual(StatusCode.OK);
         expect(res.body.email).toEqual(userData.email);
     });

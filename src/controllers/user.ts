@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from "express";
-import authMiddleware from "@middlewares/auth";
-import validationMiddleware from "@middlewares/validation";
+import authentication from "@middlewares/authentication";
+import authorization from "@middlewares/authorization";
+import validation from "@middlewares/validation";
 import userModel from "@models/user";
 import ModifyUserDto from "@validators/user";
 import isIdValid from "@utils/idChecker";
@@ -11,7 +12,7 @@ import Controller from "@interfaces/controller";
 import { ModifyUser } from "@interfaces/user";
 
 export default class UserController implements Controller {
-    path = "/users";
+    path = "/user";
     router = Router();
     private user = userModel;
 
@@ -20,10 +21,11 @@ export default class UserController implements Controller {
     }
 
     private initializeRoutes() {
-        this.router.get(this.path, authMiddleware, this.getAllUsers);
-        this.router.get(`${this.path}/:id`, authMiddleware, this.getUserById);
-        this.router.patch(`${this.path}/:id`, [authMiddleware, validationMiddleware(ModifyUserDto, true)], this.modifyUserById);
-        this.router.delete(`${this.path}/:id`, authMiddleware, this.deleteUserById);
+        this.router.all("*", authentication);
+        this.router.get(`${this.path}/all`, authorization(["admin"]), this.getAllUsers);
+        this.router.get(`${this.path}/:id`, this.getUserById);
+        this.router.patch(`${this.path}/:id`, validation(ModifyUserDto, true), this.modifyUserById);
+        this.router.delete(`${this.path}/:id`, authorization(["admin"]), this.deleteUserById);
     }
 
     private getAllUsers = async (req: Request, res: Response, next: NextFunction) => {

@@ -5,7 +5,7 @@ import validationMiddleware from "@middlewares/validation";
 import RegisterDto from "@validators/register";
 import Controller from "@interfaces/controller";
 import { User } from "@interfaces/user";
-import { RegisterCred } from "@interfaces/auth";
+import { RegisterCred } from "@interfaces/authentication";
 import HttpError from "@exceptions/Http";
 import UserAlreadyExistsException from "@exceptions/UserAlreadyExists";
 

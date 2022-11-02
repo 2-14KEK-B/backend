@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from "express";
-import validationMiddleware from "@middlewares/validation";
-import authMiddleware from "@middlewares/auth";
+import authentication from "@middlewares/authentication";
+import authorization from "@middlewares/authorization";
+import validation from "@middlewares/validation";
 import bookModel from "@models/book";
 import borrowModel from "@models/borrow";
 import userModel from "@models/user";
@@ -12,7 +13,7 @@ import Controller from "@interfaces/controller";
 import { CreateBorrow, ModifyBorrow } from "@interfaces/borrow";
 
 export default class BorrowController implements Controller {
-    path = "/borrows";
+    path = "/borrow";
     router = Router();
     private borrow = borrowModel;
     private user = userModel;
@@ -23,11 +24,12 @@ export default class BorrowController implements Controller {
     }
 
     private initializeRoutes() {
-        this.router.get(this.path, authMiddleware, this.getAllBorrows);
-        this.router.get(`${this.path}/:id`, authMiddleware, this.getBorrowById);
-        this.router.post(this.path, [authMiddleware, validationMiddleware(CreateBorrowDto)], this.createBorrow);
-        this.router.patch(`${this.path}/:id`, [authMiddleware, validationMiddleware(ModifyBorrowDto, true)], this.modifyBorrowById);
-        this.router.delete(`${this.path}/:id`, authMiddleware, this.deleteBorrowById);
+        this.router.all("*", authentication);
+        this.router.get(`${this.path}/all`, authorization(["admin"]), this.getAllBorrows);
+        this.router.get(`${this.path}/:id`, this.getBorrowById);
+        this.router.post(this.path, validation(CreateBorrowDto), this.createBorrow);
+        this.router.patch(`${this.path}/:id`, validation(ModifyBorrowDto, true), this.modifyBorrowById);
+        this.router.delete(`${this.path}/:id`, authorization(["admin"]), this.deleteBorrowById);
     }
 
     private getAllBorrows = async (req: Request, res: Response, next: NextFunction) => {
