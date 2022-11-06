@@ -30,7 +30,7 @@ export default class UserController implements Controller {
 
     private getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const users = await this.user.find().populate(["borrows", "books"]);
+            const users = await this.user.find();
             res.send(users);
         } catch (error) {
             next(new HttpError(error.message));
