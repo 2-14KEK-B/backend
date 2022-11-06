@@ -23,6 +23,7 @@ export default class LogoutController implements Controller {
             req.session.destroy(err => {
                 if (process.env.NODE_ENV == "development") console.log(err);
             });
+            res.clearCookie("session-id");
             res.send("logout successfully");
         } catch (error) {
             next(new HttpError((error as Error).message));
