@@ -75,13 +75,13 @@ export default class App {
     }
 
     private initSession() {
-        // const TOUCH_AFTER = 60 * 10; // 10mins
-        const MAX_AGE = 1000 * 60 * 30; // 30mins
+        const TOUCH_AFTER = 60 * 20; // 20mins
+        const MAX_AGE = 1000 * 60 * 60; // 60mins
 
         const sessionStore = MongoStore.create({
             client: this.mongoClient,
             ttl: MAX_AGE,
-            // touchAfter: TOUCH_AFTER
+            touchAfter: TOUCH_AFTER,
         });
 
         const options: SessionOptions = {
