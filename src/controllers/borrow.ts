@@ -34,7 +34,7 @@ export default class BorrowController implements Controller {
 
     private getAllBorrows = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const borrows = await this.borrow.find().populate(["books"]);
+            const borrows = await this.borrow.find();
             res.send(borrows);
         } catch (error) {
             next(new HttpError(error.message));
