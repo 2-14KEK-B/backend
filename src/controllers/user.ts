@@ -22,6 +22,7 @@ export default class UserController implements Controller {
 
     private initializeRoutes() {
         this.router.all("*", authentication);
+        this.router.get(`${this.path}/me`, this.getMyUserInfo);
         this.router.get(`${this.path}/all`, authorization(["admin"]), this.getAllUsers);
         this.router.get(`${this.path}/:id`, this.getUserById);
         this.router.patch(`${this.path}/:id`, validation(ModifyUserDto, true), this.modifyUserById);
@@ -37,12 +38,26 @@ export default class UserController implements Controller {
         }
     };
 
+    private getMyUserInfo = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const userId = req.session.userId;
+            if (!(await isIdValid(this.user, [userId], next))) return;
+
+            const user = await this.user.findById(userId, "-password").populate(["books", "borrows", "messages", "user_ratings"]);
+            if (!user) return next(new UserNotFoundException(userId));
+
+            res.send(user);
+        } catch (error) {
+            next(new HttpError(error.message));
+        }
+    };
+
     private getUserById = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const userId = req.params.id;
             if (!(await isIdValid(this.user, [userId], next))) return;
 
-            const user = await this.user.findById(userId);
+            const user = await this.user.findById(userId, "-password -email_is_verified -updated_on -role -messages").populate("user_ratings");
             if (!user) return next(new UserNotFoundException(userId));
 
             res.send(user);
