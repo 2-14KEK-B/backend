@@ -4,6 +4,7 @@ import { Book } from "@interfaces/book";
 const now = new Date();
 
 const bookSchema = new Schema<Book>({
+    uploader: String,
     created_on: { type: Date, default: now },
     updated_on: { type: Date, default: now },
     author: { type: String, required: true },

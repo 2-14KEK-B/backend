@@ -78,7 +78,7 @@ export default class BookController implements Controller {
             const userId = req.session.userId;
             const now = new Date();
             const bookData: CreateBook = req.body;
-            const newBook = await this.book.create({ ...bookData, created_on: now, updated_on: now });
+            const newBook = await this.book.create({ ...bookData, created_on: now, updated_on: now, uploader: userId });
             if (!newBook) return next(new HttpError("Failed to create book"));
 
             await this.user.findByIdAndUpdate(userId, { $push: { books: { _id: newBook._id } } });
