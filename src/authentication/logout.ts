@@ -1,7 +1,7 @@
-import { NextFunction, Request, Response, Router } from "express";
-import Controller from "@interfaces/controller";
-import HttpError from "@exceptions/Http";
 import authMiddleware from "@middlewares/authentication";
+import HttpError from "@exceptions/Http";
+import type { NextFunction, Request, Response, Router } from "express";
+import type Controller from "@interfaces/controller";
 
 export default class LogoutController implements Controller {
     path: string;
@@ -19,9 +19,11 @@ export default class LogoutController implements Controller {
 
     private logout = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            req.session.userId = null;
-            req.session.destroy(err => {
-                if (process.env.NODE_ENV == "development") console.log(err);
+            delete req.session["userId"];
+            req.session.destroy(error => {
+                if (error) {
+                    next(new HttpError((error as Error).message));
+                }
             });
             res.clearCookie("session-id");
             res.send("logout successfully");

@@ -8,8 +8,8 @@ import isIdValid from "@utils/idChecker";
 import StatusCode from "@utils/statusCodes";
 import UserNotFoundException from "@exceptions/UserNotFound";
 import HttpError from "@exceptions/Http";
-import Controller from "@interfaces/controller";
-import { ModifyUser } from "@interfaces/user";
+import type Controller from "@interfaces/controller";
+import type { ModifyUser } from "@interfaces/user";
 
 export default class UserController implements Controller {
     path = "/user";
@@ -29,7 +29,7 @@ export default class UserController implements Controller {
         this.router.delete(`${this.path}/:id`, authorization(["admin"]), this.deleteUserById);
     }
 
-    private getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
+    private getAllUsers = async (_req: Request, res: Response, next: NextFunction) => {
         try {
             const users = await this.user.find();
             res.send(users);
@@ -54,7 +54,7 @@ export default class UserController implements Controller {
 
     private getUserById = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const userId = req.params.id;
+            const userId = req.params["id"];
             if (!(await isIdValid(this.user, [userId], next))) return;
 
             const user = await this.user.findById(userId, "-password -email_is_verified -updated_on -role -messages").populate("user_ratings");
@@ -68,7 +68,7 @@ export default class UserController implements Controller {
 
     private modifyUserById = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const userId = req.params.id;
+            const userId = req.params["id"];
             if (!(await isIdValid(this.user, [userId], next))) return;
 
             const userData: ModifyUser = req.body;
@@ -83,7 +83,7 @@ export default class UserController implements Controller {
 
     private deleteUserById = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const userId = req.params.id;
+            const userId = req.params["id"];
             if (!(await isIdValid(this.user, [userId], next))) return;
 
             const successResponse = await this.user.findByIdAndDelete(userId);

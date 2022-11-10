@@ -9,8 +9,8 @@ import StatusCode from "@utils/statusCodes";
 import isIdValid from "@utils/idChecker";
 import CreateMessageDto from "@validators/message";
 import HttpError from "@exceptions/Http";
-import { CreateMessage, MessageContent } from "@interfaces/message";
-import Controller from "@interfaces/controller";
+import type { CreateMessage, MessageContent } from "@interfaces/message";
+import type Controller from "@interfaces/controller";
 
 export default class MessageController implements Controller {
     path = "/message";
@@ -30,7 +30,7 @@ export default class MessageController implements Controller {
         this.router.delete(`${this.path}/:id`, authorization(["admin"]), this.deleteMessageById);
     }
 
-    private getAllMessages = async (req: Request, res: Response, next: NextFunction) => {
+    private getAllMessages = async (_req: Request, res: Response, next: NextFunction) => {
         try {
             const messages = await this.message.find();
             res.send(messages);
@@ -41,7 +41,7 @@ export default class MessageController implements Controller {
 
     private getMessageById = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const messageId: string = req.params.id;
+            const messageId = req.params["id"];
             if (!(await isIdValid(this.message, [messageId], next))) return;
 
             const message = await this.message.findById(messageId);
@@ -90,16 +90,16 @@ export default class MessageController implements Controller {
 
     private deleteMessageById = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const messageId: string = req.params.id;
+            const messageId = req.params["id"];
             if (!(await isIdValid(this.message, [messageId], next))) return;
 
-            const { users } = await this.message.findById(messageId);
-            if (!users) return next(new HttpError("Failed to get ids from messages"));
+            const message = await this.message.findById(messageId);
+            if (!message?.users) return next(new HttpError("Failed to get ids from messages"));
 
             const response = await this.message.findByIdAndDelete(messageId);
             if (!response) return next(new HttpError(`Failed to delete message by id ${messageId}`));
 
-            const { acknowledged } = await this.user.updateMany({ _id: { $in: users } }, { $pull: { messages: messageId } });
+            const { acknowledged } = await this.user.updateMany({ _id: { $in: message.users } }, { $pull: { messages: messageId } });
             if (!acknowledged) return next(new HttpError("Failed to update users"));
 
             res.sendStatus(StatusCode.NoContent);

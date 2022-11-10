@@ -1,15 +1,12 @@
-import { Request, Response, NextFunction } from "express";
 import userModel from "@models/user";
-import HttpError from "@exceptions/Http";
-import StatusCode from "@utils/statusCodes";
 import isIdValid from "@utils/idChecker";
+import StatusCode from "@utils/statusCodes";
+import HttpError from "@exceptions/Http";
+import type { Request, Response, NextFunction } from "express";
+import type { User } from "@interfaces/user";
 
 /**
- * Validate if user logged in by session
- * @param req Request
- * @param _res Response
- * @param next NextFunction
- * @returns void
+Validate if user logged in by session
  */
 export default async function authenticationMiddleware(req: Request, _res: Response, next: NextFunction): Promise<void> {
     const userId = req.session.userId;
@@ -17,6 +14,6 @@ export default async function authenticationMiddleware(req: Request, _res: Respo
 
     const user = await isIdValid(userModel, [userId], next);
     if (!user) return next(new HttpError("Unauthorized", StatusCode.Unauthorized));
-    req.user = await userModel.findById(userId, "-password");
+    req.user = (await userModel.findById(userId, "-password")) as User;
     next();
 }

@@ -1,20 +1,21 @@
 import express, { Express, json } from "express";
-import { connect, connection } from "mongoose";
+import { connect, connection, Connection } from "mongoose";
 import session, { SessionOptions } from "express-session";
 import MongoStore from "connect-mongo";
-import { MongoClient } from "mongodb";
 import cors from "cors";
 import errorMiddleware from "@middlewares/error";
 import loggerMiddleware from "@middlewares/logger";
-import Controller from "@interfaces/controller";
+import env from "@utils/validateEnv";
+import type { MongoClient } from "mongodb";
+import type Controller from "@interfaces/controller";
 
 export default class App {
     public app: Express;
-    private mongoClient: MongoClient;
+    public connection: Connection;
 
-    constructor(controllers: Controller[]) {
+    constructor(controllers: Controller[], connectionString?: string) {
         this.app = express();
-        this.mongoClient = this.connectToTheDatabase();
+        this.connection = this.connectToTheDatabase(connectionString);
         this.initializeMiddlewares();
         this.initializeControllers(controllers);
         this.initializeErrorHandling();
@@ -22,6 +23,10 @@ export default class App {
 
     public getServer(): Express {
         return this.app;
+    }
+
+    public getDb(): Connection {
+        return this.connection;
     }
 
     private initializeMiddlewares() {
@@ -34,7 +39,6 @@ export default class App {
             }),
         );
         this.app.use(loggerMiddleware);
-        this.initSession();
     }
 
     private initializeErrorHandling() {
@@ -47,69 +51,65 @@ export default class App {
         });
     }
 
-    private connectToTheDatabase() {
-        let connectionString: string;
+    private connectToTheDatabase(connectionString?: string) {
+        const uri = connectionString || env.MONGO_URI;
 
-        if (process.env.NODE_ENV === "development") {
-            connectionString = process.env.DEV_MONGO_URI;
-        } else if (process.env.NODE_ENV === "test") {
-            connectionString = process.env.TEST_MONGO_URI;
-        } else {
-            const { MONGO_USER, MONGO_PASSWORD, MONGO_PATH, MONGO_DB } = process.env;
-            connectionString = `mongodb+srv://${MONGO_USER}:${MONGO_PASSWORD}${MONGO_PATH}${MONGO_DB}?retryWrites=true&w=majority`;
-        }
-        connect(connectionString, err => {
+        connect(uri, err => {
             if (err) {
-                console.log("Unable to connect to the server. Please start MongoDB.");
+                if (env.isProduction) console.log("Unable to connect to the server. Please use real mongo atlas uri.");
+                else console.log("Unable to connect to the server. Please start MongoDB.");
             }
         });
 
-        connection.on("error", error => {
-            console.log(`Mongoose error message: ${error.message}`);
-        });
-        connection.on("connected", () => {
-            console.log(`Connected to MongoDB server. :: ${connectionString}`);
-        });
+        connection
+            .once("open", () => {
+                if (env.isProduction) console.log("Connected to MongoDB server.");
+                else console.log(`Connected to ${uri}`);
+            })
+            .on("error", error => {
+                console.log(`Mongoose error message: ${error.message}`);
+            });
 
-        return connection.getClient();
+        this.initSession(connection.getClient());
+        return connection;
     }
 
-    private initSession() {
+    private initSession(mongoClient: MongoClient) {
         const TOUCH_AFTER = 60 * 20; // 20mins
         const MAX_AGE = 1000 * 60 * 60; // 60mins
 
         const sessionStore = MongoStore.create({
-            client: this.mongoClient,
+            client: mongoClient,
             ttl: MAX_AGE,
             touchAfter: TOUCH_AFTER,
         });
 
         const options: SessionOptions = {
-            secret: process.env.SECRET,
+            secret: env.SECRET,
             name: "session-id",
             cookie: {
                 maxAge: MAX_AGE,
                 httpOnly: true,
                 signed: true,
-                sameSite: "strict",
-                secure: false,
+                sameSite: "none",
+                secure: "auto",
             },
             saveUninitialized: false,
             resave: true,
             store: sessionStore,
         };
 
-        if (process.env.NODE_ENV != "development") {
+        if (env.isProduction) {
             this.app.set("trust proxy", 1); // trust first proxy
-            options.cookie.secure = true; // serve secure cookies
+            // if (options.cookie) options.cookie.secure = true; // serve secure cookies
         }
 
         this.app.use(session(options));
     }
 
     public listen(): void {
-        this.app.listen(process.env.PORT, () => {
-            console.log(`App listening on the port ${process.env.PORT}`);
+        this.app.listen(env.PORT, () => {
+            console.log(`App listening on the port ${env.PORT}`);
         });
     }
 }

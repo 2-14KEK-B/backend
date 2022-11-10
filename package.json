@@ -1,26 +1,16 @@
 {
-    "name": "jedlik-express-mongoose-ts-backend-template",
-    "version": "1.0.0",
-    "description": "Jedlik project template for backend programming.",
-    "main": "src/server.ts",
-    "repository": {
-        "private": false,
-        "type": "git",
-        "url": "https://github.com/nitslaszlo/jedlik-express-mongoose-ts-backend-template"
-    },
+    "name": "bookswap_backend",
     "scripts": {
-        "start:server": "node ./dist/server.js",
-        "start:db": "mongod",
-        "compile": "tsc",
-        "compile:watch": "tsc --watch",
-        "postinstall": "tsc",
+        "start": "node ./dist/server.js",
+        "build": "tsc -p tsconfig.prod.json && tsc-alias",
+        "build:watch": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\")",
+        "build:docker": "docker build -t bookswap_backend:latest . -f Dockerfile",
         "dev": "nodemon",
         "format": "prettier --write ./src",
-        "lint": "eslint ./src --ext .vue,.js,.ts",
-        "lint-fix": "eslint --fix ./src --ext .vue,.js,.ts",
-        "test": "jest --maxWorkers=2 || ECHO."
+        "lint": "eslint ./src --ext .js,.ts",
+        "lint-fix": "eslint --fix ./src --ext .js,.ts",
+        "test": "jest --maxWorkers=50% --testTimeout=5000 || ECHO."
     },
-    "author": "Nits László",
     "license": "MIT",
     "dependencies": {
         "bcrypt": "^5.1.0",
@@ -28,11 +18,10 @@
         "class-validator": "^0.13.2",
         "connect-mongo": "^4.6.0",
         "cors": "^2.8.5",
-        "dotenv": "^16.0.3",
         "envalid": "^7.3.1",
         "express": "^4.18.2",
         "express-session": "^1.17.3",
-        "mongoose": "6.7.1"
+        "mongoose": "6.7.2"
     },
     "devDependencies": {
         "@types/bcrypt": "^5.0.0",
@@ -43,17 +32,19 @@
         "@types/node": "^18.11.9",
         "@types/supertest": "^2.0.12",
         "@types/validator": "^13.7.10",
-        "@typescript-eslint/eslint-plugin": "^5.42.0",
-        "@typescript-eslint/parser": "^5.42.0",
+        "@typescript-eslint/eslint-plugin": "^5.42.1",
+        "@typescript-eslint/parser": "^5.42.1",
+        "concurrently": "^7.5.0",
         "eslint": "^8.27.0",
         "eslint-config-prettier": "^8.5.0",
         "eslint-plugin-prettier": "^4.2.1",
-        "jest": "^29.2.2",
+        "jest": "^29.3.1",
         "nodemon": "^2.0.20",
         "prettier": "^2.7.1",
         "supertest": "^6.3.1",
         "ts-jest": "^29.0.3",
         "ts-node": "^10.9.1",
+        "tsc-alias": "^1.7.1",
         "tsconfig-paths": "^4.1.0",
         "typescript": "^4.8.4"
     }

@@ -5,12 +5,12 @@ import validation from "@middlewares/validation";
 import bookModel from "@models/book";
 import borrowModel from "@models/borrow";
 import userModel from "@models/user";
-import { CreateBorrowDto, ModifyBorrowDto } from "@validators/borrow";
 import isIdValid from "@utils/idChecker";
 import StatusCode from "@utils/statusCodes";
+import { CreateBorrowDto, ModifyBorrowDto } from "@validators/borrow";
 import HttpError from "@exceptions/Http";
-import Controller from "@interfaces/controller";
-import { CreateBorrow, ModifyBorrow } from "@interfaces/borrow";
+import type Controller from "@interfaces/controller";
+import type { CreateBorrow, ModifyBorrow } from "@interfaces/borrow";
 
 export default class BorrowController implements Controller {
     path = "/borrow";
@@ -32,7 +32,7 @@ export default class BorrowController implements Controller {
         this.router.delete(`${this.path}/:id`, authorization(["admin"]), this.deleteBorrowById);
     }
 
-    private getAllBorrows = async (req: Request, res: Response, next: NextFunction) => {
+    private getAllBorrows = async (_req: Request, res: Response, next: NextFunction) => {
         try {
             const borrows = await this.borrow.find();
             res.send(borrows);
@@ -43,7 +43,7 @@ export default class BorrowController implements Controller {
 
     private getBorrowById = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const borrowId: string = req.params.id;
+            const borrowId = req.params["id"];
             if (!(await isIdValid(this.borrow, [borrowId], next))) return;
 
             const borrow = await this.borrow.findById(borrowId).populate(["books", "from_id", "to_id"]);
@@ -76,7 +76,7 @@ export default class BorrowController implements Controller {
 
     private modifyBorrowById = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const borrowId: string = req.params.id;
+            const borrowId = req.params["id"];
             if (!(await isIdValid(this.borrow, [borrowId], next))) return;
 
             const borrowData: ModifyBorrow = req.body;
@@ -91,16 +91,16 @@ export default class BorrowController implements Controller {
 
     private deleteBorrowById = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const borrowId: string = req.params.id;
+            const borrowId = req.params["id"];
             if (!(await isIdValid(this.borrow, [borrowId], next))) return;
 
-            const { from_id, to_id } = await this.borrow.findById(borrowId);
-            if (!from_id || !to_id) return next(new HttpError("Failed to get ids from borrow"));
+            const borrow = await this.borrow.findById(borrowId);
+            if (!borrow?.from_id || !borrow?.to_id) return next(new HttpError("Failed to get ids from borrow"));
 
             const response = await this.borrow.findByIdAndDelete(borrowId);
             if (!response) return next(new HttpError(`Failed to delete borrow by id ${borrowId}`));
 
-            const { acknowledged } = await this.user.updateMany({ _id: { $in: [from_id, to_id] } }, { $pull: { borrows: borrowId } });
+            const { acknowledged } = await this.user.updateMany({ _id: { $in: [borrow.from_id, borrow.to_id] } }, { $pull: { borrows: borrowId } });
             if (!acknowledged) return next(new HttpError("Failed to update users"));
 
             res.sendStatus(StatusCode.NoContent);

@@ -1,13 +1,13 @@
-import { NextFunction, Request, Response, Router } from "express";
 import { compare } from "bcrypt";
-import { Model } from "mongoose";
 import validationMiddleware from "@middlewares/validation";
 import LoginDto from "@validators/login";
-import Controller from "@interfaces/controller";
-import { User } from "@interfaces/user";
-import { LoginCred } from "@interfaces/authentication";
 import HttpError from "@exceptions/Http";
 import WrongCredentialsException from "@exceptions/WrongCredentials";
+import type { Model } from "mongoose";
+import type { NextFunction, Request, Response, Router } from "express";
+import type { LoginCred } from "@interfaces/authentication";
+import type { User } from "@interfaces/user";
+import type Controller from "@interfaces/controller";
 
 export default class LoginController implements Controller {
     path: string;
@@ -29,15 +29,15 @@ export default class LoginController implements Controller {
         try {
             const userData: LoginCred = req.body;
 
-            const user = await this.userModel.findOne({ email: userData.email }).populate(["books", "borrows", "messages"]);
+            const user: User | null = await this.userModel.findOne({ email: userData.email });
             if (!user) return next(new WrongCredentialsException());
 
-            const isPasswordMatching = await compare(userData.password, user.password);
+            const isPasswordMatching = await compare(userData.password, user.password as string);
             if (!isPasswordMatching) return next(new WrongCredentialsException());
 
-            user.password = undefined;
+            delete user["password"];
 
-            req.session.userId = user._id.toString();
+            req.session.userId = user._id?.toString();
             req.session.save(function (err) {
                 if (err) return next(err);
             });

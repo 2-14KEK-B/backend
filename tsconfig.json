@@ -1,17 +1,24 @@
 {
   "compilerOptions": {
-    "sourceMap": true,
-    "target": "esnext",
     "module": "commonjs",
+    "target": "es5",
     "outDir": "./dist",
-    "baseUrl": ".",
     "alwaysStrict": true,
     "noImplicitAny": true,
     "importHelpers": true,
-    "experimentalDecorators": true,
+    "allowUnusedLabels": false,
+    "allowUnreachableCode": false,
+    "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "strictNullChecks": true,
+    "importsNotUsedAsValues": "error",
     "esModuleInterop": true,
     "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
@@ -19,13 +26,10 @@
       "node",
       "jest"
     ],
-    "typeRoots": [
-      "node_modules/@types",
-      "src/types"
-    ],
+    "baseUrl": ".",
     "paths": {
       "@interfaces/*": [
-        "src/interfaces/*"
+        "src/interfaces/*.d.ts"
       ],
       "@models/*": [
         "src/models/*"
@@ -59,9 +63,7 @@
     ]
   },
   "include": [
-    "src/**/*.ts",
-    "**/test/**/*.ts",
-    "jest.config.ts"
+    "src/**/*.ts"
   ],
   "exclude": [
     "node_modules",

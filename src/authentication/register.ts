@@ -1,13 +1,13 @@
-import { NextFunction, Request, Response, Router } from "express";
 import { hash } from "bcrypt";
-import { Model } from "mongoose";
 import validationMiddleware from "@middlewares/validation";
 import RegisterDto from "@validators/register";
-import Controller from "@interfaces/controller";
-import { User } from "@interfaces/user";
-import { RegisterCred } from "@interfaces/authentication";
 import HttpError from "@exceptions/Http";
 import UserAlreadyExistsException from "@exceptions/UserAlreadyExists";
+import type { NextFunction, Request, Response, Router } from "express";
+import type { Model } from "mongoose";
+import type Controller from "@interfaces/controller";
+import type { User } from "@interfaces/user";
+import type { RegisterCred } from "@interfaces/authentication";
 
 export default class RegisterController implements Controller {
     path: string;
