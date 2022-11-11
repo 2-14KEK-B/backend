@@ -10,8 +10,8 @@ import {
 import isIdValid from "@utils/idChecker";
 import StatusCode from "@utils/statusCodes";
 import HttpError from "@exceptions/Http";
-import Controller from "@interfaces/controller";
-import {
+import type Controller from "@interfaces/controller";
+import type {
     CreateBook,
     // ModifyBook
 } from "@interfaces/book";
@@ -36,7 +36,7 @@ export default class BookController implements Controller {
         this.router.delete(`${this.path}/:id`, authentication, this.deleteBookById);
     }
 
-    private getAllBooks = async (req: Request, res: Response, next: NextFunction) => {
+    private getAllBooks = async (_req: Request, res: Response, next: NextFunction) => {
         try {
             const books = await this.book.find();
             res.send(books);
@@ -47,7 +47,7 @@ export default class BookController implements Controller {
 
     private getUserBooks = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const userId = req.user._id.toString();
+            const userId = req.user._id?.toString();
             if (!(await isIdValid(this.user, [userId], next))) return;
 
             const user = await this.user.findOne({ _id: userId }).populate("books");
@@ -61,7 +61,7 @@ export default class BookController implements Controller {
 
     private getBookById = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const bookId: string = req.params.id;
+            const bookId = req.params["id"];
             if (!(await isIdValid(this.book, [bookId], next))) return;
 
             const book = await this.book.findById(bookId);
@@ -90,7 +90,7 @@ export default class BookController implements Controller {
     };
 
     /**
-     * TODO: Versioning
+    TODO: Versioning
      */
     // private modifyBookById = async (req: Request, res: Response, next: NextFunction) => {
     //     try {
@@ -113,7 +113,7 @@ export default class BookController implements Controller {
 
     private deleteBookById = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const bookId: string = req.params.id;
+            const bookId = req.params["id"];
             if (!(await isIdValid(this.book, [bookId], next))) return;
 
             const response = await this.book.findByIdAndDelete(bookId);

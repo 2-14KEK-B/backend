@@ -1,5 +1,5 @@
-import { CreateMessage } from "@interfaces/message";
 import { IsString } from "class-validator";
+import type { CreateMessage } from "@interfaces/message";
 
 export default class CreateMessageDto implements CreateMessage {
     @IsString()

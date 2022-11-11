@@ -1,5 +1,5 @@
-import { CreateBorrow, ModifyBorrow, UserRating } from "@interfaces/borrow";
 import { IsBoolean, IsOptional, IsString } from "class-validator";
+import type { CreateBorrow, ModifyBorrow, UserRating } from "@interfaces/borrow";
 
 class CreateBorrowDto implements CreateBorrow {
     @IsString()

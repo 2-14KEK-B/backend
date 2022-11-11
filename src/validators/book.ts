@@ -1,5 +1,5 @@
-import { CreateBook, ModifyBook } from "@interfaces/book";
 import { IsBoolean, IsNumberString, IsOptional, IsString, IsUrl } from "class-validator";
+import type { CreateBook, ModifyBook } from "@interfaces/book";
 
 class CreateBookDto implements CreateBook {
     @IsString()

@@ -3,12 +3,17 @@ import type { JestConfigWithTsJest } from "ts-jest";
 import { compilerOptions } from "./tsconfig.json";
 
 const jestConfig: JestConfigWithTsJest = {
-    roots: ["<rootDir>/src"],
+    roots: ["<rootDir>"],
     preset: "ts-jest",
     verbose: true,
     testEnvironment: "node",
     transform: {
-        "^.+\\.ts$": "ts-jest",
+        "^.+\\.ts$": [
+            "ts-jest",
+            {
+                tsconfig: "tsconfig.jest.json",
+            },
+        ],
     },
     testRegex: "(/__tests__/.*|(\\.|/)(test|spec))\\.(ts|js)$",
     moduleFileExtensions: ["ts", "js", "json", "node"],

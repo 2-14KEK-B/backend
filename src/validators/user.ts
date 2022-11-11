@@ -1,5 +1,5 @@
-import { ModifyUser } from "@interfaces/user";
 import { IsEmail, IsString, IsUrl } from "class-validator";
+import type { ModifyUser } from "@interfaces/user";
 
 export default class ModifyUserDto implements ModifyUser {
     @IsString()

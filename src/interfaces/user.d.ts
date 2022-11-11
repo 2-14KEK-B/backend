@@ -1,7 +1,7 @@
-import { Types } from "mongoose";
-import { Book } from "./book";
-import { Borrow } from "./borrow";
-import { Message } from "./message";
+import type { Types } from "mongoose";
+import type { Book } from "./book";
+import type { Borrow } from "./borrow";
+import type { Message } from "./message";
 
 interface User {
     _id?: Types.ObjectId;
@@ -11,7 +11,7 @@ interface User {
     fullname: string;
     email: string;
     email_is_verified?: boolean;
-    password: string;
+    password?: string;
     locale?: string;
     picture?: string;
     role?: string;

@@ -1,10 +1,9 @@
-// import { Router } from "express";
 import { Router, Request, Response } from "express";
 import LoginController from "./login";
 import LogoutController from "./logout";
 import RegisterController from "./register";
 import userModel from "@models/user";
-import Controller from "@interfaces/controller";
+import type Controller from "@interfaces/controller";
 
 export default class AuthenticationController implements Controller {
     path = "/auth";

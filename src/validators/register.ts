@@ -1,5 +1,5 @@
-import { RegisterCred } from "@interfaces/authentication";
 import { IsEmail, IsOptional, IsString, IsUrl } from "class-validator";
+import type { RegisterCred } from "@interfaces/authentication";
 
 export default class RegisterDto implements RegisterCred {
     @IsString()
