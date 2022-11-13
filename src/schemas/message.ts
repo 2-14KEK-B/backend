@@ -1,5 +1,17 @@
 import { Schema } from "mongoose";
-import type { Message } from "@interfaces/message";
+import type { Message, MessageContent } from "@interfaces/message";
+
+const messageContentSchema = new Schema<MessageContent>(
+    {
+        sender_id: {
+            type: Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+        },
+        content: { type: String, required: true },
+    },
+    { versionKey: false },
+);
 
 const messageSchema = new Schema<Message>(
     {
@@ -10,17 +22,7 @@ const messageSchema = new Schema<Message>(
                 required: true,
             },
         ],
-        message_contents: [
-            {
-                sender_id: {
-                    type: Schema.Types.ObjectId,
-                    ref: "User",
-                    required: true,
-                },
-                time: { type: Date, default: new Date() },
-                content: { type: String, required: true },
-            },
-        ],
+        message_contents: [messageContentSchema],
     },
     { versionKey: false },
 );

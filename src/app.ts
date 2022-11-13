@@ -1,5 +1,4 @@
-import express, { Express, json } from "express";
-import { connect, connection, Connection } from "mongoose";
+import express, { Express, json, urlencoded } from "express";
 import session, { SessionOptions } from "express-session";
 import MongoStore from "connect-mongo";
 import cors from "cors";
@@ -11,11 +10,10 @@ import type Controller from "@interfaces/controller";
 
 export default class App {
     public app: Express;
-    public connection: Connection;
 
-    constructor(controllers: Controller[], connectionString?: string) {
+    constructor(controllers: Controller[], mongoClient: MongoClient) {
         this.app = express();
-        this.connection = this.connectToTheDatabase(connectionString);
+        this.initSession(mongoClient);
         this.initializeMiddlewares();
         this.initializeControllers(controllers);
         this.initializeErrorHandling();
@@ -25,12 +23,9 @@ export default class App {
         return this.app;
     }
 
-    public getDb(): Connection {
-        return this.connection;
-    }
-
     private initializeMiddlewares() {
         this.app.use(json());
+        this.app.use(urlencoded({ extended: true }));
         // Enabled CORS:
         this.app.use(
             cors({
@@ -51,28 +46,28 @@ export default class App {
         });
     }
 
-    private connectToTheDatabase(connectionString?: string) {
-        const uri = connectionString || env.MONGO_URI;
+    // private connectToTheDatabase(connectionString?: string) {
+    //     const uri = connectionString || env.MONGO_URI;
 
-        connect(uri, err => {
-            if (err) {
-                if (env.isProduction) console.log("Unable to connect to the server. Please use real mongo atlas uri.");
-                else console.log("Unable to connect to the server. Please start MongoDB.");
-            }
-        });
+    //     connect(uri, err => {
+    //         if (err) {
+    //             if (env.isProduction) console.log("Unable to connect to the server. Please use real mongo atlas uri.");
+    //             else console.log("Unable to connect to the server. Please start MongoDB.");
+    //         }
+    //     });
 
-        connection
-            .once("open", () => {
-                if (env.isProduction) console.log("Connected to MongoDB server.");
-                else console.log(`Connected to ${uri}`);
-            })
-            .on("error", error => {
-                console.log(`Mongoose error message: ${error.message}`);
-            });
+    //     connection
+    //         .once("open", () => {
+    //             if (env.isProduction) console.log("Connected to MongoDB server.");
+    //             else console.log(`Connected to ${uri}`);
+    //         })
+    //         .on("error", error => {
+    //             console.log(`Mongoose error message: ${error.message}`);
+    //         });
 
-        this.initSession(connection.getClient());
-        return connection;
-    }
+    //     this.initSession(connection.getClient());
+    //     return connection;
+    // }
 
     private initSession(mongoClient: MongoClient) {
         const TOUCH_AFTER = 60 * 20; // 20mins

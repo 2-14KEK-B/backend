@@ -38,7 +38,7 @@ export default class BookController implements Controller {
 
     private getAllBooks = async (_req: Request, res: Response, next: NextFunction) => {
         try {
-            const books = await this.book.find();
+            const books = await this.book.find().lean();
             res.send(books);
         } catch (error) {
             next(new HttpError(error.message));
@@ -50,7 +50,7 @@ export default class BookController implements Controller {
             const userId = req.user._id?.toString();
             if (!(await isIdValid(this.user, [userId], next))) return;
 
-            const user = await this.user.findOne({ _id: userId }).populate("books");
+            const user = await this.user.findOne({ _id: userId }).populate("books").lean();
             if (!user) return next(new HttpError(`Failed to get user by id ${userId}`));
 
             res.send(user.books);
@@ -64,7 +64,7 @@ export default class BookController implements Controller {
             const bookId = req.params["id"];
             if (!(await isIdValid(this.book, [bookId], next))) return;
 
-            const book = await this.book.findById(bookId);
+            const book = await this.book.findById(bookId).lean();
             if (!book) return next(new HttpError(`Failed to get book by id ${bookId}`));
 
             res.send(book);
@@ -76,9 +76,8 @@ export default class BookController implements Controller {
     private createBook = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const userId = req.session.userId;
-            const now = new Date();
             const bookData: CreateBook = req.body;
-            const newBook = await this.book.create({ ...bookData, created_on: now, updated_on: now, uploader: userId });
+            const newBook = await this.book.create({ ...bookData, uploader: userId });
             if (!newBook) return next(new HttpError("Failed to create book"));
 
             await this.user.findByIdAndUpdate(userId, { $push: { books: { _id: newBook._id } } });

@@ -6,12 +6,6 @@
         "uploader": {
             "$oid": "6357b544447026c9b91950fd"
         },
-        "created_on": {
-            "$date": "2022-10-25T12:40:39.138Z"
-        },
-        "updated_on": {
-            "$date": "2022-10-25T12:40:39.138Z"
-        },
         "author": "Turbó Titán",
         "title": "A lét elviselhetetlen könnyűsége.",
         "picture": "https://smartmobilestudio.com/wp-content/uploads/2012/06/leather-book-preview.png",
@@ -28,12 +22,6 @@
         },
         "uploader": {
             "$oid": "6357b544447026c9b91950fd"
-        },
-        "created_on": {
-            "$date": "2022-10-25T13:40:39.138Z"
-        },
-        "updated_on": {
-            "$date": "2022-10-25T13:40:39.138Z"
         },
         "author": "Turbó Titán",
         "title": "A lét elviselhetetlen könnyűsége. 2",

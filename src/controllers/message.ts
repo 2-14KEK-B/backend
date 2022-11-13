@@ -32,7 +32,7 @@ export default class MessageController implements Controller {
 
     private getAllMessages = async (_req: Request, res: Response, next: NextFunction) => {
         try {
-            const messages = await this.message.find();
+            const messages = await this.message.find().lean();
             res.send(messages);
         } catch (error) {
             next(new HttpError(error.message));
@@ -44,7 +44,7 @@ export default class MessageController implements Controller {
             const messageId = req.params["id"];
             if (!(await isIdValid(this.message, [messageId], next))) return;
 
-            const message = await this.message.findById(messageId);
+            const message = await this.message.findById(messageId).lean();
             if (!message) return next(new HttpError(`Failed to get message by id ${messageId}`));
 
             res.send(message);
@@ -62,27 +62,28 @@ export default class MessageController implements Controller {
                 sender_id: new Types.ObjectId(from_id),
                 content: content,
             };
-            const messages = await this.message.findOne({ users: { $in: [from_id, to_id] } });
+            let messages = await this.message.findOne({ users: { $in: [from_id, to_id] } });
 
             if (messages) {
                 messages.message_contents.push(newMessageContent);
-                const newMessage = await messages.save();
+                // const newMessage = await messages.save();
+                const newMessage = await messages.updateOne({ $push: { message_contents: { newMessageContent } } }).lean();
                 if (!newMessage) return next(new HttpError("Failed to create message"));
             } else {
-                const newMessage = await this.message.create({
+                messages = await this.message.create({
                     users: [new Types.ObjectId(from_id), new Types.ObjectId(to_id)],
                     message_contents: [newMessageContent],
                 });
-                if (!newMessage) return next(new HttpError("Failed to create message"));
+                if (!messages) return next(new HttpError("Failed to create message"));
 
                 const { acknowledged } = await this.user.updateMany(
                     { _id: { $in: [from_id, to_id] } },
-                    { $push: { messages: { _id: newMessage._id } } },
+                    { $push: { messages: { _id: messages._id } } },
                 );
                 if (!acknowledged) return next(new HttpError("Failed to update users"));
             }
 
-            res.send(newMessageContent);
+            res.json(messages);
         } catch (error) {
             next(new HttpError(error.message));
         }

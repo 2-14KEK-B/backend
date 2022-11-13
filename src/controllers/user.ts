@@ -31,8 +31,8 @@ export default class UserController implements Controller {
 
     private getAllUsers = async (_req: Request, res: Response, next: NextFunction) => {
         try {
-            const users = await this.user.find();
-            res.send(users);
+            const users = await this.user.find().lean();
+            res.json(users);
         } catch (error) {
             next(new HttpError(error.message));
         }
@@ -43,10 +43,10 @@ export default class UserController implements Controller {
             const userId = req.session.userId;
             if (!(await isIdValid(this.user, [userId], next))) return;
 
-            const user = await this.user.findById(userId, "-password").populate(["books", "borrows", "messages", "user_ratings"]);
+            const user = await this.user.findById(userId, "-password").populate(["books", "borrows", "messages", "user_ratings"]).lean();
             if (!user) return next(new UserNotFoundException(userId));
 
-            res.send(user);
+            res.json(user);
         } catch (error) {
             next(new HttpError(error.message));
         }
@@ -57,10 +57,10 @@ export default class UserController implements Controller {
             const userId = req.params["id"];
             if (!(await isIdValid(this.user, [userId], next))) return;
 
-            const user = await this.user.findById(userId, "-password -email_is_verified -updated_on -role -messages").populate("user_ratings");
+            const user = await this.user.findById(userId, "-password -email_is_verified -role -messages").populate("user_ratings").lean();
             if (!user) return next(new UserNotFoundException(userId));
 
-            res.send(user);
+            res.json(user);
         } catch (error) {
             next(new HttpError(error.message));
         }
@@ -71,11 +71,17 @@ export default class UserController implements Controller {
             const userId = req.params["id"];
             if (!(await isIdValid(this.user, [userId], next))) return;
 
-            const userData: ModifyUser = req.body;
+            if (req.user.role != "admin") {
+                if (userId != req.user._id) {
+                    return next(new HttpError("Unauthorized", StatusCode.Unauthorized));
+                }
+            }
+
+            const userData: ModifyUser = { ...req.body, updated_on: new Date() };
             const user = await this.user.findByIdAndUpdate(userId, userData, { returnDocument: "after" });
             if (!user) return next(new HttpError("Failed to update user"));
 
-            res.send(user);
+            res.json(user);
         } catch (error) {
             next(new HttpError(error.message));
         }
