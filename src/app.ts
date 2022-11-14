@@ -32,14 +32,7 @@ export default class App {
         this.app.use(urlencoded({ extended: true }));
         this.app.use(
             cors({
-                origin: [
-                    "http://localhost:4000",
-                    "http://127.0.0.1:4000",
-                    "https://bookswap.onrender.com",
-                    "18.156.158.53",
-                    "18.156.42.200",
-                    "52.59.103.54",
-                ],
+                origin: ["http://localhost:4000", "http://127.0.0.1:4000", "https://bookswap.onrender.com"],
                 credentials: true,
             }),
         );
