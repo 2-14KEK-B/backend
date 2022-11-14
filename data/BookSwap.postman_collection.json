@@ -1,9 +1,10 @@
 {
 	"info": {
-		"_postman_id": "d49bd313-693f-4da9-8b21-8f9c7b68db5e",
-		"name": "BookSwap",
+		"_postman_id": "42bbe727-baa3-4b6d-b656-77352501dcde",
+		"name": "BookSwap_dev",
 		"description": "Vizsgamunka",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "24411448"
 	},
 	"item": [
 		{
@@ -44,12 +45,10 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:3000/auth/login",
-							"protocol": "http",
+							"raw": "{{URL}}/auth/login",
 							"host": [
-								"localhost"
+								"{{URL}}"
 							],
-							"port": "3000",
 							"path": [
 								"auth",
 								"login"
@@ -84,12 +83,10 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:3000/auth/logout",
-							"protocol": "http",
+							"raw": "{{URL}}/auth/logout",
 							"host": [
-								"localhost"
+								"{{URL}}"
 							],
-							"port": "3000",
 							"path": [
 								"auth",
 								"logout"
@@ -113,15 +110,30 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:3000/auth/register",
-							"protocol": "http",
+							"raw": "{{URL}}/auth/register",
 							"host": [
-								"localhost"
+								"{{URL}}"
 							],
-							"port": "3000",
 							"path": [
 								"auth",
 								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "logged in user",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/auth",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"auth"
 							]
 						}
 					},
@@ -132,6 +144,59 @@
 		{
 			"name": "books",
 			"item": [
+				{
+					"name": "get all",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/book/all",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"book",
+								"all"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get by id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/book/6357d9e43441ea127321696d",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"book",
+								"6357d9e43441ea127321696d"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get of logged user",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/book",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"book"
+							]
+						}
+					},
+					"response": []
+				},
 				{
 					"name": "create",
 					"request": {
@@ -147,71 +212,10 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:3000/book",
-							"protocol": "http",
+							"raw": "{{URL}}/book",
 							"host": [
-								"localhost"
+								"{{URL}}"
 							],
-							"port": "3000",
-							"path": [
-								"book"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "get all",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "http://localhost:3000/book/all",
-							"protocol": "http",
-							"host": [
-								"localhost"
-							],
-							"port": "3000",
-							"path": [
-								"book",
-								"all"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "get by id",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "http://localhost:3000/book/6357d9e43441ea127321696d",
-							"protocol": "http",
-							"host": [
-								"localhost"
-							],
-							"port": "3000",
-							"path": [
-								"book",
-								"6357d9e43441ea127321696d"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "get of logged user",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "http://localhost:3000/book",
-							"protocol": "http",
-							"host": [
-								"localhost"
-							],
-							"port": "3000",
 							"path": [
 								"book"
 							]
@@ -225,12 +229,10 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:3000/book/6357d9e43441ea127321696d",
-							"protocol": "http",
+							"raw": "{{URL}}/book/6357d9e43441ea127321696d",
 							"host": [
-								"localhost"
+								"{{URL}}"
 							],
-							"port": "3000",
 							"path": [
 								"book",
 								"6357d9e43441ea127321696d"
@@ -244,34 +246,6 @@
 		{
 			"name": "borrows",
 			"item": [
-				{
-					"name": "create",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n  \"from_id\": \"6357b544447026c9b91950fd\",\r\n  \"books\": [\"6357da8b3441ea1273216971\"]\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "http://localhost:3000/borrow",
-							"protocol": "http",
-							"host": [
-								"localhost"
-							],
-							"port": "3000",
-							"path": [
-								"borrow"
-							]
-						}
-					},
-					"response": []
-				},
 				{
 					"name": "get all",
 					"event": [
@@ -298,12 +272,10 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:3000/borrow/all",
-							"protocol": "http",
+							"raw": "{{URL}}/borrow/all",
 							"host": [
-								"localhost"
+								"{{URL}}"
 							],
-							"port": "3000",
 							"path": [
 								"borrow",
 								"all"
@@ -318,15 +290,66 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:3000/borrow/6357f9bf7b60ee488385f95",
-							"protocol": "http",
+							"raw": "{{URL}}/borrow/6357f9bf7b60ee488385f955",
 							"host": [
-								"localhost"
+								"{{URL}}"
 							],
-							"port": "3000",
 							"path": [
 								"borrow",
-								"6357f9bf7b60ee488385f95"
+								"6357f9bf7b60ee488385f955"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"from_id\": \"6357b544447026c9b91950fd\",\r\n  \"books\": [\"6357da8b3441ea1273216971\"]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/borrow",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"borrow"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"verified\": true\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/borrow/6357f9bf7b60ee488385f955",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"borrow",
+								"6357f9bf7b60ee488385f955"
 							]
 						}
 					},
@@ -338,15 +361,13 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:3000/borrows/6357f96c7b60ee488385f94e",
-							"protocol": "http",
+							"raw": "{{URL}}/borrows/6357f9bf7b60ee488385f955",
 							"host": [
-								"localhost"
+								"{{URL}}"
 							],
-							"port": "3000",
 							"path": [
 								"borrows",
-								"6357f96c7b60ee488385f94e"
+								"6357f9bf7b60ee488385f955"
 							]
 						}
 					},
@@ -372,12 +393,10 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:3000/message",
-							"protocol": "http",
+							"raw": "{{URL}}/message",
 							"host": [
-								"localhost"
+								"{{URL}}"
 							],
-							"port": "3000",
 							"path": [
 								"message"
 							]
@@ -391,12 +410,10 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:3000/message/all",
-							"protocol": "http",
+							"raw": "{{URL}}/message/all",
 							"host": [
-								"localhost"
+								"{{URL}}"
 							],
-							"port": "3000",
 							"path": [
 								"message",
 								"all"
@@ -411,12 +428,10 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:3000/message/635803e76fe4028063397763",
-							"protocol": "http",
+							"raw": "{{URL}}/message/635803e76fe4028063397763",
 							"host": [
-								"localhost"
+								"{{URL}}"
 							],
-							"port": "3000",
 							"path": [
 								"message",
 								"635803e76fe4028063397763"
@@ -431,12 +446,10 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:3000/messages/635803e76fe4028063397763",
-							"protocol": "http",
+							"raw": "{{URL}}/messages/635803e76fe4028063397763",
 							"host": [
-								"localhost"
+								"{{URL}}"
 							],
-							"port": "3000",
 							"path": [
 								"messages",
 								"635803e76fe4028063397763"
@@ -456,15 +469,76 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:3000/user/all",
-							"protocol": "http",
+							"raw": "{{URL}}/user/all",
 							"host": [
-								"localhost"
+								"{{URL}}"
 							],
-							"port": "3000",
 							"path": [
 								"user",
 								"all"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get logged in user",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/user/me",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"user",
+								"me"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get user by id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/user/6357b544447026c9b91950fd",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"user",
+								"6357b544447026c9b91950fd"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update user by id",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"fullname\": \"Nagy József\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/user/6357b544447026c9b91950fd",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"user",
+								"6357b544447026c9b91950fd"
 							]
 						}
 					},
@@ -476,21 +550,46 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:3000/user/",
-							"protocol": "http",
+							"raw": "{{URL}}/user/6357b544447026c9b91950fd",
 							"host": [
-								"localhost"
+								"{{URL}}"
 							],
-							"port": "3000",
 							"path": [
 								"user",
-								""
+								"6357b544447026c9b91950fd"
 							]
 						}
 					},
 					"response": []
 				}
 			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "URL",
+			"value": "http://localhost:3000",
+			"type": "string"
 		}
 	]
 }
