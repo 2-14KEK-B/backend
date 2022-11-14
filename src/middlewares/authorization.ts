@@ -1,11 +1,15 @@
-import StatusCode from "@utils/statusCodes";
-import HttpError from "@exceptions/Http";
+import ForbiddenException from "@exceptions/Forbidden";
+import UnauthorizedException from "@exceptions/Unauthorized";
 import type { NextFunction, Request, Response } from "express";
 
-export default function authorizationMiddleware([...permittedRoles]) {
+export default function authorizationMiddleware(permittedRoles?: string[]) {
     return (req: Request, _res: Response, next: NextFunction) => {
-        if (!req.user) return next(new HttpError("Unauthorized", StatusCode.Unauthorized));
-        if (!permittedRoles.includes(req.user.role)) return next(new HttpError("Forbidden", StatusCode.Forbidden));
+        if (!req.user) {
+            return next(new UnauthorizedException());
+        }
+        if (!req.user.role || !permittedRoles?.includes(req.user.role)) {
+            return next(new ForbiddenException());
+        }
         next();
     };
 }

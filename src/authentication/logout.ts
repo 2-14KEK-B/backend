@@ -22,11 +22,11 @@ export default class LogoutController implements Controller {
             delete req.session["userId"];
             req.session.destroy(error => {
                 if (error) {
-                    next(new HttpError((error as Error).message));
+                    return next(new HttpError((error as Error).message));
                 }
+                res.clearCookie("session-id");
+                res.json("Logged out successfully.");
             });
-            res.clearCookie("session-id");
-            res.send("logout successfully");
         } catch (error) {
             next(new HttpError((error as Error).message));
         }

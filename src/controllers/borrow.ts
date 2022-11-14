@@ -34,7 +34,7 @@ export default class BorrowController implements Controller {
 
     private getAllBorrows = async (_req: Request, res: Response, next: NextFunction) => {
         try {
-            const borrows = await this.borrow.find();
+            const borrows = await this.borrow.find().lean();
             res.send(borrows);
         } catch (error) {
             next(new HttpError(error.message));
@@ -46,7 +46,7 @@ export default class BorrowController implements Controller {
             const borrowId = req.params["id"];
             if (!(await isIdValid(this.borrow, [borrowId], next))) return;
 
-            const borrow = await this.borrow.findById(borrowId).populate(["books", "from_id", "to_id"]);
+            const borrow = await this.borrow.findById(borrowId).populate(["books", "from_id", "to_id"]).lean();
             if (!borrow) return next(new HttpError(`Failed to get borrow by id ${borrowId}`));
 
             res.send(borrow);
@@ -61,8 +61,7 @@ export default class BorrowController implements Controller {
             const { from_id, books }: CreateBorrow = req.body;
             if (!(await isIdValid(this.user, [from_id], next)) || !(await isIdValid(this.book, books, next))) return;
 
-            const now = new Date();
-            const newBorrow = await this.borrow.create({ time: now, to_id: userId, from_id: from_id, books: [...books] });
+            const newBorrow = await this.borrow.create({ to_id: userId, from_id: from_id, books: [...books] });
             if (!newBorrow) return next(new HttpError("Failed to create borrow"));
 
             const { acknowledged } = await this.user.updateMany({ _id: { $in: [from_id, userId] } }, { $push: { borrows: { _id: newBorrow._id } } });
@@ -79,11 +78,12 @@ export default class BorrowController implements Controller {
             const borrowId = req.params["id"];
             if (!(await isIdValid(this.borrow, [borrowId], next))) return;
 
-            const borrowData: ModifyBorrow = req.body;
-            const borrow = this.borrow.findByIdAndUpdate(borrowId, borrowData, { returnDocument: "after" });
+            const borrowData: ModifyBorrow = { ...req.body, updated_on: new Date() };
+
+            const borrow = await this.borrow.findByIdAndUpdate(borrowId, borrowData, { returnDocument: "after" });
             if (!borrow) return next(new HttpError("Failed to update borrow"));
 
-            res.send(borrow);
+            res.json(borrow);
         } catch (error) {
             next(new HttpError(error.message));
         }

@@ -28,7 +28,7 @@ export default class RegisterController implements Controller {
     private register = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const userData: RegisterCred = req.body;
-            if (await this.userModel.findOne({ email: userData.email })) return next(new UserAlreadyExistsException(userData.email));
+            if (await this.userModel.exists({ email: userData.email })) return next(new UserAlreadyExistsException(userData.email));
 
             const hashedPassword = await hash(userData.password, 10);
             const newUser = await this.userModel.create({
@@ -37,7 +37,7 @@ export default class RegisterController implements Controller {
             });
             newUser.password = undefined;
 
-            res.send(`user created with ${newUser.email}`);
+            res.json(`user created with ${newUser.email}`);
         } catch (error) {
             next(new HttpError((error as Error).message));
         }

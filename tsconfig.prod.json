@@ -1,6 +1,7 @@
 {
   "extends": "./tsconfig",
   "exclude": [
+    "config/*.ts",
     "**/*.test.ts",
     "**/*.mock.ts",
     "jest.config.ts"

@@ -1,8 +1,9 @@
-import { Router, Request, Response } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import LoginController from "./login";
 import LogoutController from "./logout";
 import RegisterController from "./register";
 import userModel from "@models/user";
+import UnauthorizedException from "@exceptions/Unauthorized";
 import type Controller from "@interfaces/controller";
 
 export default class AuthenticationController implements Controller {
@@ -21,10 +22,10 @@ export default class AuthenticationController implements Controller {
         new RegisterController(this.path, this.router, this.model);
     }
 
-    private checkIfLoggedIn = async (req: Request, res: Response) => {
-        console.log("test session: ", req.session);
-        if (!req.session.userId) return res.sendStatus(401);
-        const user = await userModel.findById(req.session.userId, "-password -books -borrows -messages -user_ratings");
-        res.send(user);
+    private checkIfLoggedIn = async (req: Request, res: Response, next: NextFunction) => {
+        // console.log("test session: ", req.session);
+        if (!req.session.userId) return next(new UnauthorizedException());
+        const user = await userModel.findById(req.session.userId, "-password -books -borrows -messages -user_ratings").lean();
+        res.json(user);
     };
 }

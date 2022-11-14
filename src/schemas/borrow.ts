@@ -2,10 +2,6 @@ import { Schema } from "mongoose";
 import type { Borrow } from "@interfaces/borrow";
 
 const borrowSchema = new Schema<Borrow>({
-    time: {
-        type: Date,
-        required: true,
-    },
     from_id: {
         type: Schema.Types.ObjectId,
         ref: "User",
@@ -16,6 +12,7 @@ const borrowSchema = new Schema<Borrow>({
         ref: "User",
         required: true,
     },
+    updated_on: { type: Date },
     books: [
         {
             type: Schema.Types.ObjectId,

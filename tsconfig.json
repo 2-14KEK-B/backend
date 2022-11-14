@@ -63,7 +63,10 @@
     ]
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "config/auth.test.ts",
+    "src/controllers/__tests__/message.test.ts",
+    "config/borrow.test.ts"
   ],
   "exclude": [
     "node_modules",

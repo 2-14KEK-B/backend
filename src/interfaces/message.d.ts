@@ -1,21 +1,20 @@
 import { Types } from "mongoose";
 
+type ID = Types.ObjectId | string;
+
 interface MessageContent {
-    _id?: Types.ObjectId;
-    sender_id: Types.ObjectId;
-    time?: Date;
+    _id?: ID;
+    sender_id: ID;
     content: string;
 }
 
 interface Message {
-    _id?: Types.ObjectId;
-    users: Types.ObjectId[];
+    _id: ID;
+    users: ID[];
     message_contents: MessageContent[];
 }
 
 interface CreateMessage {
-    from_id: string;
-    to_id: string;
     content: string;
 }
 

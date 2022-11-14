@@ -3,12 +3,6 @@
         "_id": {
             "$oid": "6357b544447026c9b91950fd"
         },
-        "created_on": {
-            "$date": "2022-10-25T10:06:32.453Z"
-        },
-        "updated_on": {
-            "$date": "2022-10-25T10:06:32.453Z"
-        },
         "password": "$2b$10$VfmyHNA42h2KdsKJ5SZhnePV24GT9zQsgZjJdamZ0jPczVAQNSlSq",
         "email": "test@test.com",
         "email_is_verified": false,
@@ -37,12 +31,6 @@
     {
         "_id": {
             "$oid": "6357b59c447026c9b9195100"
-        },
-        "created_on": {
-            "$date": "2022-10-25T11:06:32.453Z"
-        },
-        "updated_on": {
-            "$date": "2022-10-25T11:06:32.453Z"
         },
         "password": "$2b$10$933CxPbXlAj47L2ssgMw/OcnQB0q/YvjzplELbj8yxbR22ZBF.OLC",
         "email": "test2@test.com",
