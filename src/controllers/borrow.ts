@@ -79,10 +79,11 @@ export default class BorrowController implements Controller {
             if (!(await isIdValid(this.borrow, [borrowId], next))) return;
 
             const borrowData: ModifyBorrow = { ...req.body, updated_on: new Date() };
-            const borrow = this.borrow.findByIdAndUpdate(borrowId, borrowData, { returnDocument: "after" });
+
+            const borrow = await this.borrow.findByIdAndUpdate(borrowId, borrowData, { returnDocument: "after" });
             if (!borrow) return next(new HttpError("Failed to update borrow"));
 
-            res.send(borrow);
+            res.json(borrow);
         } catch (error) {
             next(new HttpError(error.message));
         }

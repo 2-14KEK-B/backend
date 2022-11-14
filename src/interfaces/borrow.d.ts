@@ -4,7 +4,7 @@ import { Book } from "./book";
 type ID = Types.ObjectId | string;
 
 interface Borrow {
-    _id?: ID;
+    _id: ID;
     from_id: ID;
     updated_on?: Date;
     to_id: ID;
@@ -28,7 +28,6 @@ interface CreateBorrow {
 interface ModifyBorrow {
     books?: string[];
     verified?: boolean;
-    updated_on?: Date;
 }
 
 interface UserRating {

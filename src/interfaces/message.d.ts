@@ -9,14 +9,12 @@ interface MessageContent {
 }
 
 interface Message {
-    _id?: ID;
+    _id: ID;
     users: ID[];
     message_contents: MessageContent[];
 }
 
 interface CreateMessage {
-    from_id: string;
-    to_id: string;
     content: string;
 }
 

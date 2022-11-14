@@ -26,14 +26,14 @@ export default class MessageController implements Controller {
         this.router.all("*", authentication);
         this.router.get(`${this.path}/all`, authorization(["admin"]), this.getAllMessages);
         this.router.get(`${this.path}/:id`, this.getMessageById);
-        this.router.post(this.path, validation(CreateMessageDto), this.createMessage);
+        this.router.post(`${this.path}/:toId`, validation(CreateMessageDto), this.createMessage);
         this.router.delete(`${this.path}/:id`, authorization(["admin"]), this.deleteMessageById);
     }
 
     private getAllMessages = async (_req: Request, res: Response, next: NextFunction) => {
         try {
             const messages = await this.message.find().lean();
-            res.send(messages);
+            res.json(messages);
         } catch (error) {
             next(new HttpError(error.message));
         }
@@ -47,7 +47,7 @@ export default class MessageController implements Controller {
             const message = await this.message.findById(messageId).lean();
             if (!message) return next(new HttpError(`Failed to get message by id ${messageId}`));
 
-            res.send(message);
+            res.json(message);
         } catch (error) {
             next(new HttpError(error.message));
         }
@@ -55,7 +55,9 @@ export default class MessageController implements Controller {
 
     private createMessage = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const { from_id, to_id, content }: CreateMessage = req.body;
+            const to_id = req.params["toId"];
+            const from_id = req.user._id.toString();
+            const { content } = req.body as CreateMessage;
             if (!(await isIdValid(this.user, [from_id, to_id], next))) return;
 
             const newMessageContent: MessageContent = {
@@ -83,7 +85,7 @@ export default class MessageController implements Controller {
                 if (!acknowledged) return next(new HttpError("Failed to update users"));
             }
 
-            res.json(messages);
+            res.json(messages._id);
         } catch (error) {
             next(new HttpError(error.message));
         }
@@ -94,7 +96,7 @@ export default class MessageController implements Controller {
             const messageId = req.params["id"];
             if (!(await isIdValid(this.message, [messageId], next))) return;
 
-            const message = await this.message.findById(messageId);
+            const message = await this.message.findById(messageId).lean();
             if (!message?.users) return next(new HttpError("Failed to get ids from messages"));
 
             const response = await this.message.findByIdAndDelete(messageId);

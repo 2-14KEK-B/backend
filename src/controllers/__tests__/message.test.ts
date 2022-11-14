@@ -6,7 +6,7 @@ import userModel from "@models/user";
 import AuthenticationController from "@authentication/index";
 import StatusCode from "@utils/statusCodes";
 import type { Express } from "express";
-import type { Message } from "@interfaces/message";
+import type { CreateMessage, Message } from "@interfaces/message";
 import type { User } from "@interfaces/user";
 import MessageController from "@controllers/message";
 
@@ -41,20 +41,15 @@ describe("MESSAGES", () => {
 
     describe("MESSAGES with logged in as user", () => {
         let agent: SuperAgentTest;
-        let mockMessage: Message;
+        let mockMessageId: string;
 
         beforeAll(async () => {
             agent = request.agent(server);
             await agent.post("/auth/login").send(mockUser);
             if (testUsers[0]?._id && testUsers[1]?._id) {
-                const res = await agent.post("/message").send({
-                    from_id: testUsers[0]?._id?.toString(),
-                    to_id: testUsers[1]?._id?.toString(),
-                    content: "test",
-                });
-                mockMessage = res.body;
+                const res = await agent.post(`/message/${testUsers[1]?._id?.toString()}`).send({ content: "test" });
+                mockMessageId = res.body;
             }
-            console.log(mockMessage);
         });
 
         it("GET /message/all, should return statuscode 200", async () => {
@@ -65,27 +60,59 @@ describe("MESSAGES", () => {
         });
         it("GET /message/:id, should return statuscode 200", async () => {
             expect.assertions(2);
-            const res: Response = await agent.get(`/message/${mockMessage._id}`);
+            const res: Response = await agent.get(`/message/${mockMessageId}`);
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body).toBeInstanceOf(Object as unknown as Message);
         });
-        // it("GET /message/:id, should return statuscode 200", async () => {
-        //     expect.assertions(2);
-        //     const res: Response = await agent.get(`/book/${books[0]?._id}`);
-        //     expect(res.statusCode).toBe(StatusCode.OK);
-        //     expect(res.body).toBeInstanceOf(Object as unknown as Book);
-        // });
-        // it("POST /message, should return statuscode 200", async () => {
-        //     expect.assertions(2);
-        //     const res: Response = await agent.post("/book").send(newBook);
-        //     expect(res.statusCode).toBe(StatusCode.OK);
-        //     expect(res.body).toBeInstanceOf(Object as unknown as Book);
-        // });
-        // it("DELETE /message/:id, should return statuscode 200", async () => {
-        //     expect.assertions(1);
-        //     const res: Response = await agent.delete(`/book/${books[0]?._id}`);
-        //     console.log(res.body);
-        //     expect(res.statusCode).toBe(StatusCode.NoContent);
-        // });
+        it("POST /message/:toId, should return statuscode 200", async () => {
+            expect.assertions(1);
+            const newMessage: CreateMessage = { content: "newMessage" };
+            const res: Response = await agent.post(`/message/${testUsers[1]?._id?.toString()}`).send(newMessage);
+            expect(res.statusCode).toBe(StatusCode.OK);
+        });
+        it("DELETE /message/:id, should return statuscode 200", async () => {
+            expect.assertions(2);
+            const res: Response = await agent.delete(`/message/${mockMessageId}`);
+            expect(res.statusCode).toBe(StatusCode.Forbidden);
+            expect(res.body).toBe("Forbidden");
+        });
+    });
+
+    describe("MESSAGES with logged in as admin", () => {
+        let agent: SuperAgentTest;
+        let mockMessageId: Message;
+
+        beforeAll(async () => {
+            agent = request.agent(server);
+            await agent.post("/auth/login").send(mockAdmin);
+            if (testUsers[0]?._id && testUsers[1]?._id) {
+                const res = await agent.post(`/message/${testUsers[0]?._id?.toString()}`).send({ content: "test" });
+                mockMessageId = res.body;
+            }
+        });
+
+        it("GET /message/all, should return statuscode 200", async () => {
+            expect.assertions(2);
+            const res: Response = await agent.get("/message/all");
+            expect(res.statusCode).toBe(StatusCode.OK);
+            expect(res.body).toBeInstanceOf(Array<Message>);
+        });
+        it("GET /message/:id, should return statuscode 200", async () => {
+            expect.assertions(2);
+            const res: Response = await agent.get(`/message/${mockMessageId}`);
+            expect(res.statusCode).toBe(StatusCode.OK);
+            expect(res.body).toBeInstanceOf(Object as unknown as Message);
+        });
+        it("POST /message, should return statuscode 200", async () => {
+            expect.assertions(1);
+            const newMessage: CreateMessage = { content: "newMessage" };
+            const res: Response = await agent.post(`/message/${testUsers[0]?._id?.toString()}`).send(newMessage);
+            expect(res.statusCode).toBe(StatusCode.OK);
+        });
+        it("DELETE /message/:id, should return statuscode 200", async () => {
+            expect.assertions(1);
+            const res: Response = await agent.delete(`/message/${mockMessageId}`);
+            expect(res.statusCode).toBe(StatusCode.NoContent);
+        });
     });
 });
