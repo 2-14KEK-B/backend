@@ -4,7 +4,6 @@ import MongoStore from "connect-mongo";
 import cors from "cors";
 import morgan from "morgan";
 import errorMiddleware from "@middlewares/error";
-import loggerMiddleware from "@middlewares/logger";
 import env from "@utils/validateEnv";
 import StatusCode from "@utils/statusCodes";
 import type { MongoClient } from "mongodb";
@@ -27,7 +26,7 @@ export default class App {
 
     private initializeMiddlewares() {
         if (env.isDev) this.app.use(morgan("| :date[iso] | :method | :url | :status | :response-time ms |"));
-        if (env.isProd) this.app.use(loggerMiddleware);
+        if (env.isProd) this.app.use(morgan("tiny"));
 
         this.app.use(json());
         this.app.use(urlencoded({ extended: true }));
