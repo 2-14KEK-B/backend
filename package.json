@@ -8,8 +8,8 @@
         "dev": "nodemon",
         "debug": "set DEBUG=* && nodemon",
         "format": "prettier --write ./src",
-        "lint": "eslint ./src --ext .js,.ts",
-        "lint-fix": "eslint --fix ./src --ext .js,.ts",
+        "lint": "eslint . --ext .js,.ts,.json",
+        "lint-fix": "eslint --fix . --ext .js,.ts,.json",
         "test": "jest || ECHO."
     },
     "license": "MIT",

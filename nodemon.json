@@ -3,9 +3,7 @@
     "env": {
         "NODE_ENV": "development"
     },
-    "watch": [
-        "src/"
-    ],
+    "watch": ["src/"],
     "ext": "ts, js, txt, json, ico",
     "delay": 0,
     "exec": "./node_modules/.bin/ts-node src/server.ts || exit 1"

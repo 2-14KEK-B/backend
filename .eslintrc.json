@@ -12,7 +12,9 @@
         }
     },
     "extends": [
+        "eslint:recommended",
         "plugin:@typescript-eslint/recommended",
+        "plugin:@typescript-eslint/eslint-recommended",
         "plugin:prettier/recommended"
     ],
     "rules": {
@@ -28,10 +30,7 @@
     },
     "overrides": [
         {
-            "files": [
-                "**/__tests__/*.{j,t}s?(x)",
-                "**/tests/unit/**/*.spec.{j,t}s?(x)"
-            ],
+            "files": ["**/__tests__/*.{j,t}s?(x)", "**/tests/unit/**/*.spec.{j,t}s?(x)"],
             "env": {
                 "jest": true
             }

@@ -1,9 +1,4 @@
 {
-  "extends": "./tsconfig",
-  "include": [
-    "config/*.ts",
-    "**/*.test.ts",
-    "**/*.mock.ts",
-    "jest.config.ts"
-  ]
+    "extends": "./tsconfig",
+    "include": ["config/*.ts", "**/*.test.ts", "**/*.mock.ts", "jest.config.ts"]
 }

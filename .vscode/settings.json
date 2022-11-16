@@ -2,7 +2,8 @@
     "eslint.alwaysShowStatus": true,
     "eslint.validate": [
         "javascript",
-        "typescript"
+        "typescript",
+        "json"
     ],
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true,
@@ -38,8 +39,6 @@
         "**/*.npmrc": true,
         "**/.env.example": true
     },
-    "[jsonc]": {
-        "editor.defaultFormatter": "vscode.json-language-features"
-    },
+    "json.format.enable": false,
     "jest.autoRun": "off"
 }

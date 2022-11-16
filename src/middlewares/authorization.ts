@@ -1,8 +1,8 @@
 import ForbiddenException from "@exceptions/Forbidden";
 import UnauthorizedException from "@exceptions/Unauthorized";
-import type { NextFunction, Request, Response } from "express";
+import type { NextFunction, Request, RequestHandler, Response } from "express";
 
-export default function authorizationMiddleware(permittedRoles?: string[]) {
+export default function authorizationMiddleware(permittedRoles?: string[]): RequestHandler {
     return (req: Request, _res: Response, next: NextFunction) => {
         if (!req.user) {
             return next(new UnauthorizedException());
