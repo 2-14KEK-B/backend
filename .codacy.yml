@@ -1,0 +1,6 @@
+exclude_paths:
+  - "data/**/*"
+  - ".vscode/**/*"
+  - "tsconfig.*.json"
+  - ".env.example"
+  - "src/**/__tests__/*"
