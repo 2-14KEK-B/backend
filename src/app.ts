@@ -1,20 +1,18 @@
 import express, { Express, json, Request, Response, urlencoded } from "express";
 import session, { SessionOptions } from "express-session";
-import MongoStore from "connect-mongo";
 import cors from "cors";
 import morgan from "morgan";
 import errorMiddleware from "@middlewares/error";
 import env from "@utils/validateEnv";
 import StatusCode from "@utils/statusCodes";
-import type { MongoClient } from "mongodb";
 import type Controller from "@interfaces/controller";
 
 export default class App {
     public app: Express;
 
-    constructor(controllers: Controller[], mongoClient: MongoClient) {
+    constructor(controllers: Controller[]) {
         this.app = express();
-        this.initSession(mongoClient);
+        this.initSession();
         this.initializeMiddlewares();
         this.initializeControllers(controllers);
         this.initializeErrorHandling();
@@ -49,21 +47,12 @@ export default class App {
         });
     }
 
-    private initSession(mongoClient: MongoClient) {
-        const TOUCH_AFTER = 60 * 20; // 20mins
-        const MAX_AGE = 1000 * 60 * 60; // 60mins
-
-        const sessionStore = MongoStore.create({
-            client: mongoClient,
-            ttl: MAX_AGE,
-            touchAfter: TOUCH_AFTER,
-        });
-
+    private initSession() {
         const options: SessionOptions = {
             secret: env.SECRET,
             name: "session-id",
             cookie: {
-                maxAge: MAX_AGE,
+                maxAge: 1000 * 60 * 60,
                 httpOnly: true,
                 signed: true,
                 sameSite: "none",
@@ -71,7 +60,7 @@ export default class App {
             },
             saveUninitialized: false,
             resave: true,
-            store: sessionStore,
+            store: global.sessionStore,
         };
 
         if (env.isProduction) {

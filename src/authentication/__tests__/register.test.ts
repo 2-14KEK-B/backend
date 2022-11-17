@@ -1,4 +1,3 @@
-import { mongoClient } from "../../../config/setupTest";
 import userModel from "@models/user";
 import request, { Response } from "supertest";
 import App from "../../app";
@@ -11,7 +10,7 @@ describe("POST /auth/register", () => {
     const mockUser = { email: "test@test.com", password: "test1234" };
 
     beforeAll(async () => {
-        server = new App([new AuthenticationController()], mongoClient).getServer();
+        server = new App([new AuthenticationController()]).getServer();
     });
 
     it("returns statuscode 200 if registered successfully", async () => {

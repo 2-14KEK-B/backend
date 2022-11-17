@@ -1,6 +1,5 @@
 import { hash } from "bcrypt";
 import request, { Response, SuperAgentTest } from "supertest";
-import { mongoClient } from "../../../config/setupTest";
 import App from "../../app";
 import userModel from "@models/user";
 import UserController from "@controllers/user";
@@ -14,7 +13,7 @@ describe("USERS", () => {
     const defaultUser = { email: "default@test.com", password: "test1234" };
 
     beforeAll(async () => {
-        server = new App([new AuthenticationController(), new UserController()], mongoClient).getServer();
+        server = new App([new AuthenticationController(), new UserController()]).getServer();
         const password = await hash(defaultUser.password, 10);
         await userModel.create({ email: defaultUser.email, password: password });
     });

@@ -1,6 +1,5 @@
 import { hash } from "bcrypt";
 import request, { Response, SuperAgentTest } from "supertest";
-import { mongoClient } from "../../../config/setupTest";
 import App from "../../app";
 import bookModel from "@models/book";
 import userModel from "@models/user";
@@ -15,7 +14,7 @@ describe("BOOKS", () => {
     const mockBook = { author: "testAuthor", title: "testTitle", for_borrow: true };
 
     beforeAll(async () => {
-        server = new App([new AuthenticationController(), new BookController()], mongoClient).getServer();
+        server = new App([new AuthenticationController(), new BookController()]).getServer();
     });
 
     describe("BOOKS without logged in", () => {

@@ -1,20 +1,25 @@
-import connectToDatabase from "@utils/connectToDatabase";
+import userModel from "@models/user";
+import bookModel from "@models/book";
+import borrowModel from "@models/borrow";
+import messageModel from "@models/message";
 import { MongoMemoryServer } from "mongodb-memory-server";
-import type { Connection } from "mongoose";
-import type { MongoClient } from "mongodb";
+import { closeSessionStore, createSessionStore } from "@db/sessionStore";
+import connectToDatabase from "@db/connectToDatabase";
 
 let mongoMemory: MongoMemoryServer;
-let mongoConnection: Connection;
-let mongoClient: MongoClient;
 
 beforeAll(async () => {
     mongoMemory = await MongoMemoryServer.create();
-    mongoConnection = connectToDatabase(`${mongoMemory.getUri()}bookswap_test`);
-    mongoClient = mongoConnection.getClient();
-});
-afterAll(async () => {
-    await mongoConnection.close(true);
-    await mongoMemory.stop({ doCleanup: true });
+    await connectToDatabase(`${mongoMemory.getUri()}bookswap_test`);
+    await createSessionStore();
+    await userModel.init();
+    await bookModel.init();
+    await borrowModel.init();
+    await messageModel.init();
 });
 
-export { mongoClient };
+afterAll(async () => {
+    await closeSessionStore();
+    await global.mongoConnection.close(true);
+    await mongoMemory.stop({ doCleanup: true });
+});

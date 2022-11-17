@@ -12,12 +12,7 @@ const jestConfig: JestConfigWithTsJest = {
     detectOpenHandles: true,
     maxWorkers: "50%",
     transform: {
-        "^.+\\.ts$": [
-            "ts-jest",
-            {
-                tsconfig: "tsconfig.jest.json",
-            },
-        ],
+        "^.+\\.ts$": "ts-jest",
     },
     testMatch: ["<rootDir>/**/__tests__/**/*.ts"],
     moduleFileExtensions: ["ts", "js", "json", "node"],

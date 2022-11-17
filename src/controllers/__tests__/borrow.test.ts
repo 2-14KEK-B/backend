@@ -1,6 +1,5 @@
 import { hash } from "bcrypt";
 import request, { Response, SuperAgentTest } from "supertest";
-import { mongoClient } from "../../../config/setupTest";
 import App from "../../app";
 import userModel from "@models/user";
 import AuthenticationController from "@authentication/index";
@@ -21,7 +20,7 @@ describe("BORROWS", () => {
     const mockAdmin = { email: "test2@test.com", password: "test1234" };
 
     beforeAll(async () => {
-        server = new App([new AuthenticationController(), new BorrowController(), new BookController()], mongoClient).getServer();
+        server = new App([new AuthenticationController(), new BorrowController(), new BookController()]).getServer();
         const password = await hash(mockUser.password, 10);
         testUsers.push(
             await userModel.create({ email: mockUser.email, password: password }),
