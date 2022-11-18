@@ -41,7 +41,7 @@ export default class App {
     }
 
     private initializeControllers(controllers: Controller[]) {
-        this.app.get("/healthcheck", (_req: Request, res: Response) => res.sendStatus(StatusCode.NoContent));
+        this.app.get("/healthcheck", (_req: Request, res: Response) => res.sendStatus(StatusCode.OK));
         controllers.forEach(controller => {
             this.app.use("/", controller.router);
         });
