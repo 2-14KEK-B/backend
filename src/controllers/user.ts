@@ -34,7 +34,7 @@ export default class UserController implements Controller {
             const users = await this.user.find().lean();
             res.json(users);
         } catch (error) {
-            next(new HttpError(error.message));
+            next(new HttpError(error));
         }
     };
 
@@ -48,7 +48,7 @@ export default class UserController implements Controller {
 
             res.json(user);
         } catch (error) {
-            next(new HttpError(error.message));
+            next(new HttpError(error));
         }
     };
 
@@ -62,7 +62,7 @@ export default class UserController implements Controller {
 
             res.json(user);
         } catch (error) {
-            next(new HttpError(error.message));
+            next(new HttpError(error));
         }
     };
 
@@ -83,7 +83,7 @@ export default class UserController implements Controller {
 
             res.json(user);
         } catch (error) {
-            next(new HttpError(error.message));
+            next(new HttpError(error));
         }
     };
 
@@ -97,7 +97,7 @@ export default class UserController implements Controller {
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
-            next(new HttpError(error.message));
+            next(new HttpError(error));
         }
     };
 }

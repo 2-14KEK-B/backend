@@ -25,7 +25,7 @@ export default async function connectToDatabase(connectionString?: string): Prom
         await createSessionStore(uri);
 
         connection.on("error", error => {
-            console.log(`Mongoose error message: ${error.message}`);
+            console.log(`Mongoose error message: ${error}`);
         });
     } catch (error) {
         console.log("error: ", error);

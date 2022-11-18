@@ -35,7 +35,7 @@ export default class MessageController implements Controller {
             const messages = await this.message.find().lean();
             res.json(messages);
         } catch (error) {
-            next(new HttpError(error.message));
+            next(new HttpError(error));
         }
     };
 
@@ -49,7 +49,7 @@ export default class MessageController implements Controller {
 
             res.json(message);
         } catch (error) {
-            next(new HttpError(error.message));
+            next(new HttpError(error));
         }
     };
 
@@ -87,7 +87,7 @@ export default class MessageController implements Controller {
 
             res.json(messages._id);
         } catch (error) {
-            next(new HttpError(error.message));
+            next(new HttpError(error));
         }
     };
 
@@ -107,7 +107,7 @@ export default class MessageController implements Controller {
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
-            next(new HttpError(error.message));
+            next(new HttpError(error));
         }
     };
 }

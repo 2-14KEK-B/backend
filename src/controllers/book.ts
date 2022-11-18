@@ -41,7 +41,7 @@ export default class BookController implements Controller {
             const books = await this.book.find().lean();
             res.send(books);
         } catch (error) {
-            next(new HttpError(error.message));
+            next(new HttpError(error));
         }
     };
 
@@ -55,7 +55,7 @@ export default class BookController implements Controller {
 
             res.send(user.books);
         } catch (error) {
-            next(new HttpError(error.message));
+            next(new HttpError(error));
         }
     };
 
@@ -69,7 +69,7 @@ export default class BookController implements Controller {
 
             res.send(book);
         } catch (error) {
-            next(new HttpError(error.message));
+            next(new HttpError(error));
         }
     };
 
@@ -84,7 +84,7 @@ export default class BookController implements Controller {
 
             res.send(newBook);
         } catch (error) {
-            next(new HttpError(error.message));
+            next(new HttpError(error));
         }
     };
 
@@ -106,7 +106,7 @@ export default class BookController implements Controller {
 
     //         res.send(newBook);
     //     } catch (error) {
-    //         next(new HttpError(error.message));
+    //         next(new HttpError(error));
     //     }
     // };
 
@@ -120,7 +120,7 @@ export default class BookController implements Controller {
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
-            next(new HttpError(error.message));
+            next(new HttpError(error));
         }
     };
 }
