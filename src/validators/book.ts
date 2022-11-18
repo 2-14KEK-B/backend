@@ -1,5 +1,5 @@
 import { IsBoolean, IsNumberString, IsOptional, IsString, IsUrl } from "class-validator";
-import type { CreateBook, ModifyBook } from "@interfaces/book";
+import type { CreateBook, CreateBookRating, ModifyBook } from "@interfaces/book";
 
 class CreateBookDto implements CreateBook {
     @IsString()
@@ -44,4 +44,9 @@ class ModifyBookDto implements ModifyBook {
     public for_borrow: boolean;
 }
 
-export { CreateBookDto, ModifyBookDto };
+class BookRatingDto implements CreateBookRating {
+    public rating: number;
+    public comment?: string;
+}
+
+export { CreateBookDto, ModifyBookDto, BookRatingDto };

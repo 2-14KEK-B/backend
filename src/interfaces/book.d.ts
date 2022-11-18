@@ -9,6 +9,11 @@ interface BookRating {
     rating: number;
 }
 
+interface CreateBookRating {
+    rating: number;
+    comment?: string;
+}
+
 interface Book {
     _id: ID;
     uploader: ID;
@@ -44,4 +49,4 @@ interface ModifyBook {
     ratings?: BookRating[];
 }
 
-export { Book, BookRating, CreateBook, ModifyBook };
+export { Book, BookRating, CreateBookRating, CreateBook, ModifyBook };

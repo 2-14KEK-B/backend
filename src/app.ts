@@ -55,7 +55,7 @@ export default class App {
                 maxAge: 1000 * 60 * 60,
                 httpOnly: true,
                 signed: true,
-                sameSite: "none",
+                sameSite: true,
                 secure: "auto",
             },
             saveUninitialized: false,
