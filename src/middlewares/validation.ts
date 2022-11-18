@@ -8,9 +8,9 @@ Checks input from req.data by Dto-s
  */
 export default function validationMiddleware<T>(type: ClassConstructor<T>, skipMissingProperties = false): RequestHandler {
     return (req: Request, _res: Response, next: NextFunction) => {
-        validate(plainToInstance(type, [req.body]), { skipMissingProperties }).then((errors: ValidationError[]) => {
+        validate(plainToInstance(type, req.body) as object, { skipMissingProperties }).then((errors: ValidationError[]) => {
             if (errors.length > 0) {
-                const message = errors.map((error: ValidationError) => Object.values([error.constraints])).join(", ");
+                const message = errors.map((error: ValidationError) => Object.values(error.constraints as unknown as string)).join(", ");
                 next(new HttpError(message));
             } else {
                 next();
