@@ -39,6 +39,8 @@
         "**/*.npmrc": true,
         "**/.env.example": true
     },
-    "json.format.enable": false,
-    "jest.autoRun": "off"
+    "jest.autoRun": "off",
+    "[jsonc]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    }
 }

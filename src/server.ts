@@ -6,13 +6,12 @@ import BookController from "@controllers/book";
 import BorrowController from "@controllers/borrow";
 import MessageController from "@controllers/message";
 import connectToDatabase from "src/db/connectToDatabase";
-import { createSessionStore } from "src/db/sessionStore";
 
 debug("express");
 
-connectToDatabase().then(() => {
-    createSessionStore();
-});
+(async () => {
+    await connectToDatabase();
+})();
 
 const app = new App([new AuthenticationController(), new BookController(), new BorrowController(), new MessageController(), new UserController()]);
 

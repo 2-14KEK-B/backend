@@ -1,8 +1,8 @@
 import MongoStore from "connect-mongo";
 
-async function createSessionStore(MAX_AGE = 1000 * 60 * 60) {
+async function createSessionStore(connectionString: string, MAX_AGE = 1000 * 60 * 60) {
     const sessionStore = MongoStore.create({
-        client: global.mongoConnection.getClient(),
+        mongoUrl: connectionString,
         ttl: MAX_AGE,
         touchAfter: 60 * 20,
     });

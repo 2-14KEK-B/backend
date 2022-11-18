@@ -1,18 +1,28 @@
 import { connect, connection } from "mongoose";
 import env from "../utils/validateEnv";
+import userModel from "@models/user";
+import bookModel from "@models/book";
+import borrowModel from "@models/borrow";
+import messageModel from "@models/message";
+import { createSessionStore } from "./sessionStore";
 
 export default async function connectToDatabase(connectionString?: string): Promise<void> {
     try {
         const uri = connectionString || env.MONGO_URI;
         await connect(uri);
 
-        global.mongoConnection = connection;
-
         if (env.isProduction) {
             console.log("Connected to MongoDB server.");
-        } else {
+        } else if (env.isDevelopment) {
             console.log(`Connected to ${uri}`);
         }
+
+        await userModel.init();
+        await bookModel.init();
+        await borrowModel.init();
+        await messageModel.init();
+
+        await createSessionStore(uri);
 
         connection.on("error", error => {
             console.log(`Mongoose error message: ${error.message}`);

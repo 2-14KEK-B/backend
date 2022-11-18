@@ -1,10 +1,10 @@
 /* eslint-disable no-var */
-import { Connection } from "mongoose";
 import MongoStore from "connect-mongo";
+import { MongoMemoryServer } from "mongodb-memory-server";
 
 export {};
 
 declare global {
-    var mongoConnection: Connection;
+    var mongoInstance: MongoMemoryServer;
     var sessionStore: MongoStore;
 }
