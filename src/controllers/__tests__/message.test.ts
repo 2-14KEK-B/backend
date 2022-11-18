@@ -1,14 +1,13 @@
 import { hash } from "bcrypt";
 import request, { Response, SuperAgentTest } from "supertest";
-import { mongoClient } from "../../../config/setupTest";
 import App from "../../app";
 import userModel from "@models/user";
+import MessageController from "@controllers/message";
 import AuthenticationController from "@authentication/index";
 import StatusCode from "@utils/statusCodes";
 import type { Express } from "express";
 import type { CreateMessage, Message } from "@interfaces/message";
 import type { User } from "@interfaces/user";
-import MessageController from "@controllers/message";
 
 describe("MESSAGES", () => {
     let server: Express;
@@ -17,7 +16,7 @@ describe("MESSAGES", () => {
     const mockAdmin = { email: "test2@test.com", password: "test1234" };
 
     beforeAll(async () => {
-        server = new App([new AuthenticationController(), new MessageController()], mongoClient).getServer();
+        server = new App([new AuthenticationController(), new MessageController()]).getServer();
         const password = await hash(mockUser.password, 10);
         testUsers.push(
             await userModel.create({ email: mockUser.email, password: password }),

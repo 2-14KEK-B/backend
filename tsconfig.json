@@ -1,44 +1,44 @@
 {
     "compilerOptions": {
-        "module": "commonjs",
-        "target": "es5",
+        "module": "NodeNext",
+        "target": "ESNext",
         "outDir": "./dist",
         "alwaysStrict": true,
-        "noImplicitAny": true,
+        "skipLibCheck": true,
         "importHelpers": true,
-        "allowUnusedLabels": false,
-        "allowUnreachableCode": false,
+        "esModuleInterop": true,
+        "moduleResolution": "NodeNext",
         "noFallthroughCasesInSwitch": true,
         "forceConsistentCasingInFileNames": true,
         "noPropertyAccessFromIndexSignature": true,
         "noUncheckedIndexedAccess": true,
+        "noImplicitAny": true,
         "noUnusedLocals": true,
-        "noUnusedParameters": true,
         "strictNullChecks": true,
-        "importsNotUsedAsValues": "error",
-        "esModuleInterop": true,
+        "noUnusedParameters": true,
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
-        "moduleResolution": "node",
-        "allowSyntheticDefaultImports": true,
+        "importsNotUsedAsValues": "error",
         "resolveJsonModule": true,
+        "typeRoots": ["node_modules/@types", "src/types"],
         "types": ["node", "jest"],
         "baseUrl": ".",
         "paths": {
-            "@interfaces/*": ["src/interfaces/*.d.ts"],
-            "@models/*": ["src/models/*"],
-            "@schemas/*": ["src/schemas/*"],
             "@authentication/*": ["src/authentication/*"],
             "@controllers/*": ["src/controllers/*"],
-            "@utils/*": ["src/utils/*"],
+            "@db/*": ["src/db/*"],
+            "@exceptions/*": ["src/exceptions/*"],
+            "@interfaces/*": ["src/interfaces/*.d.ts"],
             "@middlewares/*": ["src/middlewares/*"],
-            "@validators/*": ["src/validators/*"],
-            "@exceptions/*": ["src/exceptions/*"]
+            "@models/*": ["src/models/*"],
+            "@schemas/*": ["src/schemas/*"],
+            "@utils/*": ["src/utils/*"],
+            "@validators/*": ["src/validators/*"]
         }
     },
     "ts-node": {
         "require": ["tsconfig-paths/register"]
     },
-    "include": ["src/**/*.ts", "config/auth.test.ts", "src/controllers/__tests__/message.test.ts", "config/borrow.test.ts"],
-    "exclude": ["node_modules", "dist"]
+    "include": ["src/**/*.ts", "config/*.ts", "**/*.test.ts", "jest.config.ts"],
+    "exclude": ["node_modules", "dist", "data", "coverage"]
 }

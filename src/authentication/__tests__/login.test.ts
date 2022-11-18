@@ -1,4 +1,3 @@
-import { mongoClient } from "../../../config/setupTest";
 import request, { Response } from "supertest";
 import { hash } from "bcrypt";
 import App from "../../app";
@@ -12,7 +11,7 @@ describe("POST /auth/login", () => {
     const mockUser = { email: "test@test.com", password: "test1234" };
 
     beforeAll(async () => {
-        server = new App([new AuthenticationController()], mongoClient).getServer();
+        server = new App([new AuthenticationController()]).getServer();
         const password = await hash(mockUser.password, 10);
         await userModel.create({ email: mockUser.email, password: password });
     });

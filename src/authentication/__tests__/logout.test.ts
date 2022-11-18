@@ -5,14 +5,13 @@ import userModel from "@models/user";
 import AuthenticationController from "@authentication/index";
 import StatusCode from "@utils/statusCodes";
 import type { Express } from "express";
-import { mongoClient } from "../../../config/setupTest";
 
 describe("POST /auth/logout", () => {
     let server: Express;
     const mockUser = { email: "test@test.com", password: "test1234" };
 
     beforeAll(async () => {
-        server = new App([new AuthenticationController()], mongoClient).getServer();
+        server = new App([new AuthenticationController()]).getServer();
     });
 
     it("returns statuscode 401 if not already logged in", async () => {

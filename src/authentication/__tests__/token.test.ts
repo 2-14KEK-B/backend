@@ -2,7 +2,6 @@ import AuthenticationController from "@authentication/index";
 import userModel from "@models/user";
 import StatusCode from "@utils/statusCodes";
 import { hash } from "bcrypt";
-import { mongoClient } from "../../../config/setupTest";
 import App from "../../app";
 import request, { Response, SuperAgentTest } from "supertest";
 import type { Application } from "express";
@@ -10,10 +9,10 @@ import type { Application } from "express";
 describe("POST /auth", () => {
     let server: Application;
     let agent: SuperAgentTest;
-    const mockUser = { email: "test@test.com", password: "test1234" };
+    const mockUser = { email: "testforlogin@test.com", password: "test1234" };
 
     beforeAll(async () => {
-        server = new App([new AuthenticationController()], mongoClient).getServer();
+        server = new App([new AuthenticationController()]).getServer();
         agent = request.agent(server);
     });
 

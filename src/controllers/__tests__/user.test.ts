@@ -1,20 +1,19 @@
 import { hash } from "bcrypt";
 import request, { Response, SuperAgentTest } from "supertest";
-import { mongoClient } from "../../../config/setupTest";
 import App from "../../app";
 import userModel from "@models/user";
 import UserController from "@controllers/user";
 import AuthenticationController from "@authentication/index";
 import StatusCode from "@utils/statusCodes";
 import type { Express } from "express";
-import type { User } from "@interfaces/user";
+import type { ModifyUser, User } from "@interfaces/user";
 
 describe("USERS", () => {
     let server: Express;
     const defaultUser = { email: "default@test.com", password: "test1234" };
 
     beforeAll(async () => {
-        server = new App([new AuthenticationController(), new UserController()], mongoClient).getServer();
+        server = new App([new AuthenticationController(), new UserController()]).getServer();
         const password = await hash(defaultUser.password, 10);
         await userModel.create({ email: defaultUser.email, password: password });
     });
@@ -68,11 +67,11 @@ describe("USERS", () => {
         });
         it("PATCH /user/:id, should return statuscode 200", async () => {
             expect.assertions(2);
-            const newData = { email: "newemail@test.com" };
+            const newData: ModifyUser = { username: "justatestuser" };
             const res: Response = await agent.patch(`/user/${mockUser._id}`).send(newData);
             const modifiedUser: User = res.body;
             expect(res.statusCode).toBe(StatusCode.OK);
-            expect(modifiedUser).toHaveProperty("email", newData.email);
+            expect(modifiedUser).toHaveProperty("username", newData.username);
         });
         it("DELETE /user/:id, should return statuscode 403", async () => {
             expect.assertions(2);
@@ -116,11 +115,11 @@ describe("USERS", () => {
         });
         it("PATCH /user/:id, should return statuscode 200", async () => {
             expect.assertions(2);
-            const newData = { email: "newemail@test.com" };
+            const newData: ModifyUser = { fullname: "John Doe" };
             const res: Response = await agent.patch(`/user/${users[0]?._id}`).send(newData);
             const modifiedUser: User = res.body;
             expect(res.statusCode).toBe(StatusCode.OK);
-            expect(modifiedUser).toHaveProperty("email", newData.email);
+            expect(modifiedUser).toHaveProperty("fullname", newData.fullname);
         });
         it("DELETE /user/:id, should return statuscode 204", async () => {
             expect.assertions(1);
