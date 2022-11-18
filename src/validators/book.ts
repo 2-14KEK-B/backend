@@ -13,6 +13,7 @@ class CreateBookDto implements CreateBook {
     public picture: string;
 
     @IsString({ each: true })
+    @IsOptional()
     public category: string[];
 
     @IsNumberString()

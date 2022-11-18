@@ -9,7 +9,7 @@ import type { Application } from "express";
 describe("POST /auth", () => {
     let server: Application;
     let agent: SuperAgentTest;
-    const mockUser = { email: "test@test.com", password: "test1234" };
+    const mockUser = { email: "testforlogin@test.com", password: "test1234" };
 
     beforeAll(async () => {
         server = new App([new AuthenticationController()]).getServer();

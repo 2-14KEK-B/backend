@@ -6,7 +6,7 @@ import UserController from "@controllers/user";
 import AuthenticationController from "@authentication/index";
 import StatusCode from "@utils/statusCodes";
 import type { Express } from "express";
-import type { User } from "@interfaces/user";
+import type { ModifyUser, User } from "@interfaces/user";
 
 describe("USERS", () => {
     let server: Express;
@@ -67,11 +67,11 @@ describe("USERS", () => {
         });
         it("PATCH /user/:id, should return statuscode 200", async () => {
             expect.assertions(2);
-            const newData = { email: "newemail@test.com" };
+            const newData: ModifyUser = { username: "justatestuser" };
             const res: Response = await agent.patch(`/user/${mockUser._id}`).send(newData);
             const modifiedUser: User = res.body;
             expect(res.statusCode).toBe(StatusCode.OK);
-            expect(modifiedUser).toHaveProperty("email", newData.email);
+            expect(modifiedUser).toHaveProperty("username", newData.username);
         });
         it("DELETE /user/:id, should return statuscode 403", async () => {
             expect.assertions(2);
@@ -115,11 +115,11 @@ describe("USERS", () => {
         });
         it("PATCH /user/:id, should return statuscode 200", async () => {
             expect.assertions(2);
-            const newData = { email: "newemail@test.com" };
+            const newData: ModifyUser = { fullname: "John Doe" };
             const res: Response = await agent.patch(`/user/${users[0]?._id}`).send(newData);
             const modifiedUser: User = res.body;
             expect(res.statusCode).toBe(StatusCode.OK);
-            expect(modifiedUser).toHaveProperty("email", newData.email);
+            expect(modifiedUser).toHaveProperty("fullname", newData.fullname);
         });
         it("DELETE /user/:id, should return statuscode 204", async () => {
             expect.assertions(1);
