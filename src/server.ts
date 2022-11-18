@@ -5,7 +5,7 @@ import UserController from "@controllers/user";
 import BookController from "@controllers/book";
 import BorrowController from "@controllers/borrow";
 import MessageController from "@controllers/message";
-import connectToDatabase from "src/db/connectToDatabase";
+import connectToDatabase from "@db/connectToDatabase";
 
 debug("express");
 
