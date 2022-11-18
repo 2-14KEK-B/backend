@@ -37,7 +37,7 @@ export default class BorrowController implements Controller {
             const borrows = await this.borrow.find().lean();
             res.send(borrows);
         } catch (error) {
-            next(new HttpError(error.message));
+            next(new HttpError(error));
         }
     };
 
@@ -51,7 +51,7 @@ export default class BorrowController implements Controller {
 
             res.send(borrow);
         } catch (error) {
-            next(new HttpError(error.message));
+            next(new HttpError(error));
         }
     };
 
@@ -69,7 +69,7 @@ export default class BorrowController implements Controller {
 
             res.send(newBorrow);
         } catch (error) {
-            next(new HttpError(error.message));
+            next(new HttpError(error));
         }
     };
 
@@ -85,7 +85,7 @@ export default class BorrowController implements Controller {
 
             res.json(borrow);
         } catch (error) {
-            next(new HttpError(error.message));
+            next(new HttpError(error));
         }
     };
 
@@ -105,7 +105,7 @@ export default class BorrowController implements Controller {
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
-            next(new HttpError(error.message));
+            next(new HttpError(error));
         }
     };
 }

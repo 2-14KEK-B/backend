@@ -40,7 +40,7 @@ export default class LoginController implements Controller {
             req.session.userId = user._id?.toString();
             res.send(user);
         } catch (error) {
-            next(new HttpError((error as Error).message));
+            next(new HttpError(error));
         }
     };
 }
