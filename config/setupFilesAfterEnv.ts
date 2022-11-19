@@ -4,7 +4,7 @@ import { closeSessionStore } from "@db/sessionStore";
 
 beforeAll(async () => {
     // put your client connection code here, example with mongoose:
-    await connectToDatabase(`${process.env["TEST_URI"]}/bookswap_test`);
+    await connectToDatabase(process.env["TEST_URI"]);
 });
 
 afterAll(async () => {
