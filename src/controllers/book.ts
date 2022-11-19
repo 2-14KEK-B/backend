@@ -4,7 +4,7 @@ import validation from "@middlewares/validation";
 import bookModel from "@models/book";
 import userModel from "@models/user";
 import {
-    BookRatingDto,
+    // BookRatingDto,
     CreateBookDto,
     // ModifyBookDto,
 } from "@validators/book";
@@ -14,12 +14,13 @@ import HttpError from "@exceptions/Http";
 import type Controller from "@interfaces/controller";
 import type {
     Book,
-    BookRating,
+    // BookRating,
     CreateBook,
     // ModifyBook
 } from "@interfaces/book";
 import { Types } from "mongoose";
 import type { User } from "@interfaces/user";
+import BookRatingController from "./bookRating";
 
 export default class BookController implements Controller {
     path = "/book";
@@ -30,14 +31,15 @@ export default class BookController implements Controller {
 
     constructor() {
         this.initializeRoutes();
+        this.router.use(`${this.path}/:id/rate`, new BookRatingController().router);
     }
 
     private initializeRoutes() {
         this.router.get(`${this.path}/all`, this.getAllBooks);
         this.router.get(this.path, authentication, this.getUserBooks);
         this.router.get(`${this.path}/:id`, authentication, this.getBookById);
-        this.router.post(`${this.path}/rate/:id`, validation(BookRatingDto), this.rateBook);
         this.router.post(this.path, [authentication, validation(CreateBookDto)], this.createBook);
+        // this.router.post(`${this.path}/:id/rate`, validation(BookRatingDto), this.createBookRating);
         // this.router.patch(`${this.path}/:id`, [authentication, validation(ModifyBookDto), true], this.modifyBookById);  VERSIONING NEEDED!!!!!!!!!!
         this.router.delete(`${this.path}/:id`, authentication, this.deleteBookById);
     }
@@ -93,32 +95,35 @@ export default class BookController implements Controller {
         }
     };
 
-    private rateBook = async (req: Request, res: Response, next: NextFunction) => {
-        try {
-            const userId = req.session.userId;
-            if (!userId) return;
-            const bookId = req.params["_id"];
+    // private createBookRating = async (req: Request, res: Response, next: NextFunction) => {
+    //     try {
+    //         const userId = req.session.userId as string;
+    //         const bookId = req.params["_id"];
+    //         if (!(await isIdValid(this.book, [bookId], next))) return;
 
-            if (!(await isIdValid(this.book, [bookId], next))) return;
+    //         const book = await this.book.findById(bookId);
 
-            const book = await this.book.findById(bookId);
-            if (book?.ratings?.some(rate => rate.from_id.toString() == userId?.toString())) return next(new HttpError("Already rated this book."));
+    //         const ratedAlready = book?.ratings?.find(rating => {
+    //             rating.from_id.toString() === userId.toString();
+    //         });
+    //         if (ratedAlready) return next(new HttpError("Already rated this book."));
 
-            const rateData: BookRating = req.body;
-            book?.ratings?.push({ ...rateData, from_id: userId });
+    //         const rateData: BookRating = req.body;
+    //         book?.ratings?.push({ ...rateData, from_id: userId });
 
-            const ratedBook = await book?.save();
-            // const rating = await this.book.updateOne({ _id: bookId }, { ...rateData, uploader: userId }, { returnDocument: "after" });
+    //         const ratedBook = await book?.save();
+    //         if (!ratedBook) return next(new HttpError("Failed to rate book"));
 
-            if (!ratedBook) return next(new HttpError("Failed to rate book"));
+    //         const updatedUser = await this.user.findByIdAndUpdate(userId, { $push: { rated_books: book?._id } });
+    //         if (!updatedUser) return next(new HttpError("Failed to update the user"));
 
-            // await this.user.findByIdAndUpdate(userId, { $push: { books: { _id: rating._id } } });
+    // await this.user.findByIdAndUpdate(userId, { $push: { books: { _id: rating._id } } });
 
-            res.send(ratedBook);
-        } catch (error) {
-            next(new HttpError(error));
-        }
-    };
+    //         res.json(book);
+    //     } catch (error) {
+    //         next(new HttpError(error));
+    //     }
+    // };
 
     /**
     TODO: Versioning

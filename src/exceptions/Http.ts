@@ -1,7 +1,7 @@
 import StatusCode from "@utils/statusCodes";
 
 export default class HttpError extends Error {
-    constructor(public message: string, public status: number = StatusCode.BadRequest) {
+    constructor(public message: string = "Something went wrong", public status: number = StatusCode.BadRequest) {
         super(message);
 
         Object.setPrototypeOf(this, new.target.prototype);

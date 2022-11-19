@@ -17,6 +17,7 @@ interface User {
     picture?: string;
     role?: string;
     books: (Book | ID)[];
+    rated_books: ID[];
     messages: Message[];
     user_ratings: ID[];
     borrows: Borrow[];
