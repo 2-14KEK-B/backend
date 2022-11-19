@@ -4,7 +4,7 @@ import validation from "@middlewares/validation";
 import bookModel from "@models/book";
 import userModel from "@models/user";
 import {
-    BookRatingDto,
+    // BookRatingDto,
     CreateBookDto,
     // ModifyBookDto,
 } from "@validators/book";
@@ -13,27 +13,27 @@ import StatusCode from "@utils/statusCodes";
 import HttpError from "@exceptions/Http";
 import type Controller from "@interfaces/controller";
 import type {
-    BookRating,
     CreateBook,
     // ModifyBook
 } from "@interfaces/book";
+import BookRatingController from "./bookRating";
 
 export default class BookController implements Controller {
     path = "/book";
     router = Router();
-    badRequest = StatusCode.BadRequest;
     private book = bookModel;
     private user = userModel;
 
     constructor() {
         this.initializeRoutes();
+        this.router.use(`${this.path}/:id`, new BookRatingController().router);
     }
 
     private initializeRoutes() {
         this.router.get(`${this.path}/all`, this.getAllBooks);
         this.router.get(this.path, authentication, this.getUserBooks);
         this.router.get(`${this.path}/:id`, authentication, this.getBookById);
-        this.router.post(`${this.path}/rate/:id`, validation(BookRatingDto), this.rateBook);
+        // this.router.post(`${this.path}/rate/:id`, validation(BookRatingDto), this.rateBook);
         this.router.post(this.path, [authentication, validation(CreateBookDto)], this.createBook);
         // this.router.patch(`${this.path}/:id`, [authentication, validation(ModifyBookDto), true], this.modifyBookById);  VERSIONING NEEDED!!!!!!!!!!
         this.router.delete(`${this.path}/:id`, authentication, this.deleteBookById);
@@ -91,32 +91,34 @@ export default class BookController implements Controller {
         }
     };
 
-    private rateBook = async (req: Request, res: Response, next: NextFunction) => {
-        try {
-            const userId = req.session.userId;
-            if (!userId) return;
-            const bookId = req.params["_id"];
+    // private rateBook = async (req: Request, res: Response, next: NextFunction) => {
+    //     try {
+    //         const userId = req.session.userId;
+    //         if (!userId) return;
+    //         const bookId = req.params["_id"];
 
-            if (!(await isIdValid(this.book, [bookId], next))) return;
+    //         if (!(await isIdValid(this.book, [bookId], next))) return;
 
-            const book = await this.book.findById(bookId);
-            if (book?.ratings?.some(rate => rate.from_id.toString() == userId?.toString())) return next(new HttpError("Already rated this book."));
+    //         const book = await this.book.findById(bookId);
+    //         if (book?.ratings?.some(rate => rate.from_id.toString() == userId?.toString())) return next(new HttpError("Already rated this book."));
 
-            const rateData: BookRating = req.body;
-            book?.ratings?.push({ ...rateData, from_id: userId });
+    //         const rateData: BookRating = req.body;
+    //         const newRate = await this.bookRating.create(rateData);
 
-            const ratedBook = await book?.save();
-            // const rating = await this.book.updateOne({ _id: bookId }, { ...rateData, uploader: userId }, { returnDocument: "after" });
+    //         book?.ratings?.push({ ...rateData, from_id: userId });
 
-            if (!ratedBook) return next(new HttpError("Failed to rate book"));
+    //         const ratedBook = await book?.save();
+    //         // const rating = await this.book.updateOne({ _id: bookId }, { ...rateData, uploader: userId }, { returnDocument: "after" });
 
-            await this.user.findByIdAndUpdate(userId, { $push: { books: { _id: rating._id } } });
+    //         if (!ratedBook) return next(new HttpError("Failed to rate book"));
 
-            res.send(ratedBook);
-        } catch (error) {
-            next(new HttpError(error));
-        }
-    };
+    //         await this.user.findByIdAndUpdate(userId, { $push: { books: { _id: rating._id } } });
+
+    //         res.send(ratedBook);
+    //     } catch (error) {
+    //         next(new HttpError(error));
+    //     }
+    // };
 
     /**
     TODO: Versioning

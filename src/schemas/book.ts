@@ -16,12 +16,8 @@ const bookSchema = new Schema<Book>({
     for_borrow: { type: Boolean, required: true },
     ratings: [
         {
-            from_id: {
-                type: Schema.Types.ObjectId,
-                ref: "User",
-            },
-            comment: String,
-            rating: { type: Number, required: true },
+            type: Schema.Types.ObjectId,
+            ref: "BookRating",
         },
     ],
 });
