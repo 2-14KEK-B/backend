@@ -9,7 +9,7 @@ import StatusCode from "@utils/statusCodes";
 import isIdValid from "@utils/idChecker";
 import CreateMessageDto from "@validators/message";
 import HttpError from "@exceptions/Http";
-import type { CreateMessage, MessageContent } from "@interfaces/message";
+import type { CreateMessage, Message, MessageContent } from "@interfaces/message";
 import type Controller from "@interfaces/controller";
 
 export default class MessageController implements Controller {
@@ -32,7 +32,7 @@ export default class MessageController implements Controller {
 
     private getAllMessages = async (_req: Request, res: Response, next: NextFunction) => {
         try {
-            const messages = await this.message.find().lean();
+            const messages = await this.message.find().lean<Message[]>().exec();
             res.json(messages);
         } catch (error) {
             next(new HttpError(error));
@@ -44,7 +44,7 @@ export default class MessageController implements Controller {
             const messageId = req.params["id"];
             if (!(await isIdValid(this.message, [messageId], next))) return;
 
-            const message = await this.message.findById(messageId).lean();
+            const message = await this.message.findById(messageId).lean<Message>().exec();
             if (!message) return next(new HttpError(`Failed to get message by id ${messageId}`));
 
             res.json(message);
@@ -56,20 +56,23 @@ export default class MessageController implements Controller {
     private createMessage = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const to_id = req.params["toId"];
-            const from_id = req.user._id.toString();
+            const from_id = req.session.userId?.toString();
             const { content } = req.body as CreateMessage;
-            if (!(await isIdValid(this.user, [from_id, to_id], next))) return;
+            if (!(await isIdValid(this.user, [to_id], next))) return;
 
             const newMessageContent: MessageContent = {
                 sender_id: new Types.ObjectId(from_id),
                 content: content,
             };
-            let messages = await this.message.findOne({ users: { $in: [from_id, to_id] } });
+            let messages = await this.message.findOne({ users: { $in: [from_id, to_id] } }).exec();
 
             if (messages) {
                 messages.message_contents.push(newMessageContent);
                 // const newMessage = await messages.save();
-                const newMessage = await messages.updateOne({ $push: { message_contents: { newMessageContent } } }).lean();
+                const newMessage = await messages
+                    .updateOne({ $push: { message_contents: { newMessageContent } } })
+                    .lean<Message>()
+                    .exec();
                 if (!newMessage) return next(new HttpError("Failed to create message"));
             } else {
                 messages = await this.message.create({
@@ -96,13 +99,13 @@ export default class MessageController implements Controller {
             const messageId = req.params["id"];
             if (!(await isIdValid(this.message, [messageId], next))) return;
 
-            const message = await this.message.findById(messageId).lean();
-            if (!message?.users) return next(new HttpError("Failed to get ids from messages"));
+            const { users } = await this.message.findById(messageId).lean<Message>().exec();
+            if (!users) return next(new HttpError("Failed to get ids from messages"));
 
             const response = await this.message.findByIdAndDelete(messageId);
             if (!response) return next(new HttpError(`Failed to delete message by id ${messageId}`));
 
-            const { acknowledged } = await this.user.updateMany({ _id: { $in: message.users } }, { $pull: { messages: messageId } });
+            const { acknowledged } = await this.user.updateMany({ _id: { $in: users } }, { $pull: { messages: messageId } });
             if (!acknowledged) return next(new HttpError("Failed to update users"));
 
             res.sendStatus(StatusCode.NoContent);

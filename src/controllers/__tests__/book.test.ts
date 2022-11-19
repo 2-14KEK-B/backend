@@ -90,7 +90,7 @@ describe("BOOKS", () => {
         });
         it("DELETE /book/:id, should return statuscode 200", async () => {
             expect.assertions(1);
-            const res: Response = await agent.delete(`/book/${books[0]?._id}`);
+            const res: Response = await agent.delete(`/book/${books[1]?._id}`);
             expect(res.statusCode).toBe(StatusCode.NoContent);
         });
     });
