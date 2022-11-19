@@ -3,14 +3,13 @@ import type { Types } from "mongoose";
 type ID = Types.ObjectId | string;
 
 interface BookRating {
-    _id: string;
-    from_id: string;
+    from_id: ID;
+    rate: number;
     comment?: string;
-    rating: number;
 }
 
 interface CreateBookRating {
-    rating: number;
+    rate: number;
     comment?: string;
 }
 
@@ -46,7 +45,6 @@ interface ModifyBook {
     price?: number;
     for_borrow?: boolean;
     available?: boolean;
-    ratings?: BookRating[];
 }
 
 export { Book, BookRating, CreateBookRating, CreateBook, ModifyBook };
