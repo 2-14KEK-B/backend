@@ -13,7 +13,6 @@ import StatusCode from "@utils/statusCodes";
 import HttpError from "@exceptions/Http";
 import type Controller from "@interfaces/controller";
 import type {
-    // BookRating,
     CreateBook,
     // ModifyBook
 } from "@interfaces/book";
@@ -22,7 +21,6 @@ import BookRatingController from "./bookRating";
 export default class BookController implements Controller {
     path = "/book";
     router = Router();
-    badRequest = StatusCode.BadRequest;
     private book = bookModel;
     private user = userModel;
 
