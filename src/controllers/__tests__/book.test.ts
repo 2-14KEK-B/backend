@@ -54,13 +54,15 @@ describe("BOOKS", () => {
         let agent: SuperAgentTest;
         const mockUser = { email: "test@test.com", password: "test1234" };
         const newBook: CreateBook = { author: "testfornewbook", title: "testfornewbook", for_borrow: true };
+        let mockBookId: string;
 
         beforeAll(async () => {
             agent = request.agent(server);
             const password = await hash(mockUser.password, 10);
             await userModel.create({ email: mockUser.email, password: password });
             await agent.post("/auth/login").send(mockUser);
-            await agent.post("/book").send(mockBook);
+            const mockBookRes = await agent.post("/book").send(mockBook);
+            mockBookId = mockBookRes.body._id;
         });
 
         it("GET /book/all, should return statuscode 200", async () => {
@@ -88,9 +90,9 @@ describe("BOOKS", () => {
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body).toBeInstanceOf(Object as unknown as Book);
         });
-        it("DELETE /book/:id, should return statuscode 200", async () => {
+        it("DELETE /book/:id, should return statuscode 204", async () => {
             expect.assertions(1);
-            const res: Response = await agent.delete(`/book/${books[0]?._id}`);
+            const res: Response = await agent.delete(`/book/${mockBookId}`);
             expect(res.statusCode).toBe(StatusCode.NoContent);
         });
     });
