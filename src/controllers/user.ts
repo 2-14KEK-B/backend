@@ -41,7 +41,6 @@ export default class UserController implements Controller {
     private getMyUserInfo = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const userId = req.session.userId;
-            if (!(await isIdValid(this.user, [userId], next))) return;
 
             const user = await this.user.findById(userId, "-password").populate(["books", "borrows", "messages", "user_ratings"]).lean<User>().exec();
             if (!user) return next(new UserNotFoundException(userId));

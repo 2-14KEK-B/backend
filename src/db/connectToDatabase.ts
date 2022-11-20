@@ -2,7 +2,6 @@ import { connect, connection } from "mongoose";
 import env from "../utils/validateEnv";
 import userModel from "@models/user";
 import bookModel from "@models/book";
-import bookRatingModel from "@models/bookRating";
 import borrowModel from "@models/borrow";
 import messageModel from "@models/message";
 
@@ -19,7 +18,6 @@ export default async function connectToDatabase(connectionString?: string): Prom
 
         await userModel.init();
         await bookModel.init();
-        await bookRatingModel.init();
         await borrowModel.init();
         await messageModel.init();
 

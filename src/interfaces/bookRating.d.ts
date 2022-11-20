@@ -3,15 +3,15 @@ import type { Types } from "mongoose";
 type ID = Types.ObjectId | string;
 
 interface BookRating {
-    _id: ID;
+    _id?: ID;
     from_id: ID;
     comment?: string;
-    rating: number;
+    rate: number;
 }
 
 interface CreateBookRating {
     from_id?: ID;
-    rating: number;
+    rate: number;
     comment?: string;
 }
 

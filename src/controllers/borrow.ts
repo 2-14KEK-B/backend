@@ -59,6 +59,7 @@ export default class BorrowController implements Controller {
         try {
             const userId = req.session.userId;
             const { from_id, books }: CreateBorrow = req.body;
+            if (!(await isIdValid(this.user, [from_id], next))) return;
             if (!(await isIdValid(this.book, books, next))) return;
 
             const newBorrow = await this.borrow.create({ to_id: userId, from_id: from_id, books: [...books] });
