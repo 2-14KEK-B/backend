@@ -116,7 +116,7 @@ export default class BookController implements Controller {
     //         const updatedUser = await this.user.findByIdAndUpdate(userId, { $push: { rated_books: book?._id } });
     //         if (!updatedUser) return next(new HttpError("Failed to update the user"));
 
-    // await this.user.findByIdAndUpdate(userId, { $push: { books: { _id: rating._id } } });
+    //         // // const rating = await this.book.updateOne({ _id: bookId }, { ...rateData, uploader: userId }, { returnDocument: "after" });
 
     //         res.json(book);
     //     } catch (error) {
