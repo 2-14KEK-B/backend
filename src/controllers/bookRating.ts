@@ -54,17 +54,12 @@ export default class BookRatingController implements Controller {
 
             const rateData: CreateBookRating = req.body;
             book?.ratings?.push({ ...rateData, from_id: new Types.ObjectId(userId) });
-            // console.log("book?.ratings?: ", book?.ratings);
 
             const ratedBook = await book?.save();
-            // console.log("ratedBook: ", ratedBook);
             if (!ratedBook) return next(new HttpError("Failed to rate book"));
 
             const updatedUser = await this.user.findByIdAndUpdate(userId, { $push: { rated_books: book?._id } }, { returnDocument: "after" });
-            // console.log(updatedUser);
             if (!updatedUser) return next(new HttpError("Failed to update the user"));
-
-            // // const rating = await this.book.updateOne({ _id: bookId }, { ...rateData, uploader: userId }, { returnDocument: "after" });
 
             res.json(book);
         } catch (error) {
@@ -85,18 +80,9 @@ export default class BookRatingController implements Controller {
 
             const { acknowledged } = await this.book.updateOne({ _id: bookId }, { $pull: { ratings: { from_id: new Types.ObjectId(userId) } } });
 
-            // book?.ratings?.filter((rate, _index, arr) => {
-            //     arr.pop();
-            //     return rate.from_id.valueOf() === userId;
-            // });
-            // console.log("book?.ratings? after delete: ", book?.ratings);
-
-            // const bookWithDeletedRate = await book?.save();
-            // console.log("bookWithDeletedRate: ", bookWithDeletedRate);
             if (!acknowledged) return next(new HttpError("Failed to delete book"));
 
             const updatedUser = await this.user.findByIdAndUpdate(userId, { $pull: { rated_books: book?._id } }, { returnDocument: "after" });
-            // console.log(updatedUser);
             if (!updatedUser) return next(new HttpError("Failed to update the user"));
 
             res.sendStatus(StatusCode.NoContent);
@@ -107,7 +93,5 @@ export default class BookRatingController implements Controller {
 }
 
 function isUsersRate(rate: BookRating, userId: string) {
-    const users = rate.from_id.valueOf() === userId;
-    console.log(users);
-    return users;
+    return rate.from_id.valueOf() === userId;
 }
