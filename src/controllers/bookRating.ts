@@ -11,6 +11,7 @@ import authenticationMiddleware from "@middlewares/authentication";
 import { Types } from "mongoose";
 import authorizationMiddleware from "@middlewares/authorization";
 import StatusCode from "@utils/statusCodes";
+import type { Book } from "@interfaces/book";
 
 export default class BookRatingController implements Controller {
     path = "/";
@@ -53,15 +54,16 @@ export default class BookRatingController implements Controller {
             if (ratedAlready) return next(new HttpError("Already rated this book."));
 
             const rateData: CreateBookRating = req.body;
-            book?.ratings?.push({ ...rateData, from_id: new Types.ObjectId(userId) });
-
-            const ratedBook = await book?.save();
+            const ratedBook = await this.book
+                .findByIdAndUpdate(bookId, { $push: { ratings: { ...rateData, from_id: userId } } }, { returnDocument: "after" })
+                .lean<Book>()
+                .exec();
             if (!ratedBook) return next(new HttpError("Failed to rate book"));
 
             const updatedUser = await this.user.findByIdAndUpdate(userId, { $push: { rated_books: book?._id } }, { returnDocument: "after" });
             if (!updatedUser) return next(new HttpError("Failed to update the user"));
 
-            res.json(book);
+            res.json(ratedBook);
         } catch (error) {
             next(new HttpError(error));
         }
