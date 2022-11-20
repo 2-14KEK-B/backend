@@ -9,7 +9,7 @@ import StatusCode from "@utils/statusCodes";
 import UserNotFoundException from "@exceptions/UserNotFound";
 import HttpError from "@exceptions/Http";
 import type Controller from "@interfaces/controller";
-import type { ModifyUser } from "@interfaces/user";
+import type { ModifyUser, User } from "@interfaces/user";
 
 export default class UserController implements Controller {
     path = "/user";
@@ -31,7 +31,7 @@ export default class UserController implements Controller {
 
     private getAllUsers = async (_req: Request, res: Response, next: NextFunction) => {
         try {
-            const users = await this.user.find().lean();
+            const users = await this.user.find().lean<User[]>().exec();
             res.json(users);
         } catch (error) {
             next(new HttpError(error));
@@ -43,7 +43,7 @@ export default class UserController implements Controller {
             const userId = req.session.userId;
             if (!(await isIdValid(this.user, [userId], next))) return;
 
-            const user = await this.user.findById(userId, "-password").populate(["books", "borrows", "messages", "user_ratings"]).lean();
+            const user = await this.user.findById(userId, "-password").populate(["books", "borrows", "messages", "user_ratings"]).lean<User>().exec();
             if (!user) return next(new UserNotFoundException(userId));
 
             res.json(user);
@@ -57,7 +57,11 @@ export default class UserController implements Controller {
             const userId = req.params["id"];
             if (!(await isIdValid(this.user, [userId], next))) return;
 
-            const user = await this.user.findById(userId, "-password -email_is_verified -role -messages").populate("user_ratings").lean();
+            const user = await this.user
+                .findById(userId, "-password -email_is_verified -role -messages")
+                .populate("user_ratings")
+                .lean<User>()
+                .exec();
             if (!user) return next(new UserNotFoundException(userId));
 
             res.json(user);
@@ -70,15 +74,16 @@ export default class UserController implements Controller {
         try {
             const userId = req.params["id"];
             if (!(await isIdValid(this.user, [userId], next))) return;
+            const loggedUser = await this.user.findById(req.session.userId).lean<User>().exec();
 
-            if (req.user.role != "admin") {
-                if (userId != req.user._id) {
-                    return next(new HttpError("Unauthorized", StatusCode.Unauthorized));
+            if (loggedUser.role != "admin") {
+                if (userId != loggedUser._id) {
+                    return next(new HttpError("Unauthorized", StatusCode.Forbidden));
                 }
             }
 
             const userData: ModifyUser = { ...req.body, updated_on: new Date() };
-            const user = await this.user.findByIdAndUpdate(userId, userData, { returnDocument: "after" });
+            const user = await this.user.findByIdAndUpdate(userId, userData, { returnDocument: "after" }).lean<User>().exec();
             if (!user) return next(new HttpError("Failed to update user"));
 
             res.json(user);
@@ -92,7 +97,7 @@ export default class UserController implements Controller {
             const userId = req.params["id"];
             if (!(await isIdValid(this.user, [userId], next))) return;
 
-            const successResponse = await this.user.findByIdAndDelete(userId);
+            const successResponse = await this.user.findByIdAndDelete(userId).exec();
             if (!successResponse) return next(new UserNotFoundException(userId));
 
             res.sendStatus(StatusCode.NoContent);

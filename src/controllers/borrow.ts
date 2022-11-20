@@ -10,7 +10,7 @@ import StatusCode from "@utils/statusCodes";
 import { CreateBorrowDto, ModifyBorrowDto } from "@validators/borrow";
 import HttpError from "@exceptions/Http";
 import type Controller from "@interfaces/controller";
-import type { CreateBorrow, ModifyBorrow } from "@interfaces/borrow";
+import type { Borrow, CreateBorrow, ModifyBorrow } from "@interfaces/borrow";
 
 export default class BorrowController implements Controller {
     path = "/borrow";
@@ -34,7 +34,7 @@ export default class BorrowController implements Controller {
 
     private getAllBorrows = async (_req: Request, res: Response, next: NextFunction) => {
         try {
-            const borrows = await this.borrow.find().lean();
+            const borrows = await this.borrow.find().lean<Borrow[]>().exec();
             res.send(borrows);
         } catch (error) {
             next(new HttpError(error));
@@ -46,7 +46,7 @@ export default class BorrowController implements Controller {
             const borrowId = req.params["id"];
             if (!(await isIdValid(this.borrow, [borrowId], next))) return;
 
-            const borrow = await this.borrow.findById(borrowId).populate(["books", "from_id", "to_id"]).lean();
+            const borrow = await this.borrow.findById(borrowId).populate(["books", "from_id", "to_id"]).lean<Borrow>().exec();
             if (!borrow) return next(new HttpError(`Failed to get borrow by id ${borrowId}`));
 
             res.send(borrow);
@@ -59,7 +59,7 @@ export default class BorrowController implements Controller {
         try {
             const userId = req.session.userId;
             const { from_id, books }: CreateBorrow = req.body;
-            if (!(await isIdValid(this.user, [from_id], next)) || !(await isIdValid(this.book, books, next))) return;
+            if (!(await isIdValid(this.book, books, next))) return;
 
             const newBorrow = await this.borrow.create({ to_id: userId, from_id: from_id, books: [...books] });
             if (!newBorrow) return next(new HttpError("Failed to create borrow"));
@@ -80,7 +80,7 @@ export default class BorrowController implements Controller {
 
             const borrowData: ModifyBorrow = { ...req.body, updated_on: new Date() };
 
-            const borrow = await this.borrow.findByIdAndUpdate(borrowId, borrowData, { returnDocument: "after" });
+            const borrow = await this.borrow.findByIdAndUpdate(borrowId, borrowData, { returnDocument: "after" }).lean<Borrow>().exec();
             if (!borrow) return next(new HttpError("Failed to update borrow"));
 
             res.json(borrow);
@@ -94,13 +94,13 @@ export default class BorrowController implements Controller {
             const borrowId = req.params["id"];
             if (!(await isIdValid(this.borrow, [borrowId], next))) return;
 
-            const borrow = await this.borrow.findById(borrowId);
-            if (!borrow?.from_id || !borrow?.to_id) return next(new HttpError("Failed to get ids from borrow"));
+            const { from_id, to_id } = await this.borrow.findById(borrowId).lean<Borrow>().exec();
+            if (!from_id || !to_id) return next(new HttpError("Failed to get ids from borrow"));
 
             const response = await this.borrow.findByIdAndDelete(borrowId);
             if (!response) return next(new HttpError(`Failed to delete borrow by id ${borrowId}`));
 
-            const { acknowledged } = await this.user.updateMany({ _id: { $in: [borrow.from_id, borrow.to_id] } }, { $pull: { borrows: borrowId } });
+            const { acknowledged } = await this.user.updateMany({ _id: { $in: [from_id, to_id] } }, { $pull: { borrows: borrowId } });
             if (!acknowledged) return next(new HttpError("Failed to update users"));
 
             res.sendStatus(StatusCode.NoContent);

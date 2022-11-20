@@ -11,8 +11,13 @@ debug("express");
 
 (async () => {
     await connectToDatabase();
+    const app = new App([
+        new AuthenticationController(),
+        new BookController(),
+        new BorrowController(),
+        new MessageController(),
+        new UserController(),
+    ]);
+
+    app.listen();
 })();
-
-const app = new App([new AuthenticationController(), new BookController(), new BorrowController(), new MessageController(), new UserController()]);
-
-app.listen();

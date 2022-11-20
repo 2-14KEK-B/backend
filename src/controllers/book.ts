@@ -12,9 +12,12 @@ import StatusCode from "@utils/statusCodes";
 import HttpError from "@exceptions/Http";
 import type Controller from "@interfaces/controller";
 import type {
+    Book,
     CreateBook,
     // ModifyBook
 } from "@interfaces/book";
+import { Types } from "mongoose";
+import type { User } from "@interfaces/user";
 
 export default class BookController implements Controller {
     path = "/book";
@@ -38,7 +41,7 @@ export default class BookController implements Controller {
 
     private getAllBooks = async (_req: Request, res: Response, next: NextFunction) => {
         try {
-            const books = await this.book.find().lean();
+            const books = await this.book.find().lean<Book[]>().exec();
             res.send(books);
         } catch (error) {
             next(new HttpError(error));
@@ -47,10 +50,9 @@ export default class BookController implements Controller {
 
     private getUserBooks = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const userId = req.user._id?.toString();
-            if (!(await isIdValid(this.user, [userId], next))) return;
+            const userId = req.session.userId;
 
-            const user = await this.user.findOne({ _id: userId }).populate("books").lean();
+            const user = await this.user.findOne({ _id: userId }).populate("books").lean<User>().exec();
             if (!user) return next(new HttpError(`Failed to get user by id ${userId}`));
 
             res.send(user.books);
@@ -64,7 +66,7 @@ export default class BookController implements Controller {
             const bookId = req.params["id"];
             if (!(await isIdValid(this.book, [bookId], next))) return;
 
-            const book = await this.book.findById(bookId).lean();
+            const book = await this.book.findById(bookId).lean<Book>().exec();
             if (!book) return next(new HttpError(`Failed to get book by id ${bookId}`));
 
             res.send(book);
@@ -80,7 +82,7 @@ export default class BookController implements Controller {
             const newBook = await this.book.create({ ...bookData, uploader: userId });
             if (!newBook) return next(new HttpError("Failed to create book"));
 
-            await this.user.findByIdAndUpdate(userId, { $push: { books: { _id: newBook._id } } });
+            await this.user.findByIdAndUpdate(userId, { $push: { books: { _id: newBook._id } } }).exec();
 
             res.send(newBook);
         } catch (error) {
@@ -112,11 +114,25 @@ export default class BookController implements Controller {
 
     private deleteBookById = async (req: Request, res: Response, next: NextFunction) => {
         try {
+            const userId = req.session.userId;
+
             const bookId = req.params["id"];
+            if (!bookId) return;
             if (!(await isIdValid(this.book, [bookId], next))) return;
 
-            const response = await this.book.findByIdAndDelete(bookId);
-            if (!response) return next(new HttpError(`Failed to delete book by id ${bookId}`));
+            const loggedUser = await this.user.findById(userId).lean<User>().exec();
+
+            if (loggedUser.role != "admin") {
+                if (!loggedUser.books.find(id => id.toString() === bookId)) {
+                    return next(new HttpError("Unauthorized", StatusCode.Unauthorized));
+                }
+            }
+
+            const bookRes = await this.book.findByIdAndDelete(bookId).lean<Book>().exec();
+            if (!bookRes) return next(new HttpError(`Failed to delete book by id ${bookId}`));
+
+            const userRes = await this.user.findByIdAndUpdate(new Types.ObjectId(bookRes?.uploader), { $pull: { books: bookRes?._id } }).exec();
+            if (!userRes) return next(new HttpError(`Failed to update user`));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {

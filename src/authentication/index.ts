@@ -5,6 +5,7 @@ import RegisterController from "./register";
 import userModel from "@models/user";
 import UnauthorizedException from "@exceptions/Unauthorized";
 import type Controller from "@interfaces/controller";
+import type { User } from "@interfaces/user";
 
 export default class AuthenticationController implements Controller {
     path = "/auth";
@@ -24,7 +25,7 @@ export default class AuthenticationController implements Controller {
 
     private checkIfLoggedIn = async (req: Request, res: Response, next: NextFunction) => {
         if (!req.session.userId) return next(new UnauthorizedException());
-        const user = await userModel.findById(req.session.userId, "-password -books -borrows -messages -user_ratings").lean();
+        const user = await userModel.findById(req.session.userId, "-password -books -borrows -messages -user_ratings").lean<User>().exec();
         res.json(user);
     };
 }

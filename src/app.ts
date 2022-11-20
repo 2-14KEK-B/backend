@@ -2,6 +2,7 @@ import express, { Express, json, Request, Response, urlencoded } from "express";
 import session, { SessionOptions } from "express-session";
 import cors from "cors";
 import morgan from "morgan";
+import { createSessionStore } from "@db/sessionStore";
 import errorMiddleware from "@middlewares/error";
 import env from "@utils/validateEnv";
 import StatusCode from "@utils/statusCodes";
@@ -48,23 +49,28 @@ export default class App {
     }
 
     private initSession() {
+        const MAX_AGE = 1000 * 60 * 60;
+        const uri = process.env["TEST_URI"] || env.MONGO_URI;
+        const sessionStore = createSessionStore(MAX_AGE, uri);
+
         const options: SessionOptions = {
             secret: env.SECRET,
             name: "session-id",
             cookie: {
-                maxAge: 1000 * 60 * 60,
+                maxAge: MAX_AGE,
                 httpOnly: true,
                 signed: true,
-                sameSite: "none",
+                sameSite: true,
                 secure: "auto",
             },
             saveUninitialized: false,
             resave: true,
-            store: global.sessionStore,
+            store: sessionStore,
         };
 
         if (env.isProduction) {
             this.app.set("trust proxy", 1);
+            if (options.cookie) options.cookie.sameSite = "none";
         }
 
         this.app.use(session(options));
