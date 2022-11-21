@@ -8,7 +8,7 @@ interface Borrow {
     from_id: ID;
     updated_on?: Date;
     to_id: ID;
-    books: Book[];
+    books: (Book | ID)[];
     verified: boolean;
     user_ratings?: [
         {
