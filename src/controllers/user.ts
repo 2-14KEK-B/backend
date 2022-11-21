@@ -77,7 +77,7 @@ export default class UserController implements Controller {
 
             if (loggedUser.role != "admin") {
                 if (userId != loggedUser._id) {
-                    return next(new HttpError("Unauthorized", StatusCode.Forbidden));
+                    return next(new HttpError("You cannot modify other user's data.", StatusCode.Forbidden));
                 }
             }
 
