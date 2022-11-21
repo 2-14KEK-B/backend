@@ -83,19 +83,17 @@ export default class BorrowController implements Controller {
             if (!(await isIdValid(this.borrow, [borrowId], next))) return;
 
             const loggedUser = await this.user.findById(userId).lean<User>().exec();
+            const borrowData: ModifyBorrow = { ...req.body };
 
             if (loggedUser.role != "admin") {
                 if (!loggedUser.borrows.some(id => id.valueOf() === borrowId)) {
                     return next(new HttpError("Unauthorized", StatusCode.Unauthorized));
                 }
-            }
-
-            const borrow = await this.borrow.findById(borrowId).lean<Borrow>().exec();
-
-            const borrowData: ModifyBorrow = { ...req.body };
-            if (borrow.from_id.valueOf() !== userId) {
-                if (borrowData.verified !== undefined) {
-                    return next(new HttpError("You can not modify this value", StatusCode.Unauthorized));
+                const borrow = await this.borrow.findById(borrowId).lean<Borrow>().exec();
+                if (borrow.from_id.valueOf() !== userId) {
+                    if (borrowData.verified !== undefined) {
+                        return next(new HttpError("You can not modify this value", StatusCode.Unauthorized));
+                    }
                 }
             }
 
@@ -105,9 +103,8 @@ export default class BorrowController implements Controller {
                 .exec();
             if (!modifiedBorrow) return next(new HttpError("Failed to update borrow"));
 
-            res.json(borrowData);
+            res.json(modifiedBorrow);
         } catch (error) {
-            console.log(error);
             next(new HttpError(error.message));
         }
     };
