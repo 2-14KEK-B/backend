@@ -18,9 +18,9 @@ interface User {
     role?: string;
     books: (Book | ID)[];
     rated_books: ID[];
-    messages: Message[];
+    messages: (Message | ID)[];
     user_ratings: ID[];
-    borrows: Borrow[];
+    borrows: (Borrow | ID)[];
 }
 
 interface CreateUser {

@@ -11,6 +11,7 @@ import { CreateBorrowDto, ModifyBorrowDto } from "@validators/borrow";
 import HttpError from "@exceptions/Http";
 import type Controller from "@interfaces/controller";
 import type { Borrow, CreateBorrow, ModifyBorrow } from "@interfaces/borrow";
+import type { User } from "@interfaces/user";
 
 export default class BorrowController implements Controller {
     path = "/borrow";
@@ -37,7 +38,7 @@ export default class BorrowController implements Controller {
             const borrows = await this.borrow.find().lean<Borrow[]>().exec();
             res.send(borrows);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 
@@ -46,12 +47,12 @@ export default class BorrowController implements Controller {
             const borrowId = req.params["id"];
             if (!(await isIdValid(this.borrow, [borrowId], next))) return;
 
-            const borrow = await this.borrow.findById(borrowId).populate(["books", "from_id", "to_id"]).lean<Borrow>().exec();
+            const borrow = await this.borrow.findById(borrowId).populate(["books"]).lean<Borrow>().exec();
             if (!borrow) return next(new HttpError(`Failed to get borrow by id ${borrowId}`));
 
             res.send(borrow);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 
@@ -65,28 +66,50 @@ export default class BorrowController implements Controller {
             const newBorrow = await this.borrow.create({ to_id: userId, from_id: from_id, books: [...books] });
             if (!newBorrow) return next(new HttpError("Failed to create borrow"));
 
-            const { acknowledged } = await this.user.updateMany({ _id: { $in: [from_id, userId] } }, { $push: { borrows: { _id: newBorrow._id } } });
+            const { acknowledged } = await this.user
+                .updateMany({ _id: { $in: [from_id, userId] } }, { $push: { borrows: { _id: newBorrow._id } } })
+                .exec();
             if (!acknowledged) return next(new HttpError("Failed to update users"));
 
             res.send(newBorrow);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 
     private modifyBorrowById = async (req: Request, res: Response, next: NextFunction) => {
         try {
+            const userId = req.session.userId;
             const borrowId = req.params["id"];
             if (!(await isIdValid(this.borrow, [borrowId], next))) return;
 
-            const borrowData: ModifyBorrow = { ...req.body, updated_on: new Date() };
+            const loggedUser = await this.user.findById(userId).lean<User>().exec();
 
-            const borrow = await this.borrow.findByIdAndUpdate(borrowId, borrowData, { returnDocument: "after" }).lean<Borrow>().exec();
-            if (!borrow) return next(new HttpError("Failed to update borrow"));
+            if (loggedUser.role != "admin") {
+                if (!loggedUser.borrows.some(id => id.valueOf() === borrowId)) {
+                    return next(new HttpError("Unauthorized", StatusCode.Unauthorized));
+                }
+            }
 
-            res.json(borrow);
+            const borrow = await this.borrow.findById(borrowId).lean<Borrow>().exec();
+
+            const borrowData: ModifyBorrow = { ...req.body };
+            if (borrow.from_id.valueOf() !== userId) {
+                if (borrowData.verified !== undefined) {
+                    return next(new HttpError("You can not modify this value", StatusCode.Unauthorized));
+                }
+            }
+
+            const modifiedBorrow = await this.borrow
+                .findByIdAndUpdate(borrowId, { ...borrowData, updated_on: new Date() }, { returnDocument: "after" })
+                .lean<Borrow>()
+                .exec();
+            if (!modifiedBorrow) return next(new HttpError("Failed to update borrow"));
+
+            res.json(borrowData);
         } catch (error) {
-            next(new HttpError(error));
+            console.log(error);
+            next(new HttpError(error.message));
         }
     };
 
@@ -106,7 +129,7 @@ export default class BorrowController implements Controller {
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 }
