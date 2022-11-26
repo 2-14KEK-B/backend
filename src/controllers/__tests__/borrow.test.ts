@@ -1,5 +1,4 @@
 import request, { Response, SuperAgentTest } from "supertest";
-import { hash } from "bcrypt";
 import App from "../../app";
 import AuthenticationController from "@authentication/index";
 import BorrowController from "@controllers/borrow";
@@ -11,38 +10,14 @@ import StatusCode from "@utils/statusCodes";
 import { Types } from "mongoose";
 import type { Express } from "express";
 import type { CreateBorrow, ModifyBorrow } from "@interfaces/borrow";
-import type { Book } from "@interfaces/book";
 import type { Borrow } from "@interfaces/borrow";
-
-type ID = string | Types.ObjectId;
-
-interface MockUser {
-    _id: ID;
-    email: string;
-    password: string;
-    role?: string;
-    books: (Book | ID)[];
-    borrows: (Borrow | ID)[];
-}
-interface MockBook {
-    _id: ID;
-    uploader?: ID;
-    author: string;
-    title: string;
-    for_borrow: boolean;
-}
-interface MockBorrow {
-    _id: ID;
-    from_id?: ID;
-    updated_on?: Date;
-    to_id: ID;
-    books: (Book | ID)[];
-    verified?: boolean;
-}
+import type { MockBook, MockBorrow, MockUser } from "@interfaces/mockData";
 
 describe("BORROWS", () => {
     let server: Express;
-    const mockBookFromUser1Id = new Types.ObjectId(),
+    const pw = global.MOCK_PASSWORD,
+        hpw = global.MOCK_HASHED_PASSWORD,
+        mockBookFromUser1Id = new Types.ObjectId(),
         mockBook1FromUser2Id = new Types.ObjectId(),
         mockBook2FromUser2Id = new Types.ObjectId(),
         mockBorrowId = new Types.ObjectId(),
@@ -55,21 +30,21 @@ describe("BORROWS", () => {
         mockUser1: MockUser = {
             _id: mockUser1Id,
             email: "testuser1@test.com",
-            password: "test1234",
+            password: pw,
             books: [mockBookFromUser1Id],
             borrows: [mockBorrowId],
         },
         mockUser2: MockUser = {
             _id: mockUser2Id,
             email: "testuser2@test.com",
-            password: "test1234",
+            password: pw,
             books: [mockBook1FromUser2Id, mockBook2FromUser2Id],
             borrows: [mockBorrowId],
         },
         mockAdmin: MockUser = {
             _id: mockAdminId,
             email: "testadmin@test.com",
-            password: "test1234",
+            password: pw,
             role: "admin",
             books: [],
             borrows: [],
@@ -78,11 +53,10 @@ describe("BORROWS", () => {
 
     beforeAll(async () => {
         server = new App([new AuthenticationController(), new BorrowController(), new BookController()]).getServer();
-        const password = await hash(mockUser1.password, 10);
         await userModel.create([
-            { ...mockUser1, password: password },
-            { ...mockUser2, password: password },
-            { ...mockAdmin, password: password },
+            { ...mockUser1, password: hpw },
+            { ...mockUser2, password: hpw },
+            { ...mockAdmin, password: hpw },
         ]);
         await bookModel.create([mockBookFromUser1, mockBook1FromUser2, mockBook2FromUser2]);
         await borrowModel.create(mockBorrow);
@@ -112,8 +86,8 @@ describe("BORROWS", () => {
         beforeAll(async () => {
             agentForUser1 = request.agent(server);
             agentForUser2 = request.agent(server);
-            await agentForUser1.post("/auth/login").send({ email: mockUser1.email, password: mockUser1.password });
-            await agentForUser2.post("/auth/login").send({ email: mockUser2.email, password: mockUser2.password });
+            await agentForUser1.post("/auth/login").send({ email: mockUser1.email, password: pw });
+            await agentForUser2.post("/auth/login").send({ email: mockUser2.email, password: pw });
         });
 
         it("GET /borrow/all, should return statuscode 403", async () => {
@@ -139,9 +113,8 @@ describe("BORROWS", () => {
         it("PATCH /borrow/:id, should return statuscode 401 if logged in user have nothing to do with the borrow", async () => {
             expect.assertions(2);
             const patch: ModifyBorrow = { verified: true };
-            const thirdMockUserData = { email: "thirduser@test.com", password: "test4321" };
-            const password = await hash(thirdMockUserData.password, 10);
-            await userModel.create({ email: thirdMockUserData.email, password: password });
+            const thirdMockUserData = { email: "thirduser@test.com", password: pw };
+            await userModel.create({ email: thirdMockUserData.email, password: hpw });
             await request(server).post("/auth/login").send(thirdMockUserData);
             const res: Response = await request(server).patch(`/borrow/${mockBorrowId.toString()}`).send(patch);
             expect(res.statusCode).toBe(StatusCode.Unauthorized);
@@ -180,7 +153,7 @@ describe("BORROWS", () => {
 
         beforeAll(async () => {
             agent = request.agent(server);
-            await agent.post("/auth/login").send({ email: mockAdmin.email, password: mockAdmin.password });
+            await agent.post("/auth/login").send({ email: mockAdmin.email, password: pw });
         });
 
         it("GET /borrow/all, should return statuscode 200", async () => {

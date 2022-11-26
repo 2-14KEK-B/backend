@@ -1,4 +1,3 @@
-import { hash } from "bcrypt";
 import request, { Response, SuperAgentTest } from "supertest";
 import App from "../../app";
 import userModel from "@models/user";
@@ -8,32 +7,25 @@ import StatusCode from "@utils/statusCodes";
 import { Types } from "mongoose";
 import type { Express } from "express";
 import type { ModifyUser, User } from "@interfaces/user";
-
-type ID = string | Types.ObjectId;
-
-interface MockUser {
-    _id: ID;
-    email: string;
-    password: string;
-    role?: string;
-}
+import type { MockUser } from "@interfaces/mockData";
 
 describe("USERS", () => {
     let server: Express;
-    const mockUser1Id = new Types.ObjectId(),
+    const pw = global.MOCK_PASSWORD,
+        hpw = global.MOCK_HASHED_PASSWORD,
+        mockUser1Id = new Types.ObjectId(),
         mockUser2Id = new Types.ObjectId(),
         mockAdminId = new Types.ObjectId(),
-        mockUser1: MockUser = { _id: mockUser1Id, email: "testuser1@test.com", password: "test1234" },
-        mockUser2: MockUser = { _id: mockUser2Id, email: "testuser2@test.com", password: "test1234" },
-        mockAdmin: MockUser = { _id: mockAdminId, email: "testadmin@test.com", password: "test1234", role: "admin" };
+        mockUser1: MockUser = { _id: mockUser1Id, email: "testuser1@test.com", password: pw },
+        mockUser2: MockUser = { _id: mockUser2Id, email: "testuser2@test.com", password: pw },
+        mockAdmin: MockUser = { _id: mockAdminId, email: "testadmin@test.com", password: pw, role: "admin" };
 
     beforeAll(async () => {
         server = new App([new AuthenticationController(), new UserController()]).getServer();
-        const password = await hash(mockUser1.password, 10);
         await userModel.create([
-            { ...mockUser1, password: password },
-            { ...mockUser2, password: password },
-            { ...mockAdmin, password: password },
+            { ...mockUser1, password: hpw },
+            { ...mockUser2, password: hpw },
+            { ...mockAdmin, password: hpw },
         ]);
     });
 
@@ -58,7 +50,7 @@ describe("USERS", () => {
 
         beforeAll(async () => {
             agent = request.agent(server);
-            await agent.post("/auth/login").send({ email: mockUser1.email, password: mockUser1.password });
+            await agent.post("/auth/login").send({ email: mockUser1.email, password: pw });
         });
 
         it("GET /user/me, should return statuscode 200", async () => {
@@ -106,7 +98,7 @@ describe("USERS", () => {
 
         beforeAll(async () => {
             agent = request.agent(server);
-            await agent.post("/auth/login").send({ email: mockAdmin.email, password: mockAdmin.password });
+            await agent.post("/auth/login").send({ email: mockAdmin.email, password: pw });
         });
 
         it("GET /user/me, should return statuscode 200", async () => {
@@ -138,6 +130,12 @@ describe("USERS", () => {
             expect.assertions(1);
             const res: Response = await agent.delete(`/user/${mockUser1Id.toString()}`);
             expect(res.statusCode).toBe(StatusCode.NoContent);
+        });
+        it("DELETE /user/:id, should return statuscode 404 if user not found", async () => {
+            expect.assertions(2);
+            const res: Response = await agent.delete(`/user/${mockUser1Id.toString()}`);
+            expect(res.statusCode).toBe(404);
+            expect(res.body).toBe(`This ${mockUser1Id.toString()} id is not valid.`);
         });
     });
 });
