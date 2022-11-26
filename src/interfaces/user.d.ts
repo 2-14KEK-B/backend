@@ -17,10 +17,10 @@ interface User {
     picture?: string;
     role?: string;
     books: (Book | ID)[];
+    messages: (Message | ID)[];
     rated_books: ID[];
-    messages: Message[];
     user_ratings: ID[];
-    borrows: Borrow[];
+    borrows: (Borrow | ID)[];
 }
 
 interface CreateUser {
