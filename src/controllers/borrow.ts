@@ -5,7 +5,7 @@ import validation from "@middlewares/validation";
 import bookModel from "@models/book";
 import borrowModel from "@models/borrow";
 import userModel from "@models/user";
-import isIdValid from "@utils/idChecker";
+import isIdNotValid from "@utils/idChecker";
 import StatusCode from "@utils/statusCodes";
 import { CreateBorrowDto, ModifyBorrowDto } from "@validators/borrow";
 import HttpError from "@exceptions/Http";
@@ -45,7 +45,7 @@ export default class BorrowController implements Controller {
     private getBorrowById = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const borrowId = req.params["id"];
-            if (!(await isIdValid(this.borrow, [borrowId], next))) return;
+            if (await isIdNotValid(this.borrow, [borrowId], next)) return;
 
             const borrow = await this.borrow.findById(borrowId).populate(["books"]).lean<Borrow>().exec();
             if (!borrow) return next(new HttpError(`Failed to get borrow by id ${borrowId}`));
@@ -60,8 +60,8 @@ export default class BorrowController implements Controller {
         try {
             const userId = req.session.userId;
             const { from_id, books }: CreateBorrow = req.body;
-            if (!(await isIdValid(this.user, [from_id], next))) return;
-            if (!(await isIdValid(this.book, books, next))) return;
+            if (await isIdNotValid(this.user, [from_id], next)) return;
+            if (await isIdNotValid(this.book, books, next)) return;
 
             const newBorrow = await this.borrow.create({ to_id: userId, from_id: from_id, books: [...books] });
             if (!newBorrow) return next(new HttpError("Failed to create borrow"));
@@ -81,7 +81,7 @@ export default class BorrowController implements Controller {
         try {
             const userId = req.session.userId;
             const borrowId = req.params["id"];
-            if (!(await isIdValid(this.borrow, [borrowId], next))) return;
+            if (await isIdNotValid(this.borrow, [borrowId], next)) return;
 
             const loggedUser = await this.user.findById(userId).lean<User>().exec();
             const borrowData: ModifyBorrow = { ...req.body };
@@ -113,7 +113,7 @@ export default class BorrowController implements Controller {
     private deleteBorrowById = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const borrowId = req.params["id"];
-            if (!(await isIdValid(this.borrow, [borrowId], next))) return;
+            if (await isIdNotValid(this.borrow, [borrowId], next)) return;
 
             const { from_id, to_id } = await this.borrow.findById(borrowId).lean<Borrow>().exec();
             if (!from_id || !to_id) return next(new HttpError("Failed to get ids from borrow"));
