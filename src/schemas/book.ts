@@ -21,7 +21,7 @@ const bookSchema = new Schema<Book>({
                 ref: "User",
             },
             comment: String,
-            rating: { type: Number, required: true },
+            rate: { type: Number, required: true },
         },
     ],
 });

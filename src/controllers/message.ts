@@ -56,9 +56,10 @@ export default class MessageController implements Controller {
     private createMessage = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const to_id = req.params["toId"];
+            if (!(await isIdValid(this.user, [to_id], next))) return;
+
             const from_id = req.session.userId?.toString();
             const { content } = req.body as CreateMessage;
-            if (!(await isIdValid(this.user, [to_id], next))) return;
 
             const newMessageContent: MessageContent = {
                 sender_id: new Types.ObjectId(from_id),

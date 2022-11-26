@@ -6,5 +6,6 @@
     "watch": ["src/"],
     "ext": "ts, js, txt, json, ico",
     "delay": 0,
+    "ignore": ["**/__tests__/*.test.ts"],
     "exec": "./node_modules/.bin/ts-node -T src/server.ts || exit 1"
 }

@@ -13,6 +13,7 @@ const userSchema = new Schema<User>(
         picture: { type: String },
         role: { type: String },
         books: [{ type: Schema.Types.ObjectId, ref: "Book" }],
+        rated_books: [{ type: Schema.Types.ObjectId, ref: "Book" }],
         messages: [{ type: Schema.Types.ObjectId, ref: "Message" }],
         borrows: [{ type: Schema.Types.ObjectId, ref: "Borrow" }],
         user_ratings: [{ type: Schema.Types.ObjectId, refPath: "borrow.user_ratings" }],
