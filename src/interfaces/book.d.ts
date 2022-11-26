@@ -1,13 +1,7 @@
 import type { Types } from "mongoose";
+import { BookRating } from "./bookRating";
 
 type ID = Types.ObjectId | string;
-
-interface BookRating {
-    _id: string;
-    from_id: string;
-    comment?: string;
-    rating: number;
-}
 
 interface Book {
     _id: ID;
@@ -41,7 +35,6 @@ interface ModifyBook {
     price?: number;
     for_borrow?: boolean;
     available?: boolean;
-    ratings?: BookRating[];
 }
 
-export { Book, BookRating, CreateBook, ModifyBook };
+export { Book, CreateBook, ModifyBook };
