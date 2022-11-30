@@ -1,5 +1,4 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { Types } from "mongoose";
 import messageModel from "@models/message";
 import authentication from "@middlewares/authentication";
 import authorization from "@middlewares/authorization";
@@ -9,6 +8,7 @@ import StatusCode from "@utils/statusCodes";
 import isIdNotValid from "@utils/idChecker";
 import CreateMessageDto from "@validators/message";
 import HttpError from "@exceptions/Http";
+import { Types } from "mongoose";
 import type { CreateMessage, Message, MessageContent } from "@interfaces/message";
 import type Controller from "@interfaces/controller";
 

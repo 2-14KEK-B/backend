@@ -4,7 +4,7 @@ import cors from "cors";
 import morgan from "morgan";
 import { createSessionStore } from "@db/sessionStore";
 import errorMiddleware from "@middlewares/error";
-import env from "@utils/validateEnv";
+import env from "@config/validateEnv";
 import StatusCode from "@utils/statusCodes";
 import type Controller from "@interfaces/controller";
 
