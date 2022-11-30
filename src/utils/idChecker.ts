@@ -3,22 +3,17 @@ import IdNotValidException from "@exceptions/IdNotValid";
 import type { NextFunction } from "express";
 
 /**
-Check id/ids if valid ObjectId or existing in the collection
+Check id/ids if not valid ObjectId or not existing in the collection
  */
-export default async function isIdValid<T>(model: Model<T>, [...ids]: (string | undefined)[], next: NextFunction): Promise<boolean> {
+export default async function isIdNotValid<T>(model: Model<T>, [...ids]: (string | undefined)[], next: NextFunction): Promise<boolean> {
     for (const id of ids) {
-        if (!id) {
+        if (!id || !isValidObjectId(id)) {
             next(new IdNotValidException(id));
-            return false;
-        }
-        if (!isValidObjectId(id)) {
+            return true;
+        } else if (!(await model.exists({ _id: id }))) {
             next(new IdNotValidException(id));
-            return false;
-        }
-        if (!(await model.exists({ _id: id }))) {
-            next(new IdNotValidException(id));
-            return false;
+            return true;
         }
     }
-    return true;
+    return false;
 }

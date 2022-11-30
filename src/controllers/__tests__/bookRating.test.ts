@@ -1,4 +1,3 @@
-import { hash } from "bcrypt";
 import request, { Response, SuperAgentTest } from "supertest";
 import bookModel from "@models/book";
 import userModel from "@models/user";
@@ -8,54 +7,37 @@ import App from "../../app";
 import StatusCode from "@utils/statusCodes";
 import { Types } from "mongoose";
 import type { Express } from "express";
-import type { BookRating } from "@interfaces/bookRating";
-
-type ID = string | Types.ObjectId;
-
-interface MockUser {
-    _id: ID;
-    email: string;
-    password: string;
-    role?: string;
-    rated_books: ID[];
-}
-interface MockBook {
-    _id: ID;
-    uploader?: ID;
-    author: string;
-    title: string;
-    for_borrow: boolean;
-    ratings?: BookRating[];
-}
+import type { MockBook, MockUser } from "@interfaces/mockData";
 
 describe("BOOK RATING", () => {
-    const mockBookId = new Types.ObjectId();
-    const mockUserId = new Types.ObjectId();
-    const mockAdminId = new Types.ObjectId();
-    const bookFromUserId = new Types.ObjectId();
-    const bookFromAdminId = new Types.ObjectId();
     let server: Express;
-    const mockBook: MockBook = {
-        _id: mockBookId,
-        author: "testAuthor",
-        title: "testTitle",
-        for_borrow: true,
-        ratings: [
-            { from_id: mockUserId, rate: 5 },
-            { from_id: mockAdminId, rate: 1 },
-        ],
-    };
-    const mockUser: MockUser = { _id: mockUserId, email: "testuser@test.com", password: "test1234", rated_books: [mockBookId] };
-    const mockAdmin: MockUser = { _id: mockAdminId, email: "testadmin@test.com", password: "test1234", role: "admin", rated_books: [mockBookId] };
-    const mockBookFromUser: MockBook = { ...mockBook, _id: bookFromUserId, uploader: mockUserId, ratings: [{ from_id: mockAdminId, rate: 3 }] };
-    const mockBookFromAdmin: MockBook = { ...mockBook, _id: bookFromAdminId, uploader: mockAdminId, ratings: [{ from_id: mockUserId, rate: 3 }] };
+    const pw = global.MOCK_PASSWORD,
+        hpw = global.MOCK_HASHED_PASSWORD,
+        mockBookId = new Types.ObjectId(),
+        mockUserId = new Types.ObjectId(),
+        mockAdminId = new Types.ObjectId(),
+        bookFromUserId = new Types.ObjectId(),
+        bookFromAdminId = new Types.ObjectId(),
+        mockBook: MockBook = {
+            _id: mockBookId,
+            author: "testAuthor",
+            title: "testTitle",
+            for_borrow: true,
+            ratings: [
+                { from_id: mockUserId, rate: 5 },
+                { from_id: mockAdminId, rate: 1 },
+            ],
+        },
+        mockUser: MockUser = { _id: mockUserId, email: "testuser@test.com", password: pw, rated_books: [mockBookId] },
+        mockAdmin: MockUser = { _id: mockAdminId, email: "testadmin@test.com", password: pw, role: "admin", rated_books: [mockBookId] },
+        mockBookFromUser: MockBook = { ...mockBook, _id: bookFromUserId, uploader: mockUserId, ratings: [{ from_id: mockAdminId, rate: 3 }] },
+        mockBookFromAdmin: MockBook = { ...mockBook, _id: bookFromAdminId, uploader: mockAdminId, ratings: [{ from_id: mockUserId, rate: 3 }] };
 
     beforeAll(async () => {
         server = new App([new AuthenticationController(), new BookController()]).getServer();
-        const password = await hash(mockUser.password, 10);
         await userModel.create([
-            { ...mockUser, password: password },
-            { ...mockAdmin, password: password },
+            { ...mockUser, password: hpw },
+            { ...mockAdmin, password: hpw },
         ]);
         await bookModel.create([mockBook, mockBookFromUser, mockBookFromAdmin]);
     });
@@ -82,7 +64,7 @@ describe("BOOK RATING", () => {
 
         beforeAll(async () => {
             agent = request.agent(server);
-            await agent.post("/auth/login").send({ email: mockUser.email, password: mockUser.password });
+            await agent.post("/auth/login").send({ email: mockUser.email, password: pw });
         });
 
         it("POST /book/:id/rate, should return statuscode 400 if rated already", async () => {
@@ -109,7 +91,7 @@ describe("BOOK RATING", () => {
 
         beforeAll(async () => {
             agent = request.agent(server);
-            await agent.post("/auth/login").send({ email: mockAdmin.email, password: mockAdmin.password });
+            await agent.post("/auth/login").send({ email: mockAdmin.email, password: pw });
         });
 
         it("DELETE /book/:id/rate, should be return 204 if has been rated the book", async () => {

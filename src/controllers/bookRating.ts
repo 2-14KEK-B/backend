@@ -5,7 +5,7 @@ import authenticationMiddleware from "@middlewares/authentication";
 import authorizationMiddleware from "@middlewares/authorization";
 import bookModel from "@models/book";
 import userModel from "@models/user";
-import isIdValid from "@utils/idChecker";
+import isIdNotValid from "@utils/idChecker";
 import StatusCode from "@utils/statusCodes";
 import { BookRatingDto } from "@validators/book";
 import HttpError from "@exceptions/Http";
@@ -32,7 +32,7 @@ export default class BookRatingController implements Controller {
     private getAllBookRatingByBookId = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const bookId = req.params["id"];
-            if (!(await isIdValid(this.book, [bookId], next))) return;
+            if (await isIdNotValid(this.book, [bookId], next)) return;
 
             const bookRatings = await this.book.findById(bookId, { _id: 0, ratings: 1 }).lean<{ ratings: BookRating[] }>().exec();
             if (!bookRatings) return next(new HttpError("Failed to get rating of the book"));
@@ -47,7 +47,7 @@ export default class BookRatingController implements Controller {
         try {
             const userId = req.session.userId as string;
             const bookId = req.params["id"];
-            if (!(await isIdValid(this.book, [bookId], next))) return;
+            if (await isIdNotValid(this.book, [bookId], next)) return;
 
             const book = await this.book.findOne({ _id: bookId, "ratings.from_id": userId }).lean<Book>().exec();
             if (book) return next(new HttpError("Already rated this book."));
@@ -72,7 +72,7 @@ export default class BookRatingController implements Controller {
         try {
             const userId = req.session.userId as string;
             const bookId = req.params["id"];
-            if (!(await isIdValid(this.book, [bookId], next))) return;
+            if (await isIdNotValid(this.book, [bookId], next)) return;
 
             const book = await this.book.findOne({ _id: bookId, "ratings.from_id": userId }).lean<Book>().exec();
             if (!book) return next(new HttpError("You did not rate this book."));

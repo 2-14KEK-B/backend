@@ -1,14 +1,14 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { Types } from "mongoose";
 import messageModel from "@models/message";
 import authentication from "@middlewares/authentication";
 import authorization from "@middlewares/authorization";
 import validation from "@middlewares/validation";
 import userModel from "@models/user";
 import StatusCode from "@utils/statusCodes";
-import isIdValid from "@utils/idChecker";
+import isIdNotValid from "@utils/idChecker";
 import CreateMessageDto from "@validators/message";
 import HttpError from "@exceptions/Http";
+import { Types } from "mongoose";
 import type { CreateMessage, Message, MessageContent } from "@interfaces/message";
 import type Controller from "@interfaces/controller";
 
@@ -42,7 +42,7 @@ export default class MessageController implements Controller {
     private getMessageById = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const messageId = req.params["id"];
-            if (!(await isIdValid(this.message, [messageId], next))) return;
+            if (await isIdNotValid(this.message, [messageId], next)) return;
 
             const message = await this.message.findById(messageId).lean<Message>().exec();
             if (!message) return next(new HttpError(`Failed to get message by id ${messageId}`));
@@ -56,7 +56,7 @@ export default class MessageController implements Controller {
     private createMessage = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const to_id = req.params["toId"];
-            if (!(await isIdValid(this.user, [to_id], next))) return;
+            if (await isIdNotValid(this.user, [to_id], next)) return;
 
             const from_id = req.session.userId?.toString();
             const { content } = req.body as CreateMessage;
@@ -98,7 +98,7 @@ export default class MessageController implements Controller {
     private deleteMessageById = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const messageId = req.params["id"];
-            if (!(await isIdValid(this.message, [messageId], next))) return;
+            if (await isIdNotValid(this.message, [messageId], next)) return;
 
             const { users } = await this.message.findById(messageId).lean<Message>().exec();
             if (!users) return next(new HttpError("Failed to get ids from messages"));

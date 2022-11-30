@@ -26,6 +26,7 @@
         "paths": {
             "@authentication/*": ["src/authentication/*"],
             "@controllers/*": ["src/controllers/*"],
+            "@config/*": ["src/config/*"],
             "@db/*": ["src/db/*"],
             "@exceptions/*": ["src/exceptions/*"],
             "@interfaces/*": ["src/interfaces/*.d.ts"],

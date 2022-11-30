@@ -4,9 +4,8 @@ import authorization from "@middlewares/authorization";
 import validation from "@middlewares/validation";
 import userModel from "@models/user";
 import ModifyUserDto from "@validators/user";
-import isIdValid from "@utils/idChecker";
+import isIdNotValid from "@utils/idChecker";
 import StatusCode from "@utils/statusCodes";
-import UserNotFoundException from "@exceptions/UserNotFound";
 import HttpError from "@exceptions/Http";
 import type Controller from "@interfaces/controller";
 import type { ModifyUser, User } from "@interfaces/user";
@@ -43,7 +42,6 @@ export default class UserController implements Controller {
             const userId = req.session.userId;
 
             const user = await this.user.findById(userId, "-password").populate(["books", "borrows", "messages", "user_ratings"]).lean<User>().exec();
-            if (!user) return next(new UserNotFoundException(userId));
 
             res.json(user);
         } catch (error) {
@@ -54,14 +52,13 @@ export default class UserController implements Controller {
     private getUserById = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const userId = req.params["id"];
-            if (!(await isIdValid(this.user, [userId], next))) return;
+            if (await isIdNotValid(this.user, [userId], next)) return;
 
             const user = await this.user
                 .findById(userId, "-password -email_is_verified -role -messages")
                 .populate("user_ratings")
                 .lean<User>()
                 .exec();
-            if (!user) return next(new UserNotFoundException(userId));
 
             res.json(user);
         } catch (error) {
@@ -72,12 +69,12 @@ export default class UserController implements Controller {
     private modifyUserById = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const userId = req.params["id"];
-            if (!(await isIdValid(this.user, [userId], next))) return;
+            if (await isIdNotValid(this.user, [userId], next)) return;
             const loggedUser = await this.user.findById(req.session.userId).lean<User>().exec();
 
             if (loggedUser.role != "admin") {
                 if (userId != loggedUser._id) {
-                    return next(new HttpError("Unauthorized", StatusCode.Forbidden));
+                    return next(new HttpError("You cannot modify other user's data.", StatusCode.Forbidden));
                 }
             }
 
@@ -94,10 +91,9 @@ export default class UserController implements Controller {
     private deleteUserById = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const userId = req.params["id"];
-            if (!(await isIdValid(this.user, [userId], next))) return;
+            if (await isIdNotValid(this.user, [userId], next)) return;
 
-            const successResponse = await this.user.findByIdAndDelete(userId).exec();
-            if (!successResponse) return next(new UserNotFoundException(userId));
+            await this.user.findByIdAndDelete(userId).exec();
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {

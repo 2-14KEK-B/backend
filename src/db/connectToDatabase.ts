@@ -1,5 +1,5 @@
 import { connect, connection } from "mongoose";
-import env from "../utils/validateEnv";
+import env from "@config/validateEnv";
 import userModel from "@models/user";
 import bookModel from "@models/book";
 import borrowModel from "@models/borrow";
