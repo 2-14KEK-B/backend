@@ -1,4 +1,3 @@
-import { hash } from "bcrypt";
 import request, { Response, SuperAgentTest } from "supertest";
 import App from "../../app";
 import bookModel from "@models/book";
@@ -13,40 +12,40 @@ import type { MockBook, MockUser } from "@interfaces/mockData";
 
 describe("BOOKS", () => {
     let server: Express;
-    const mockBook1Id = new Types.ObjectId();
-    const mockBook2Id = new Types.ObjectId();
-    const mockUser1Id = new Types.ObjectId();
-    const mockUser2Id = new Types.ObjectId();
-    const mockAdminId = new Types.ObjectId();
-    const mockBook1: MockBook = {
-        _id: mockBook1Id,
-        uploader: mockUser1Id,
-        author: "testAuthor",
-        title: "testTitle",
-        for_borrow: true,
-        available: true,
-    };
-    const mockBook2: MockBook = {
-        _id: mockBook2Id,
-        uploader: mockUser1Id,
-        author: "testAuthor",
-        title: "testTitle",
-        for_borrow: true,
-        available: true,
-    };
-    const mockUser1: MockUser = { _id: mockUser1Id, email: "testuser1@test.com", password: "test1234", books: [mockBook1Id, mockBook2Id] };
-    const mockUser2: MockUser = { _id: mockUser2Id, email: "testuser2@test.com", password: mockUser1.password, books: [] };
-    const mockAdmin: MockUser = { _id: mockAdminId, email: "testadmin@test.com", password: mockUser1.password, books: [], role: "admin" };
+    const pw = global.MOCK_PASSWORD,
+        hpw = global.MOCK_HASHED_PASSWORD,
+        mockBook1Id = new Types.ObjectId(),
+        mockBook2Id = new Types.ObjectId(),
+        mockUser1Id = new Types.ObjectId(),
+        mockUser2Id = new Types.ObjectId(),
+        mockAdminId = new Types.ObjectId(),
+        mockBook1: MockBook = {
+            _id: mockBook1Id,
+            uploader: mockUser1Id,
+            author: "testAuthor",
+            title: "testTitle",
+            for_borrow: true,
+            available: true,
+        },
+        mockBook2: MockBook = {
+            _id: mockBook2Id,
+            uploader: mockUser1Id,
+            author: "testAuthor",
+            title: "testTitle",
+            for_borrow: true,
+            available: true,
+        },
+        mockUser1: MockUser = { _id: mockUser1Id, email: "testuser1@test.com", password: pw, books: [mockBook1Id, mockBook2Id] },
+        mockUser2: MockUser = { _id: mockUser2Id, email: "testuser2@test.com", password: pw, books: [] },
+        mockAdmin: MockUser = { _id: mockAdminId, email: "testadmin@test.com", password: pw, books: [], role: "admin" };
 
     beforeAll(async () => {
         server = new App([new AuthenticationController(), new BookController()]).getServer();
-        const password = await hash(mockUser1.password, 10);
         await userModel.create([
-            { ...mockUser1, password: password },
-            { ...mockUser2, password: password },
-            { ...mockAdmin, password: password },
+            { ...mockUser1, password: hpw },
+            { ...mockUser2, password: hpw },
+            { ...mockAdmin, password: hpw },
         ]);
-        // console.log("users: ", await userModel.find());
         await bookModel.create([mockBook1, mockBook2]);
     });
 
@@ -80,8 +79,8 @@ describe("BOOKS", () => {
         beforeAll(async () => {
             agentForUser1 = request.agent(server);
             agentForUser2 = request.agent(server);
-            await agentForUser1.post("/auth/login").send({ email: mockUser1.email, password: mockUser1.password });
-            await agentForUser2.post("/auth/login").send({ email: mockUser2.email, password: mockUser2.password });
+            await agentForUser1.post("/auth/login").send({ email: mockUser1.email, password: pw });
+            await agentForUser2.post("/auth/login").send({ email: mockUser2.email, password: pw });
         });
         it("GET /book, should return statuscode 200 and a book array with 2 books in it", async () => {
             expect.assertions(2);
@@ -125,7 +124,7 @@ describe("BOOKS", () => {
 
         beforeAll(async () => {
             agent = request.agent(server);
-            await agent.post("/auth/login").send({ email: mockAdmin.email, password: mockAdmin.password });
+            await agent.post("/auth/login").send({ email: mockAdmin.email, password: pw });
         });
         it("DELETE /book/:id, should return statuscode 204", async () => {
             expect.assertions(1);

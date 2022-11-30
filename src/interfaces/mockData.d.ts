@@ -16,6 +16,7 @@ interface MockUser {
     books?: (Book | ID)[];
     borrows?: (Borrow | ID)[];
     rated_books?: ID[];
+    messages?: (Message | ID)[];
 }
 interface MockBorrow {
     _id?: ID;
@@ -25,5 +26,13 @@ interface MockBorrow {
     books?: (Book | ID)[];
     verified?: boolean;
 }
+interface MockMessage {
+    _id?: ID;
+    users: ID[];
+    message_contents: {
+        sender_id: ID;
+        content: string;
+    }[];
+}
 
-export { MockBook, MockUser, MockBorrow };
+export { MockBook, MockUser, MockBorrow, MockMessage };

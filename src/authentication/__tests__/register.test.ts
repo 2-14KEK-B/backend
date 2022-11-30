@@ -1,31 +1,43 @@
-import userModel from "@models/user";
 import request, { Response } from "supertest";
 import App from "../../app";
 import AuthenticationController from "@authentication/index";
+import userModel from "@models/user";
 import StatusCode from "@utils/statusCodes";
 import type { Express } from "express";
+import type { MockUser } from "@interfaces/mockData";
 
 describe("POST /auth/register", () => {
     let server: Express;
-    const mockUser = { email: "test@test.com", password: "test1234" };
+    const pw = global.MOCK_PASSWORD,
+        hpw = global.MOCK_HASHED_PASSWORD,
+        mockUser1: MockUser = { email: "test1@test.com", password: pw },
+        mockUser2: MockUser = { email: "test2@test.com", password: pw };
 
     beforeAll(async () => {
         server = new App([new AuthenticationController()]).getServer();
-    });
-
-    it("returns statuscode 200 if registered successfully", async () => {
-        expect.assertions(2);
-        const validEmail = "validEmail@test.com";
-        const res: Response = await request(server).post("/auth/register").send({ email: validEmail, password: mockUser.password });
-        expect(res.statusCode).toEqual(StatusCode.OK);
-        expect(res.body).toEqual(`user created with ${validEmail}`);
+        await userModel.create({ ...mockUser1, password: hpw });
     });
 
     it("returns statuscode 400 if user already exists", async () => {
         expect.assertions(2);
-        await userModel.create(mockUser);
-        const res: Response = await request(server).post("/auth/register").send(mockUser);
+        const res: Response = await request(server).post("/auth/register").send({ email: mockUser1.email, password: pw });
         expect(res.statusCode).toEqual(StatusCode.BadRequest);
-        expect(res.body).toEqual(`User with email ${mockUser.email} already exists`);
+        expect(res.body).toEqual(`User with email ${mockUser1.email} already exists`);
+    });
+
+    it("returns statuscode 406 if key-value of body is not valid", async () => {
+        expect.assertions(2);
+        const res: Response = await request(server).post("/auth/register").send({ something: "mockUser2.email", something2: "pw" });
+        expect(res.statusCode).toEqual(StatusCode.NotAcceptable);
+        expect(res.body).toEqual(
+            "property something should not exist, property something2 should not exist, email must be an email, password must be a string",
+        );
+    });
+
+    it("returns statuscode 200 if registered successfully", async () => {
+        expect.assertions(2);
+        const res: Response = await request(server).post("/auth/register").send({ email: mockUser2.email, password: pw });
+        expect(res.statusCode).toEqual(StatusCode.OK);
+        expect(res.body).toEqual(`user created with ${mockUser2.email}`);
     });
 });
