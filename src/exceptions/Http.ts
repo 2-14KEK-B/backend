@@ -1,5 +1,5 @@
 import StatusCode from "@utils/statusCodes";
-import env from "@utils/validateEnv";
+import env from "@config/validateEnv";
 
 export default class HttpError extends Error {
     constructor(public message: string = "Something went wrong", public status: number = StatusCode.BadRequest) {

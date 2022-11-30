@@ -1,8 +1,8 @@
 import { ClassConstructor, plainToInstance } from "class-transformer";
 import { validate, ValidationError } from "class-validator";
 import HttpError from "@exceptions/Http";
-import type { Request, Response, NextFunction, RequestHandler } from "express";
 import StatusCode from "@utils/statusCodes";
+import type { Request, Response, NextFunction, RequestHandler } from "express";
 
 /**
 Checks input from req.data by Dto-s
