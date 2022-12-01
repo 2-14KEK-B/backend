@@ -1,4 +1,5 @@
-type ID = string | Types.ObjectId;
+import type ID from "./id";
+
 interface MockBook {
     _id?: ID;
     uploader?: ID;

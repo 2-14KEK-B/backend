@@ -1,22 +1,5 @@
-import type { Types } from "mongoose";
 import { BookRating } from "./bookRating";
-
-type ID = Types.ObjectId | string;
-
-interface Book {
-    _id: ID;
-    uploader: ID;
-    updated_on?: Date;
-    author: string;
-    title: string;
-    picture: string;
-    category: string[];
-    price?: number;
-    available?: boolean;
-    for_borrow: boolean;
-    ratings?: BookRating[];
-    __v?: number;
-}
+import type ID from "./id";
 
 interface CreateBook {
     author: string;
@@ -27,14 +10,20 @@ interface CreateBook {
     for_borrow: boolean;
 }
 
-interface ModifyBook {
+interface ModifyBook extends CreateBook {
     author?: string;
     title?: string;
-    picture?: string;
-    category?: string[];
-    price?: number;
     for_borrow?: boolean;
     available?: boolean;
+}
+
+interface Book extends CreateBook {
+    _id: ID;
+    uploader: ID;
+    updated_on?: Date;
+    available?: boolean;
+    ratings?: BookRating[];
+    __v?: number;
 }
 
 export { Book, CreateBook, ModifyBook };
