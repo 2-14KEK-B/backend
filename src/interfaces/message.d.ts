@@ -2,11 +2,11 @@ import type ID from "./id";
 
 interface CreateMessage {
     content: string;
-    sender_id: ID;
 }
 
 interface MessageContent extends CreateMessage {
     _id?: ID;
+    sender_id: ID;
 }
 
 interface Message {

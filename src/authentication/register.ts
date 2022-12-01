@@ -33,15 +33,13 @@ export default class RegisterController implements Controller {
             const hashedPassword = await hash(userData.password, 10);
             if (!hashedPassword) return next(new HttpError("Something wrong with the password."));
 
-            const newUser = await this.userModel.create({
+            const { email } = await this.userModel.create({
                 ...userData,
                 password: hashedPassword,
             });
-            if (!newUser) return next(new HttpError("Something wrong with the user creation."));
+            if (!email) return next(new HttpError("Something wrong with the user creation."));
 
-            newUser.password = undefined;
-
-            res.json(`user created with ${newUser.email}`);
+            res.json(`user created with ${email}`);
         } catch (error) {
             next(new HttpError(error));
         }

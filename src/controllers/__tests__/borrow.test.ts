@@ -130,14 +130,14 @@ describe("BORROWS", () => {
         it("PATCH /borrow/:id, should return statuscode 401 if logged in user who is borrowing the book and modify 'verified'", async () => {
             expect.assertions(2);
             const patch: ModifyBorrow = { verified: true };
-            const res: Response = await agentForUser1.patch(`/borrow/${mockBorrowForLoggedInUser._id.toString()}`).send(patch);
+            const res: Response = await agentForUser1.patch(`/borrow/${mockBorrowForLoggedInUser._id?.toString()}`).send(patch);
             expect(res.statusCode).toBe(StatusCode.Unauthorized);
             expect(res.body).toBe("You can not modify this value");
         });
         it("PATCH /borrow/:id, should return statuscode 200 if logged in user who is borrowing the book and modify the 'books'", async () => {
             expect.assertions(2);
             const patch: ModifyBorrow = { books: [mockBook1FromUser2Id.toString(), mockBook2FromUser2Id.toString()] };
-            const res: Response = await agentForUser1.patch(`/borrow/${mockBorrowForLoggedInUser._id.toString()}`).send(patch);
+            const res: Response = await agentForUser1.patch(`/borrow/${mockBorrowForLoggedInUser._id?.toString()}`).send(patch);
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body).toBeInstanceOf(Object as unknown as Borrow);
         });

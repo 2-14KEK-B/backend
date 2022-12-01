@@ -29,7 +29,7 @@ export default class LoginController implements Controller {
         try {
             const userData: LoginCred = req.body;
 
-            const user = await this.userModel.findOne({ email: userData.email }).lean<User>().exec();
+            const user = await this.userModel.findOne({ email: userData.email }).lean<Partial<User>>().exec();
             if (!user) return next(new WrongCredentialsException());
 
             const isPasswordMatching = await compare(userData.password, user.password as string);
@@ -37,7 +37,7 @@ export default class LoginController implements Controller {
 
             delete user["password"];
 
-            req.session.userId = user._id.toString();
+            req.session.userId = user?._id?.toString();
             res.send(user);
         } catch (error) {
             next(new HttpError(error));
