@@ -14,8 +14,15 @@
                 "$oid": "6357d9e43441ea127321696d"
             }
         ],
-        "verified": false,
-        "user_ratings": [],
+        "verified": true,
+        "user_ratings": [
+            {
+                "$oid": "638906990097a84550cec128"
+            },
+            {
+                "$oid": "638906990097a84550cec129"
+            }
+        ],
         "__v": 0
     }
 ]

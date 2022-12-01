@@ -22,15 +22,13 @@ const borrowSchema = new Schema<Borrow>({
     ],
     verified: { type: Boolean, default: false },
     user_ratings: [
-        {
-            rating: { type: Boolean, required: true },
-            from_id: {
-                type: Schema.Types.ObjectId,
-                ref: "User",
-                required: true,
-            },
-            comment: String,
-        },
+        { type: Schema.Types.ObjectId, ref: "UserRating" },
+        // {
+        //     from_id: {
+        //         type: Schema.Types.ObjectId,
+        //         ref: "User",
+        //     },
+        // },
     ],
 });
 

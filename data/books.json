@@ -11,7 +11,7 @@
         "picture": "https://smartmobilestudio.com/wp-content/uploads/2012/06/leather-book-preview.png",
         "category": [],
         "price": 0,
-        "available": true,
+        "available": false,
         "for_borrow": true,
         "ratings": [],
         "__v": 0

@@ -37,7 +37,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"email\": \"test2@test.com\",\r\n    \"password\": \"4321\"\r\n}",
+							"raw": "{\r\n    \"email\": \"test@test.com\",\r\n    \"password\": \"1234\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -145,6 +145,77 @@
 			"name": "books",
 			"item": [
 				{
+					"name": "rating",
+					"item": [
+						{
+							"name": "get all by book id",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/book/6357d9e43441ea127321696d/rate",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"book",
+										"6357d9e43441ea127321696d",
+										"rate"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "delete by book id",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/book/6357d9e43441ea127321696d/rate",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"book",
+										"6357d9e43441ea127321696d",
+										"rate"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "create by book id",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"rate\": 1,\r\n    \"comment\": \"szoszi\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URL}}/book/6357d9e43441ea127321696d/rate",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"book",
+										"6357d9e43441ea127321696d",
+										"rate"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
 					"name": "get all",
 					"request": {
 						"method": "GET",
@@ -246,6 +317,59 @@
 		{
 			"name": "borrows",
 			"item": [
+				{
+					"name": "user ratings",
+					"item": [
+						{
+							"name": "get by borrowId",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/borrow/6357f9bf7b60ee488385f955/rate",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"borrow",
+										"6357f9bf7b60ee488385f955",
+										"rate"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "create by borrowId",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"rate\": false\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URL}}/borrow/6357f9bf7b60ee488385f955/rate/6357b544447026c9b91950fd",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"borrow",
+										"6357f9bf7b60ee488385f955",
+										"rate",
+										"6357b544447026c9b91950fd"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
 				{
 					"name": "get all",
 					"event": [
@@ -379,32 +503,6 @@
 			"name": "messages",
 			"item": [
 				{
-					"name": "create",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n  \"from_id\": \"6357b544447026c9b91950fd\",\r\n  \"to_id\": \"6357b59c447026c9b9195100\",\r\n  \"content\": \"mizu\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{URL}}/message",
-							"host": [
-								"{{URL}}"
-							],
-							"path": [
-								"message"
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "get all",
 					"request": {
 						"method": "GET",
@@ -435,6 +533,32 @@
 							"path": [
 								"message",
 								"635803e76fe4028063397763"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"from_id\": \"6357b544447026c9b91950fd\",\r\n  \"to_id\": \"6357b59c447026c9b9195100\",\r\n  \"content\": \"mizu\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/message",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"message"
 							]
 						}
 					},

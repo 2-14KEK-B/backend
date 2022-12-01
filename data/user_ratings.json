@@ -1,0 +1,28 @@
+[
+    {
+        "_id": {
+            "$oid": "638906990097a84550cec128"
+        },
+        "from_id": {
+            "$oid": "6357b544447026c9b91950fd"
+        },
+        "to_id": {
+            "$oid": "6357b59c447026c9b9195100"
+        },
+        "rate": true,
+        "comment": "Everything went good."
+    },
+    {
+        "_id": {
+            "$oid": "638906990097a84550cec129"
+        },
+        "from_id": {
+            "$oid": "6357b59c447026c9b9195100"
+        },
+        "to_id": {
+            "$oid": "6357b544447026c9b91950fd"
+        },
+        "rate": true,
+        "comment": "Nice guy."
+    }
+]

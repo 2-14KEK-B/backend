@@ -19,6 +19,7 @@ const bookSchema = new Schema<Book>({
             from_id: {
                 type: Schema.Types.ObjectId,
                 ref: "User",
+                required: true,
             },
             comment: String,
             rate: { type: Number, required: true },
