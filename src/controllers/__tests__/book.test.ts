@@ -22,20 +22,25 @@ describe("BOOKS", () => {
         mockBook1: MockBook = {
             _id: mockBook1Id,
             uploader: mockUser1Id,
-            author: "testAuthor",
-            title: "testTitle",
+            author: "Alpha Author",
+            title: "Title For First Book",
             for_borrow: true,
             available: true,
         },
         mockBook2: MockBook = {
             _id: mockBook2Id,
             uploader: mockUser1Id,
-            author: "testAuthor",
-            title: "testTitle",
+            author: "Beta Author",
+            title: "Title For Second Book",
             for_borrow: true,
             available: true,
         },
-        mockUser1: MockUser = { _id: mockUser1Id, email: "testuser1@test.com", password: pw, books: [mockBook1Id, mockBook2Id] },
+        mockUser1: MockUser = {
+            _id: mockUser1Id,
+            email: "testuser1@test.com",
+            password: pw,
+            books: [mockBook1Id, mockBook2Id],
+        },
         mockUser2: MockUser = { _id: mockUser2Id, email: "testuser2@test.com", password: pw, books: [] },
         mockAdmin: MockUser = { _id: mockAdminId, email: "testadmin@test.com", password: pw, books: [], role: "admin" };
 
@@ -51,10 +56,37 @@ describe("BOOKS", () => {
 
     describe("BOOKS without logged in", () => {
         it("GET /book, should return statuscode 200", async () => {
-            expect.assertions(2);
+            expect.assertions(5);
             const res = await request(server).get("/book");
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body).toBeInstanceOf(Array<Book>);
+            expect(res.body.length).toBe(2);
+            expect(res.body[0].title).toBe(mockBook1.title);
+            expect(res.body[1].title).toBe(mockBook2.title);
+        });
+        it("GET /book?limit=1, should return statuscode 200 and book array with one book in it", async () => {
+            expect.assertions(3);
+            const res = await request(server).get("/book?limit=1");
+            expect(res.statusCode).toBe(StatusCode.OK);
+            expect(res.body).toBeInstanceOf(Array<Book>);
+            expect(res.body.length).toBe(1);
+        });
+        it("GET /book?keyword=Second, should return statuscode 200 and book array with book where keyword in book title or author", async () => {
+            expect.assertions(4);
+            const res = await request(server).get("/book?keyword=Second");
+            expect(res.statusCode).toBe(StatusCode.OK);
+            expect(res.body).toBeInstanceOf(Array<Book>);
+            expect(res.body.length).toBe(1);
+            expect(res.body[0].title).toBe(mockBook2.title);
+        });
+        it("GET /book?sort=desc&sortBy=author, should return statuscode 200 and book array with sorted books by author field", async () => {
+            expect.assertions(5);
+            const res = await request(server).get("/book?sort=desc&sortBy=author");
+            expect(res.statusCode).toBe(StatusCode.OK);
+            expect(res.body).toBeInstanceOf(Array<Book>);
+            expect(res.body.length).toBe(2);
+            expect(res.body[0].title).toBe(mockBook2.title);
+            expect(res.body[1].title).toBe(mockBook1.title);
         });
         it("any other PATH than GET /book, should return statuscode 401", async () => {
             expect.assertions(5);
