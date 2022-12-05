@@ -25,20 +25,23 @@ export default class LoginController implements Controller {
         this.router.post(`${this.path}/login`, validationMiddleware(LoginDto), this.login);
     }
 
-    private login = async (req: Request, res: Response, next: NextFunction) => {
+    private login = async (req: Request<unknown, unknown, LoginCred>, res: Response, next: NextFunction) => {
         try {
-            const userData: LoginCred = req.body;
+            const { email, password } = req.body;
 
-            const user = await this.userModel.findOne({ email: userData.email }).lean<User>().exec();
+            const user = await this.userModel //
+                .findOne({ email: email })
+                .lean<User>()
+                .exec();
             if (!user) return next(new WrongCredentialsException());
 
-            const isPasswordMatching = await compare(userData.password, user.password as string);
+            const isPasswordMatching = await compare(password, user.password as string);
             if (!isPasswordMatching) return next(new WrongCredentialsException());
 
             delete user["password"];
 
             req.session.userId = user._id.toString();
-            res.send(user);
+            res.json(user);
         } catch (error) {
             next(new HttpError(error));
         }
