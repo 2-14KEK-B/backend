@@ -1,5 +1,19 @@
-import { Schema } from "mongoose";
+import { Schema, Types } from "mongoose";
 import type { Book } from "@interfaces/book";
+import type { BookRating } from "@interfaces/bookRating";
+
+const bookRatingSchema = new Schema<BookRating>({
+    from_id: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+    },
+    comment: String,
+    rate: { type: Number, required: true },
+});
+
+bookRatingSchema.virtual("created_at").get(function (this: { _id: Types.ObjectId }) {
+    return this._id?.getTimestamp();
+});
 
 const bookSchema = new Schema<Book>({
     uploader: {
@@ -14,16 +28,7 @@ const bookSchema = new Schema<Book>({
     price: { type: Number, default: 0 },
     available: { type: Boolean, default: true },
     for_borrow: { type: Boolean, required: true },
-    ratings: [
-        {
-            from_id: {
-                type: Schema.Types.ObjectId,
-                ref: "User",
-            },
-            comment: String,
-            rate: { type: Number, required: true },
-        },
-    ],
+    ratings: [bookRatingSchema],
 });
 
 export default bookSchema;

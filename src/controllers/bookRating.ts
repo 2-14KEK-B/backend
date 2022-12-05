@@ -26,33 +26,43 @@ export default class BookRatingController implements Controller {
 
     private initRoutes() {
         this.router
-            .route(`${this.path}/:id`)
+            .route(`${this.path}:id`)
             .get(this.getAllBookRatingByBookId)
             .post([authenticationMiddleware, validationMiddleware(BookRatingDto)], this.createBookRatingByBookId)
             .delete([authenticationMiddleware, authorizationMiddleware(["admin"])], this.deleteBookRatingByBookId);
     }
 
     private getAllBookRatingByBookId = async (
-        req: Request<{ id: string }, unknown, unknown, { skip?: number; limit?: number; sort?: SortOrder }>,
+        req: Request<{ id: string }, unknown, unknown, { skip?: string; limit?: string; sort?: SortOrder }>,
         res: Response,
         next: NextFunction,
     ) => {
         try {
             const bookId = req.params["id"];
             if (await isIdNotValid(this.book, [bookId], next)) return;
+            const { skip, limit, sort = "desc" } = req.query;
 
-            const { skip = 0, limit = 10, sort = "asc" } = req.query;
+            const book = await this.book.findById(bookId, { ratings: 1 }).exec();
+            if (!book) return next(new HttpError("Failed to get rating of the book"));
 
-            const { ratings } = await this.book
-                .findById(bookId, { _id: 0, ratings: 1 })
-                .sort(`${sort}`)
-                .skip(skip)
-                .limit(limit)
-                .lean<{ ratings: BookRating[] }>()
-                .exec();
-            if (!ratings) return next(new HttpError("Failed to get rating of the book"));
+            let sortedRatings: BookRating[] | undefined = [];
 
-            res.json(ratings);
+            sortedRatings = book.ratings?.sort(
+                (r1: BookRating & { created_at: Date }, r2: BookRating & { created_at: Date }) => {
+                    if (sort === "asc" || sort === "ascending") {
+                        return r2.created_at.getTime() - r1.created_at.getTime();
+                    } else {
+                        return r1.created_at.getTime() - r2.created_at.getTime();
+                    }
+                },
+            );
+
+            sortedRatings = book.ratings?.slice(
+                Number.parseInt(skip as string) || 0,
+                Number.parseInt(limit as string) || 10,
+            );
+
+            res.json(sortedRatings);
         } catch (error) {
             next(new HttpError(error));
         }
