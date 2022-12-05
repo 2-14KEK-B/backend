@@ -7,8 +7,9 @@ import App from "../../app";
 import StatusCode from "@utils/statusCodes";
 import { Types } from "mongoose";
 import type { Express } from "express";
-import type { MockBook, MockUser } from "@interfaces/mockData";
 import type { BookRating } from "@interfaces/bookRating";
+import type { Book } from "@interfaces/book";
+import type { User } from "@interfaces/user";
 
 describe("BOOK RATING", () => {
     let server: Express;
@@ -19,35 +20,40 @@ describe("BOOK RATING", () => {
         mockAdminId = new Types.ObjectId(),
         bookFromUserId = new Types.ObjectId(),
         bookFromAdminId = new Types.ObjectId(),
-        mockUser: MockUser = { _id: mockUserId, email: "testuser@test.com", password: pw, rated_books: [mockBookId] },
-        mockAdmin: MockUser = {
+        mockUser: Partial<User> = {
+            _id: mockUserId,
+            email: "testuser@test.com",
+            password: pw,
+            rated_books: [mockBookId],
+        },
+        mockAdmin: Partial<User> = {
             _id: mockAdminId,
             email: "testadmin@test.com",
             password: pw,
             role: "admin",
             rated_books: [mockBookId],
         },
-        mockBook: MockBook = {
+        mockBook: Partial<Book> = {
             _id: mockBookId,
             author: "testAuthor",
             title: "testTitle",
             for_borrow: true,
             ratings: [
-                { _id: new Types.ObjectId("60a4fa38846526d389527da3"), from_id: mockUserId, rate: 5 }, //2021
-                { _id: new Types.ObjectId("638e197810dc9e77d2842471"), from_id: mockAdminId, rate: 1 }, //2022
+                { from_id: mockUserId, rate: 5, createdAt: new Date("2020-10-10") },
+                { from_id: mockAdminId, rate: 1, createdAt: new Date("2021-10-10") },
             ],
         },
-        mockBookFromUser: MockBook = {
+        mockBookFromUser: Partial<Book> = {
             ...mockBook,
             _id: bookFromUserId,
             uploader: mockUserId,
-            ratings: [{ from_id: mockAdminId, rate: 3 }],
+            ratings: [{ from_id: mockAdminId, rate: 3, createdAt: new Date() }],
         },
-        mockBookFromAdmin: MockBook = {
+        mockBookFromAdmin: Partial<Book> = {
             ...mockBook,
             _id: bookFromAdminId,
             uploader: mockAdminId,
-            ratings: [{ from_id: mockUserId, rate: 3 }],
+            ratings: [{ from_id: mockUserId, rate: 3, createdAt: new Date() }],
         };
 
     beforeAll(async () => {

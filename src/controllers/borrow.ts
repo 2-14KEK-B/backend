@@ -30,7 +30,7 @@ export default class BorrowController implements Controller {
         this.router.get(`${this.path}/all`, authorization(["admin"]), this.getAllBorrows);
         this.router //
             .route(this.path)
-            .get(this.getBorrowsByUserId)
+            .get(this.getBorrows)
             .post(validation(CreateBorrowDto), this.createBorrow);
         this.router
             .route(`${this.path}/:id`)
@@ -52,51 +52,60 @@ export default class BorrowController implements Controller {
         }
     };
 
-    private getBorrowsByUserId = async (
+    private getBorrows = async (
         req: Request<
             unknown,
             unknown,
             unknown,
             {
-                skip?: number;
-                limit?: number;
+                skip?: string;
+                limit?: string;
                 sort?: SortOrder;
                 sortBy?: string;
-                keyword?: string;
+                userId?: string;
             }
         >,
         res: Response,
         next: NextFunction,
     ) => {
         try {
-            const { skip = 0, limit = 10, sort = "asc", sortBy, keyword } = req.query;
+            const loggedInUserId = req.session.userId as string;
+            const { skip, limit, sort = "asc", sortBy, userId } = req.query;
 
-            let query: FilterQuery<User> = {};
+            let query: FilterQuery<Borrow> = { $or: [{ from_id: loggedInUserId }, { to_id: loggedInUserId }] };
+
+            if (userId && userId != loggedInUserId) {
+                if (await isIdNotValid(this.user, [userId], next)) {
+                    return;
+                }
+                const { role } = await this.user //
+                    .findById(userId)
+                    .lean<User>()
+                    .exec();
+                if (role != "admin") {
+                    return next(new HttpError("You cannot get other user's borrows.", StatusCode.Forbidden));
+                }
+                query = { $or: [{ from_id: userId }, { to_id: userId }] };
+            }
+
             let sorting: { [_ in keyof Partial<Borrow>]: SortOrder } | string = {
                 verified: sort,
-                updated_on: sort,
+                createdAt: sort,
             };
-
-            if (keyword) {
-                const regex = new RegExp(keyword, "i");
-                query = {
-                    $or: [{ author: { $regex: regex } }, { title: { $regex: regex } }],
-                };
-            }
 
             if (sort && sortBy) {
                 sorting = `${sort == "asc" ? "" : "-"}${sortBy}`;
             }
 
-            const books = await this.borrow //
+            const borrows = await this.borrow //
                 .find(query)
                 .sort(sorting)
-                .skip(skip)
-                .limit(limit)
+                .skip(Number.parseInt(skip as string) || 0)
+                .limit(Number.parseInt(limit as string) || 10)
                 .lean<Borrow[]>()
                 .exec();
-
-            res.json(books);
+            1;
+            res.json(borrows);
         } catch (error) {
             next(new HttpError(error));
         }

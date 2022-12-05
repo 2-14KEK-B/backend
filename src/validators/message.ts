@@ -1,7 +1,7 @@
 import { IsString } from "class-validator";
-import type { CreateMessage } from "@interfaces/message";
+import type { MessageContent } from "@interfaces/message";
 
-export default class CreateMessageDto implements CreateMessage {
+export default class CreateMessageDto implements Partial<MessageContent> {
     @IsString()
     public content: string;
 }

@@ -9,7 +9,7 @@ import isIdNotValid from "@utils/idChecker";
 import CreateMessageDto from "@validators/message";
 import HttpError from "@exceptions/Http";
 import { Types } from "mongoose";
-import type { CreateMessage, Message, MessageContent } from "@interfaces/message";
+import type { CreateMessageContent, Message } from "@interfaces/message";
 import type Controller from "@interfaces/controller";
 
 export default class MessageController implements Controller {
@@ -63,7 +63,7 @@ export default class MessageController implements Controller {
     };
 
     private createMessage = async (
-        req: Request<{ id: string }, unknown, CreateMessage>,
+        req: Request<{ id: string }, unknown, { content: string }>,
         res: Response,
         next: NextFunction,
     ) => {
@@ -72,7 +72,7 @@ export default class MessageController implements Controller {
             const to_id = req.params["id"];
             if (await isIdNotValid(this.user, [to_id], next)) return;
 
-            const newMessageContent: MessageContent = {
+            const newMessageContent: CreateMessageContent = {
                 sender_id: new Types.ObjectId(from_id),
                 content: req.body.content,
             };
@@ -81,7 +81,7 @@ export default class MessageController implements Controller {
                 .exec();
 
             if (messages) {
-                messages.message_contents.push(newMessageContent);
+                messages.message_contents.push({ ...newMessageContent });
 
                 const newMessage = await messages
                     .updateOne({ $push: { message_contents: { newMessageContent } } })

@@ -7,7 +7,8 @@ type ID = Types.ObjectId | string;
 
 interface User {
     _id: ID;
-    updated_on?: Date;
+    createdAt: Date;
+    updatedAt: Date;
     username: string;
     fullname: string;
     email: string;

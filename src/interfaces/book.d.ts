@@ -6,7 +6,8 @@ type ID = Types.ObjectId | string;
 interface Book {
     _id: ID;
     uploader: ID;
-    updated_on?: Date;
+    createdAt: Date;
+    updatedAt: Date;
     author: string;
     title: string;
     picture: string;

@@ -7,7 +7,6 @@ import StatusCode from "@utils/statusCodes";
 import { Types } from "mongoose";
 import type { Express } from "express";
 import type { ModifyUser, User } from "@interfaces/user";
-import type { MockUser } from "@interfaces/mockData";
 
 describe("USERS", () => {
     let server: Express;
@@ -16,9 +15,9 @@ describe("USERS", () => {
         mockUser1Id = new Types.ObjectId(),
         mockUser2Id = new Types.ObjectId(),
         mockAdminId = new Types.ObjectId(),
-        mockUser1: MockUser = { _id: mockUser1Id, email: "testuser1@test.com", password: pw },
-        mockUser2: MockUser = { _id: mockUser2Id, email: "testuser2@test.com", password: pw },
-        mockAdmin: MockUser = { _id: mockAdminId, email: "testadmin@test.com", password: pw, role: "admin" };
+        mockUser1: Partial<User> = { _id: mockUser1Id, email: "testuser1@test.com", password: pw },
+        mockUser2: Partial<User> = { _id: mockUser2Id, email: "testuser2@test.com", password: pw },
+        mockAdmin: Partial<User> = { _id: mockAdminId, email: "testadmin@test.com", password: pw, role: "admin" };
 
     beforeAll(async () => {
         server = new App([new AuthenticationController(), new UserController()]).getServer();

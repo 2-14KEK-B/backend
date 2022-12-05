@@ -42,25 +42,23 @@ export default class BookRatingController implements Controller {
             if (await isIdNotValid(this.book, [bookId], next)) return;
             const { skip, limit, sort = "desc" } = req.query;
 
-            const book = await this.book.findById(bookId, { ratings: 1 }).exec();
-            if (!book) return next(new HttpError("Failed to get rating of the book"));
+            const { ratings } = await this.book //
+                .findById(bookId, { ratings: 1 })
+                .lean<{ ratings: BookRating[] }>()
+                .exec();
+            if (!ratings) return next(new HttpError("Failed to get rating of the book"));
 
             let sortedRatings: BookRating[] | undefined = [];
 
-            sortedRatings = book.ratings?.sort(
-                (r1: BookRating & { created_at: Date }, r2: BookRating & { created_at: Date }) => {
-                    if (sort === "asc" || sort === "ascending") {
-                        return r2.created_at.getTime() - r1.created_at.getTime();
-                    } else {
-                        return r1.created_at.getTime() - r2.created_at.getTime();
-                    }
-                },
-            );
+            sortedRatings = ratings.sort((r1, r2) => {
+                if (sort === "asc" || sort === "ascending") {
+                    return r2.createdAt.getTime() - r1.createdAt?.getTime();
+                } else {
+                    return r1.createdAt.getTime() - r2.createdAt.getTime();
+                }
+            });
 
-            sortedRatings = book.ratings?.slice(
-                Number.parseInt(skip as string) || 0,
-                Number.parseInt(limit as string) || 10,
-            );
+            sortedRatings = ratings.slice(Number.parseInt(skip as string) || 0, Number.parseInt(limit as string) || 10);
 
             res.json(sortedRatings);
         } catch (error) {

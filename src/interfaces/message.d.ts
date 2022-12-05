@@ -4,6 +4,7 @@ type ID = Types.ObjectId | string;
 
 interface MessageContent {
     _id?: ID;
+    createdAt?: Date;
     sender_id: ID;
     content: string;
 }
@@ -11,11 +12,14 @@ interface MessageContent {
 interface Message {
     _id: ID;
     users: ID[];
+    createdAt: Date;
+    updatedAt: Date;
     message_contents: MessageContent[];
 }
 
-interface CreateMessage {
+interface CreateMessageContent {
+    sender_id: ID;
     content: string;
 }
 
-export { Message, MessageContent, CreateMessage };
+export { Message, MessageContent, CreateMessageContent };

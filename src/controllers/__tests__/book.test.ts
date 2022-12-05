@@ -8,7 +8,7 @@ import StatusCode from "@utils/statusCodes";
 import { Types } from "mongoose";
 import type { Express } from "express";
 import type { Book, CreateBook } from "@interfaces/book";
-import type { MockBook, MockUser } from "@interfaces/mockData";
+import type { User } from "@interfaces/user";
 
 describe("BOOKS", () => {
     let server: Express;
@@ -19,7 +19,7 @@ describe("BOOKS", () => {
         mockUser1Id = new Types.ObjectId(),
         mockUser2Id = new Types.ObjectId(),
         mockAdminId = new Types.ObjectId(),
-        mockBook1: MockBook = {
+        mockBook1: Partial<Book> = {
             _id: mockBook1Id,
             uploader: mockUser1Id,
             author: "Alpha Author",
@@ -27,7 +27,7 @@ describe("BOOKS", () => {
             for_borrow: true,
             available: true,
         },
-        mockBook2: MockBook = {
+        mockBook2: Partial<Book> = {
             _id: mockBook2Id,
             uploader: mockUser1Id,
             author: "Beta Author",
@@ -35,14 +35,14 @@ describe("BOOKS", () => {
             for_borrow: true,
             available: true,
         },
-        mockUser1: MockUser = {
+        mockUser1: Partial<User> = {
             _id: mockUser1Id,
             email: "testuser1@test.com",
             password: pw,
             books: [mockBook1Id, mockBook2Id],
         },
-        mockUser2: MockUser = { _id: mockUser2Id, email: "testuser2@test.com", password: pw, books: [] },
-        mockAdmin: MockUser = { _id: mockAdminId, email: "testadmin@test.com", password: pw, books: [], role: "admin" };
+        mockUser2: Partial<User> = { _id: mockUser2Id, email: "testuser2@test.com", password: pw, books: [] },
+        mockAdmin: Partial<User> = { _id: mockAdminId, email: "testadmin@test.com", password: pw, books: [], role: "admin" };
 
     beforeAll(async () => {
         server = new App([new AuthenticationController(), new BookController()]).getServer();
