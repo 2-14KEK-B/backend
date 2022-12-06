@@ -8,9 +8,10 @@ import StatusCode from "@utils/statusCodes";
 import isIdNotValid from "@utils/idChecker";
 import CreateMessageDto from "@validators/message";
 import HttpError from "@exceptions/Http";
-import { Types } from "mongoose";
-import type { CreateMessage, Message, MessageContent } from "@interfaces/message";
+import { SortOrder, Types } from "mongoose";
+import type { CreateMessageContent, Message, MessageContent } from "@interfaces/message";
 import type Controller from "@interfaces/controller";
+import sortByDate from "@utils/sortByDate";
 
 export default class MessageController implements Controller {
     path = "/message";
@@ -25,51 +26,76 @@ export default class MessageController implements Controller {
     private initializeRoutes() {
         this.router.all("*", authentication);
         this.router.get(`${this.path}/all`, authorization(["admin"]), this.getAllMessages);
-        this.router.get(`${this.path}/:id`, this.getMessageById);
-        this.router.post(`${this.path}/:toId`, validation(CreateMessageDto), this.createMessage);
-        this.router.delete(`${this.path}/:id`, authorization(["admin"]), this.deleteMessageById);
+        this.router
+            .route(`${this.path}/:id`)
+            .get(this.getMessagesById)
+            .post(validation(CreateMessageDto), this.createMessage)
+            .delete(authorization(["admin"]), this.deleteMessageById);
     }
 
     private getAllMessages = async (_req: Request, res: Response, next: NextFunction) => {
         try {
-            const messages = await this.message.find().lean<Message[]>().exec();
+            const messages = await this.message //
+                .find()
+                .lean<Message[]>()
+                .exec();
+
             res.json(messages);
         } catch (error) {
             next(new HttpError(error));
         }
     };
 
-    private getMessageById = async (req: Request, res: Response, next: NextFunction) => {
+    private getMessagesById = async (
+        req: Request<{ id: string }, unknown, unknown, { skip?: string; limit?: string; sort?: SortOrder }>,
+        res: Response,
+        next: NextFunction,
+    ) => {
         try {
             const messageId = req.params["id"];
             if (await isIdNotValid(this.message, [messageId], next)) return;
 
-            const message = await this.message.findById(messageId).lean<Message>().exec();
-            if (!message) return next(new HttpError(`Failed to get message by id ${messageId}`));
+            const { skip, limit, sort } = req.query;
 
-            res.json(message);
+            const { message_contents } = await this.message //
+                .findById(messageId, { message_contents: 1 })
+                .lean<{ message_contents: MessageContent[] }>()
+                .exec();
+            if (!message_contents) return next(new HttpError(`Failed to get message by id ${messageId}`));
+
+            let sortedMessages = sortByDate(message_contents, sort || "desc");
+            sortedMessages = message_contents.slice(
+                Number.parseInt(skip as string) || 0,
+                Number.parseInt(limit as string) || 25,
+            );
+
+            res.json(sortedMessages);
         } catch (error) {
             next(new HttpError(error));
         }
     };
 
-    private createMessage = async (req: Request, res: Response, next: NextFunction) => {
+    private createMessage = async (
+        req: Request<{ id: string }, unknown, { content: string }>,
+        res: Response,
+        next: NextFunction,
+    ) => {
         try {
-            const to_id = req.params["toId"];
+            const from_id = req.session.userId;
+            const to_id = req.params["id"];
             if (await isIdNotValid(this.user, [to_id], next)) return;
 
-            const from_id = req.session.userId?.toString();
-            const { content } = req.body as CreateMessage;
-
-            const newMessageContent: MessageContent = {
+            const newMessageContent: CreateMessageContent = {
                 sender_id: new Types.ObjectId(from_id),
-                content: content,
+                content: req.body.content,
             };
-            let messages = await this.message.findOne({ users: { $in: [from_id, to_id] } }).exec();
+            let messages = await this.message //
+                .findOne({ users: { $in: [from_id, to_id] } })
+                .exec();
 
             if (messages) {
-                messages.message_contents.push(newMessageContent);
-                // const newMessage = await messages.save();
+                messages.message_contents.push({ ...newMessageContent, createdAt: new Date() });
+
                 const newMessage = await messages
                     .updateOne({ $push: { message_contents: { newMessageContent } } })
                     .lean<Message>()
@@ -95,18 +121,25 @@ export default class MessageController implements Controller {
         }
     };
 
-    private deleteMessageById = async (req: Request, res: Response, next: NextFunction) => {
+    private deleteMessageById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
         try {
             const messageId = req.params["id"];
             if (await isIdNotValid(this.message, [messageId], next)) return;
 
-            const { users } = await this.message.findById(messageId).lean<Message>().exec();
+            const { users } = await this.message //
+                .findById(messageId)
+                .lean<Message>()
+                .exec();
             if (!users) return next(new HttpError("Failed to get ids from messages"));
 
-            const response = await this.message.findByIdAndDelete(messageId);
+            const response = await this.message //
+                .findByIdAndDelete(messageId);
             if (!response) return next(new HttpError(`Failed to delete message by id ${messageId}`));
 
-            const { acknowledged } = await this.user.updateMany({ _id: { $in: users } }, { $pull: { messages: messageId } });
+            const { acknowledged } = await this.user.updateMany(
+                { _id: { $in: users } },
+                { $pull: { messages: messageId } },
+            );
             if (!acknowledged) return next(new HttpError("Failed to update users"));
 
             res.sendStatus(StatusCode.NoContent);

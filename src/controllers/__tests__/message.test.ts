@@ -7,8 +7,8 @@ import AuthenticationController from "@authentication/index";
 import StatusCode from "@utils/statusCodes";
 import { Types } from "mongoose";
 import type { Express } from "express";
-import type { CreateMessage, Message } from "@interfaces/message";
-import type { MockMessage, MockUser } from "@interfaces/mockData";
+import type { Message, MessageContent } from "@interfaces/message";
+import type { User } from "@interfaces/user";
 
 describe("MESSAGES", () => {
     let server: Express;
@@ -20,22 +20,34 @@ describe("MESSAGES", () => {
         mockUser4Id = new Types.ObjectId(),
         mockAdminId = new Types.ObjectId(),
         mockMessageId = new Types.ObjectId(),
-        mockUser1: MockUser = { _id: mockUser1Id, email: "testuser1@test.com", password: pw, messages: [mockMessageId] },
-        mockUser2: MockUser = { _id: mockUser2Id, email: "testuser2@test.com", password: pw, messages: [mockMessageId] },
-        mockUser3: MockUser = { _id: mockUser3Id, email: "testuser3@test.com", password: pw },
-        mockUser4: MockUser = { _id: mockUser4Id, email: "testuser4@test.com", password: pw },
-        mockAdmin: MockUser = { _id: mockAdminId, email: "testadmin@test.com", password: pw, role: "admin" },
-        mockMessage: MockMessage = {
+        mockUser1: Partial<User> = {
+            _id: mockUser1Id,
+            email: "testuser1@test.com",
+            password: pw,
+            messages: [mockMessageId],
+        },
+        mockUser2: Partial<User> = {
+            _id: mockUser2Id,
+            email: "testuser2@test.com",
+            password: pw,
+            messages: [mockMessageId],
+        },
+        mockUser3: Partial<User> = { _id: mockUser3Id, email: "testuser3@test.com", password: pw },
+        mockUser4: Partial<User> = { _id: mockUser4Id, email: "testuser4@test.com", password: pw },
+        mockAdmin: Partial<User> = { _id: mockAdminId, email: "testadmin@test.com", password: pw, role: "admin" },
+        mockMessage: Partial<Message> = {
             _id: mockMessageId,
             users: [mockUser1Id, mockUser2Id],
             message_contents: [
                 {
                     sender_id: mockUser1Id,
                     content: "just_a_test",
+                    createdAt: new Date(),
                 },
                 {
                     sender_id: mockUser1Id,
                     content: "just_another_test",
+                    createdAt: new Date(),
                 },
             ],
         };
@@ -91,13 +103,13 @@ describe("MESSAGES", () => {
         });
         it("POST /message/:toId, should return statuscode 200", async () => {
             expect.assertions(1);
-            const newMessage: CreateMessage = { content: "newMessage" };
+            const newMessage: Partial<MessageContent> = { content: "newMessage" };
             const res: Response = await agentForUser3.post(`/message/${mockUser4Id.toString()}`).send(newMessage);
             expect(res.statusCode).toBe(StatusCode.OK);
         });
         it("POST /message/:toId, should return statuscode 200 if users already messaging", async () => {
             expect.assertions(1);
-            const newMessage: CreateMessage = { content: "newMessage" };
+            const newMessage: Partial<MessageContent> = { content: "newMessage" };
             const res: Response = await agentForUser1.post(`/message/${mockUser2Id.toString()}`).send(newMessage);
             expect(res.statusCode).toBe(StatusCode.OK);
         });

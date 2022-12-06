@@ -4,8 +4,9 @@ import type ID from "./id";
 interface Borrow {
     _id: ID;
     from_id: ID;
+    createdAt: Date;
+    updatedAt: Date;
     to_id: ID;
-    updated_on?: Date;
     verified: boolean;
     books: (Book | ID)[];
     user_ratings?: ID[];

@@ -1,6 +1,22 @@
 import { BookRating } from "./bookRating";
 import type ID from "./id";
 
+interface Book {
+    _id: ID;
+    uploader: ID;
+    createdAt: Date;
+    updatedAt: Date;
+    author: string;
+    title: string;
+    picture: string;
+    category: string[];
+    price?: number;
+    available?: boolean;
+    for_borrow: boolean;
+    ratings?: BookRating[];
+    __v?: number;
+}
+
 interface CreateBook {
     author: string;
     title: string;

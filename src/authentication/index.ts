@@ -3,6 +3,7 @@ import LoginController from "./login";
 import LogoutController from "./logout";
 import RegisterController from "./register";
 import userModel from "@models/user";
+import HttpError from "@exceptions/Http";
 import UnauthorizedException from "@exceptions/Unauthorized";
 import type Controller from "@interfaces/controller";
 import type { User } from "@interfaces/user";
@@ -10,7 +11,7 @@ import type { User } from "@interfaces/user";
 export default class AuthenticationController implements Controller {
     path = "/auth";
     router = Router();
-    private model = userModel;
+    private user = userModel;
 
     constructor() {
         this.initControllers();
@@ -18,14 +19,22 @@ export default class AuthenticationController implements Controller {
 
     private initControllers() {
         this.router.get(this.path, this.checkIfLoggedIn);
-        new LoginController(this.path, this.router, this.model);
+        new LoginController(this.path, this.router, this.user);
         new LogoutController(this.path, this.router);
-        new RegisterController(this.path, this.router, this.model);
+        new RegisterController(this.path, this.router, this.user);
     }
 
     private checkIfLoggedIn = async (req: Request, res: Response, next: NextFunction) => {
-        if (!req.session.userId) return next(new UnauthorizedException());
-        const user = await userModel.findById(req.session.userId, "-password -books -borrows -messages -user_ratings").lean<User>().exec();
-        res.json(user);
+        try {
+            if (!req.session.userId) return next(new UnauthorizedException());
+            const user = await this.user
+                .findById(req.session.userId, "-password -books -borrows -messages -user_ratings")
+                .lean<User>()
+                .exec();
+
+            res.json(user);
+        } catch (error) {
+            next(new HttpError(error));
+        }
     };
 }

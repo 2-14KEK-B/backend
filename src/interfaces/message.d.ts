@@ -6,13 +6,21 @@ interface CreateMessage {
 
 interface MessageContent extends CreateMessage {
     _id?: ID;
+    createdAt: Date;
     sender_id: ID;
 }
 
 interface Message {
     _id: ID;
     users: ID[];
+    createdAt: Date;
+    updatedAt: Date;
     message_contents: MessageContent[];
 }
 
-export { Message, MessageContent, CreateMessage };
+interface CreateMessageContent {
+    sender_id: ID;
+    content: string;
+}
+
+export { Message, MessageContent, CreateMessageContent };

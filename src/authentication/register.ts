@@ -25,21 +25,23 @@ export default class RegisterController implements Controller {
         this.router.post(`${this.path}/register`, validationMiddleware(RegisterDto), this.register);
     }
 
-    private register = async (req: Request, res: Response, next: NextFunction) => {
+    private register = async (req: Request<unknown, unknown, RegisterCred>, res: Response, next: NextFunction) => {
         try {
-            const userData: RegisterCred = req.body;
-            if (await this.userModel.exists({ email: userData.email })) return next(new UserAlreadyExistsException(userData.email));
+            const { email, password } = req.body;
 
-            const hashedPassword = await hash(userData.password, 10);
+            if (await this.userModel.exists({ email: email }))
+                return next(new UserAlreadyExistsException(req.body.email));
+
+            const hashedPassword = await hash(password, 10);
             if (!hashedPassword) return next(new HttpError("Something wrong with the password."));
 
-            const { email } = await this.userModel.create({
-                ...userData,
+            const newUser = await this.userModel.create({
+                ...req.body,
                 password: hashedPassword,
             });
-            if (!email) return next(new HttpError("Something wrong with the user creation."));
+            if (!newUser) return next(new HttpError("Something wrong with the user creation."));
 
-            res.json(`user created with ${email}`);
+            res.json(`user created with ${newUser.email}`);
         } catch (error) {
             next(new HttpError(error));
         }

@@ -7,7 +7,6 @@ import StatusCode from "@utils/statusCodes";
 import { Types } from "mongoose";
 import type { Express } from "express";
 import type { ModifyUser, User } from "@interfaces/user";
-import type { MockUser } from "@interfaces/mockData";
 
 describe("USERS", () => {
     let server: Express;
@@ -16,9 +15,19 @@ describe("USERS", () => {
         mockUser1Id = new Types.ObjectId(),
         mockUser2Id = new Types.ObjectId(),
         mockAdminId = new Types.ObjectId(),
-        mockUser1: MockUser = { _id: mockUser1Id, email: "testuser1@test.com", password: pw },
-        mockUser2: MockUser = { _id: mockUser2Id, email: "testuser2@test.com", password: pw },
-        mockAdmin: MockUser = { _id: mockAdminId, email: "testadmin@test.com", password: pw, role: "admin" };
+        mockUser1: Partial<User> = {
+            _id: mockUser1Id,
+            email: "testuser1@test.com",
+            password: pw,
+            createdAt: new Date("2020-10-10"),
+        },
+        mockUser2: Partial<User> = {
+            _id: mockUser2Id,
+            email: "testuser2@test.com",
+            password: pw,
+            createdAt: new Date("2021-10-10"),
+        },
+        mockAdmin: Partial<User> = { _id: mockAdminId, email: "testadmin@test.com", password: pw, role: "admin" };
 
     beforeAll(async () => {
         server = new App([new AuthenticationController(), new UserController()]).getServer();
@@ -32,11 +41,13 @@ describe("USERS", () => {
     describe("USERS, not logged in", () => {
         it("any PATH, should return statuscode 401", async () => {
             expect.assertions(5);
+            const randomId = new Types.ObjectId();
+            const dummyUser: Partial<User> = { email: "justsomeemail@domain.com" };
             const meRes = await request(server).get("/user/me");
-            const allRes = await request(server).get("/user/all");
-            const idRes = await request(server).get("/user/dhjkawgdhjkawfizfgva");
-            const patchRes = await request(server).patch("/user/dhjkawgdhjkawfizfgva").send({ anything: "anything" });
-            const deleteRes = await request(server).delete("/user/dhjkawgdhjkawfizfgva");
+            const allRes = await request(server).get("/user");
+            const idRes = await request(server).get(`/user/${randomId}`);
+            const patchRes = await request(server).patch(`/user/${randomId}`).send(dummyUser);
+            const deleteRes = await request(server).delete(`/user/${randomId}`);
             expect(meRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(allRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(idRes.statusCode).toBe(StatusCode.Unauthorized);
@@ -59,9 +70,9 @@ describe("USERS", () => {
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body).toBeInstanceOf(Object as unknown as User);
         });
-        it("GET /user/all, should return statuscode 403", async () => {
+        it("GET /user, should return statuscode 403", async () => {
             expect.assertions(2);
-            const res: Response = await agent.get("/user/all");
+            const res: Response = await agent.get("/user");
             expect(res.statusCode).toBe(StatusCode.Forbidden);
             expect(res.body).toBe("Forbidden");
         });
@@ -107,11 +118,25 @@ describe("USERS", () => {
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body).toBeInstanceOf(Object as unknown as User);
         });
-        it("GET /user/all, should return statuscode 200", async () => {
+        it("GET /user, should return statuscode 200", async () => {
             expect.assertions(2);
-            const res: Response = await agent.get("/user/all");
+            const res: Response = await agent.get("/user");
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body).toBeInstanceOf(Array<User>);
+        });
+        it("GET /user?sort=asc&sortBy=createdAt, should return statuscode 200", async () => {
+            expect.assertions(3);
+            const res: Response = await agent.get("/user?sort=asc&sortBy=createdAt");
+            expect(res.statusCode).toBe(StatusCode.OK);
+            expect(res.body).toBeInstanceOf(Array<User>);
+            expect(res.body[0].createdAt).toBe(mockUser1.createdAt?.toISOString());
+        });
+        it("GET /user?keyword=testuser2@test.com, should return statuscode 200", async () => {
+            expect.assertions(3);
+            const res: Response = await agent.get(`/user?keyword=${mockUser2.email}`);
+            expect(res.statusCode).toBe(StatusCode.OK);
+            expect(res.body).toBeInstanceOf(Array<User>);
+            expect(res.body[0].email).toBe(mockUser2.email);
         });
         it("GET /user/:id, should return statuscode 200", async () => {
             expect.assertions(2);

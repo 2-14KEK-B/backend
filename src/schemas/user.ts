@@ -17,7 +17,6 @@ const userSchema = new Schema<User>(
         password: { type: String, required: true },
         email: { type: String, required: true },
         email_is_verified: { type: Boolean, default: false },
-        updated_on: { type: Date },
         locale: { type: String, default: "hu-HU" },
         picture: { type: String },
         role: { type: String },
@@ -31,7 +30,7 @@ const userSchema = new Schema<User>(
             to_me: [{ type: Schema.Types.ObjectId, ref: "UserRating" }],
         },
     },
-    { versionKey: false },
+    { timestamps: true, versionKey: false },
 );
 
 export default userSchema;

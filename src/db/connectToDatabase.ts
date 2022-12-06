@@ -1,4 +1,4 @@
-import { connect, connection } from "mongoose";
+import { connect, connection, set } from "mongoose";
 import env from "@config/validateEnv";
 import userModel from "@models/user";
 import bookModel from "@models/book";
@@ -10,6 +10,7 @@ export default async function connectToDatabase(connectionString?: string): Prom
     try {
         const uri = connectionString || env.MONGO_URI;
         await connect(uri);
+        set("strictQuery", false);
 
         if (env.isProduction) {
             console.log("Connected to MongoDB server.");

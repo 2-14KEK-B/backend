@@ -10,7 +10,7 @@ const messageContentSchema = new Schema<MessageContent>(
         },
         content: { type: String, required: true },
     },
-    { versionKey: false },
+    { timestamps: { createdAt: true, updatedAt: false }, versionKey: false },
 );
 
 const messageSchema = new Schema<Message>(
@@ -24,7 +24,7 @@ const messageSchema = new Schema<Message>(
         ],
         message_contents: [messageContentSchema],
     },
-    { versionKey: false },
+    { timestamps: true, versionKey: false },
 );
 
 export default messageSchema;
