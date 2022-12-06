@@ -7,7 +7,8 @@ type ID = Types.ObjectId | string;
 
 interface User {
     _id: ID;
-    updated_on?: Date;
+    createdAt: Date;
+    updatedAt: Date;
     username: string;
     fullname: string;
     email: string;
@@ -35,6 +36,7 @@ interface CreateUser {
 interface ModifyUser {
     username?: string;
     fullname?: string;
+    updated_on?: Date;
     email?: string;
     email_is_verified?: boolean;
     password?: string;

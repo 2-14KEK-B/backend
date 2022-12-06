@@ -4,14 +4,14 @@ import AuthenticationController from "@authentication/index";
 import userModel from "@models/user";
 import StatusCode from "@utils/statusCodes";
 import type { Express } from "express";
-import type { MockUser } from "@interfaces/mockData";
+import type { User } from "@interfaces/user";
 
 describe("POST /auth/register", () => {
     let server: Express;
     const pw = global.MOCK_PASSWORD,
         hpw = global.MOCK_HASHED_PASSWORD,
-        mockUser1: MockUser = { email: "test1@test.com", password: pw },
-        mockUser2: MockUser = { email: "test2@test.com", password: pw };
+        mockUser1: Partial<User> = { email: "test1@test.com", password: pw },
+        mockUser2: Partial<User> = { email: "test2@test.com", password: pw };
 
     beforeAll(async () => {
         server = new App([new AuthenticationController()]).getServer();

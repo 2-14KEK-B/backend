@@ -6,7 +6,8 @@ type ID = Types.ObjectId | string;
 interface Borrow {
     _id: ID;
     from_id: ID;
-    updated_on?: Date;
+    createdAt: Date;
+    updatedAt: Date;
     to_id: ID;
     books: (Book | ID)[];
     verified: boolean;

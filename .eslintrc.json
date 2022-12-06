@@ -26,7 +26,8 @@
         // "@typescript-eslint/explicit-module-boundary-types": "off",
         // "no-unused-vars": "off",
         // "@typescript-eslint/no-unused-vars": "off",
-        "@typescript-eslint/triple-slash-reference": "off"
+        // "@typescript-eslint/triple-slash-reference": "off",
+        "prettier/prettier": "off"
     },
     "overrides": [
         {

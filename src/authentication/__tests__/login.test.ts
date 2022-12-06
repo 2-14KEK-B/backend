@@ -4,13 +4,13 @@ import AuthenticationController from "@authentication/index";
 import userModel from "@models/user";
 import StatusCode from "@utils/statusCodes";
 import type { Application } from "express";
-import type { MockUser } from "@interfaces/mockData";
+import type { User } from "@interfaces/user";
 
 describe("POST /auth/login", () => {
     let server: Application;
     const pw = global.MOCK_PASSWORD,
         hpw = global.MOCK_HASHED_PASSWORD,
-        mockUser: MockUser = { email: "test@test.com", password: pw };
+        mockUser: Partial<User> = { email: "test@test.com", password: pw };
 
     beforeAll(async () => {
         server = new App([new AuthenticationController()]).getServer();
