@@ -9,6 +9,7 @@ import StatusCode from "@utils/statusCodes";
 import HttpError from "@exceptions/Http";
 import type Controller from "@interfaces/controller";
 import type { ModifyUser, User } from "@interfaces/user";
+import type { FilterQuery, SortOrder } from "mongoose";
 
 export default class UserController implements Controller {
     path = "/user";
@@ -22,7 +23,7 @@ export default class UserController implements Controller {
     private initializeRoutes() {
         this.router.all("*", authentication);
         this.router.get(`${this.path}/me`, this.getMyUserInfo);
-        this.router.get(`${this.path}/all`, authorization(["admin"]), this.getAllUsers);
+        this.router.get(this.path, authorization(["admin"]), this.getAllUsers);
         this.router
             .route(`${this.path}/:id`)
             .get(this.getUserById)
@@ -30,10 +31,43 @@ export default class UserController implements Controller {
             .delete(authorization(["admin"]), this.deleteUserById);
     }
 
-    private getAllUsers = async (_req: Request, res: Response, next: NextFunction) => {
+    private getAllUsers = async (
+        req: Request<
+            unknown,
+            unknown,
+            unknown,
+            { skip?: string; limit?: string; sort?: SortOrder; sortBy?: string; keyword?: string }
+        >,
+        res: Response,
+        next: NextFunction,
+    ) => {
         try {
+            const { skip, limit, sort, sortBy, keyword } = req.query;
+
+            let query: FilterQuery<User> = {};
+
+            if (keyword) {
+                const regex = new RegExp(keyword, "i");
+
+                query = {
+                    $or: [
+                        { email: { $regex: regex } },
+                        { fullname: { $regex: regex } },
+                        { username: { $regex: regex } },
+                    ],
+                };
+            }
+
+            let sortQuery: { [_ in keyof Partial<User>]: SortOrder } | string = {
+                createdAt: sort || "desc",
+            };
+            if (sort && sortBy) sortQuery = `${sort == "asc" ? "" : "-"}${sortBy}`;
+
             const users = await this.user //
-                .find()
+                .find(query)
+                .sort(sortQuery)
+                .skip(Number.parseInt(skip as string) || 0)
+                .limit(Number.parseInt(limit as string) || 10)
                 .lean<User[]>()
                 .exec();
 

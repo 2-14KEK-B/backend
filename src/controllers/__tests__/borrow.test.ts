@@ -132,6 +132,13 @@ describe("BORROWS", () => {
             expect(res.statusCode).toBe(StatusCode.Forbidden);
             expect(res.body).toBe("You cannot get other user's borrows.");
         });
+        it("GET /borrow?userId=id, should return statuscode 404", async () => {
+            expect.assertions(2);
+            const mockId = new Types.ObjectId();
+            const res: Response = await agentForUser1.get(`/borrow?userId=${mockId.toString()}`);
+            expect(res.statusCode).toBe(StatusCode.NotFound);
+            expect(res.body).toBe(`This ${mockId} id is not valid.`);
+        });
         it("GET /borrow?limit=1, should return statuscode 200 and array of borrows with one borrow in it", async () => {
             expect.assertions(3);
             const book = await bookModel.create({
@@ -223,6 +230,36 @@ describe("BORROWS", () => {
             await agent.post("/auth/login").send({ email: mockAdmin.email, password: pw });
         });
 
+        it("GET /borrow?userId=id&sort=asc&sortBy=title, should return statuscode 200", async () => {
+            expect.assertions(3);
+            const book = await bookModel.create({
+                _id: new Types.ObjectId(),
+                title: "Admin",
+                author: "Zsolti",
+                for_borrow: true,
+                uploader: mockUser1Id,
+            });
+            const borrow = await borrowModel.create({
+                _id: new Types.ObjectId(),
+                to_id: mockUser2Id,
+                from_id: mockUser1Id,
+                books: [book._id],
+            });
+            await userModel.updateMany(
+                { $and: [{ _id: mockUser1Id }, { _id: mockUser2Id }] },
+                { $push: { borrows: { _id: borrow._id } } },
+            );
+            const res: Response = await agent.get(`/borrow?userId=${mockUser2Id}&sort=asc&sortBy=createdAt`);
+            expect(res.statusCode).toBe(StatusCode.OK);
+            expect(res.body).toBeInstanceOf(Array<Borrow>);
+            expect(res.body[res.body.length - 1].createdAt).toBe(borrow.createdAt.toISOString());
+        });
+        it("GET /borrow?userId=id, should return statuscode 200", async () => {
+            expect.assertions(2);
+            const res: Response = await agent.get(`/borrow?userId=${mockUser1Id}`);
+            expect(res.statusCode).toBe(StatusCode.OK);
+            expect(res.body).toBeInstanceOf(Array<Borrow>);
+        });
         it("GET /borrow/all, should return statuscode 200", async () => {
             expect.assertions(2);
             const res: Response = await agent.get("/borrow/all");

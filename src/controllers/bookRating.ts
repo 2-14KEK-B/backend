@@ -9,6 +9,7 @@ import isIdNotValid from "@utils/idChecker";
 import StatusCode from "@utils/statusCodes";
 import { BookRatingDto } from "@validators/book";
 import HttpError from "@exceptions/Http";
+import sortByDate from "@utils/sortByDate";
 import type { Book } from "@interfaces/book";
 import type { User } from "@interfaces/user";
 import type Controller from "@interfaces/controller";
@@ -27,12 +28,12 @@ export default class BookRatingController implements Controller {
     private initRoutes() {
         this.router
             .route(`${this.path}:id`)
-            .get(this.getAllBookRatingByBookId)
+            .get(this.getBookRatingByBookId)
             .post([authenticationMiddleware, validationMiddleware(BookRatingDto)], this.createBookRatingByBookId)
             .delete([authenticationMiddleware, authorizationMiddleware(["admin"])], this.deleteBookRatingByBookId);
     }
 
-    private getAllBookRatingByBookId = async (
+    private getBookRatingByBookId = async (
         req: Request<{ id: string }, unknown, unknown, { skip?: string; limit?: string; sort?: SortOrder }>,
         res: Response,
         next: NextFunction,
@@ -40,7 +41,7 @@ export default class BookRatingController implements Controller {
         try {
             const bookId = req.params["id"];
             if (await isIdNotValid(this.book, [bookId], next)) return;
-            const { skip, limit, sort = "desc" } = req.query;
+            const { skip, limit, sort } = req.query;
 
             const { ratings } = await this.book //
                 .findById(bookId, { ratings: 1 })
@@ -48,16 +49,7 @@ export default class BookRatingController implements Controller {
                 .exec();
             if (!ratings) return next(new HttpError("Failed to get rating of the book"));
 
-            let sortedRatings: BookRating[] | undefined = [];
-
-            sortedRatings = ratings.sort((r1, r2) => {
-                if (sort === "asc" || sort === "ascending") {
-                    return r2.createdAt.getTime() - r1.createdAt?.getTime();
-                } else {
-                    return r1.createdAt.getTime() - r2.createdAt.getTime();
-                }
-            });
-
+            let sortedRatings = sortByDate(ratings, sort || "desc");
             sortedRatings = ratings.slice(Number.parseInt(skip as string) || 0, Number.parseInt(limit as string) || 10);
 
             res.json(sortedRatings);

@@ -58,8 +58,8 @@ export default class BookController implements Controller {
             unknown,
             unknown,
             {
-                skip?: number;
-                limit?: number;
+                skip?: string;
+                limit?: string;
                 sort?: SortOrder;
                 sortBy?: string;
                 keyword?: string;
@@ -69,12 +69,11 @@ export default class BookController implements Controller {
         next: NextFunction,
     ) => {
         try {
-            const { skip = 0, limit = 10, sort = "asc", sortBy, keyword } = req.query;
+            const { skip, limit, sort, sortBy, keyword } = req.query;
 
-            let query: FilterQuery<User> = {};
+            let query: FilterQuery<Book> = {};
             let sortQuery: { [_ in keyof Partial<Book>]: SortOrder } | string = {
-                author: sort,
-                title: sort,
+                createdAt: sort,
             };
 
             if (keyword) {
@@ -92,8 +91,8 @@ export default class BookController implements Controller {
             const books = await this.book //
                 .find(query)
                 .sort(sortQuery)
-                .skip(skip)
-                .limit(limit)
+                .skip(Number.parseInt(skip as string) || 0)
+                .limit(Number.parseInt(limit as string) || 10)
                 .lean<Book[]>()
                 .exec();
 

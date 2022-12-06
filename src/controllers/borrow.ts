@@ -70,7 +70,7 @@ export default class BorrowController implements Controller {
     ) => {
         try {
             const loggedInUserId = req.session.userId as string;
-            const { skip, limit, sort = "asc", sortBy, userId } = req.query;
+            const { skip, limit, sort, sortBy, userId } = req.query;
 
             let query: FilterQuery<Borrow> = { $or: [{ from_id: loggedInUserId }, { to_id: loggedInUserId }] };
 
@@ -79,7 +79,7 @@ export default class BorrowController implements Controller {
                     return;
                 }
                 const { role } = await this.user //
-                    .findById(userId)
+                    .findById(loggedInUserId)
                     .lean<User>()
                     .exec();
                 if (role != "admin") {
@@ -89,13 +89,9 @@ export default class BorrowController implements Controller {
             }
 
             let sorting: { [_ in keyof Partial<Borrow>]: SortOrder } | string = {
-                verified: sort,
-                createdAt: sort,
+                createdAt: sort || "desc",
             };
-
-            if (sort && sortBy) {
-                sorting = `${sort == "asc" ? "" : "-"}${sortBy}`;
-            }
+            if (sort && sortBy) sorting = `${sort == "asc" ? "" : "-"}${sortBy}`;
 
             const borrows = await this.borrow //
                 .find(query)
@@ -104,7 +100,7 @@ export default class BorrowController implements Controller {
                 .limit(Number.parseInt(limit as string) || 10)
                 .lean<Borrow[]>()
                 .exec();
-            1;
+
             res.json(borrows);
         } catch (error) {
             next(new HttpError(error));

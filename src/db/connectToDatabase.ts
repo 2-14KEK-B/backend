@@ -9,7 +9,7 @@ export default async function connectToDatabase(connectionString?: string): Prom
     try {
         const uri = connectionString || env.MONGO_URI;
         await connect(uri);
-        set('strictQuery', false)
+        set("strictQuery", false);
 
         if (env.isProduction) {
             console.log("Connected to MongoDB server.");

@@ -4,7 +4,7 @@ type ID = Types.ObjectId | string;
 
 interface MessageContent {
     _id?: ID;
-    createdAt?: Date;
+    createdAt: Date;
     sender_id: ID;
     content: string;
 }
