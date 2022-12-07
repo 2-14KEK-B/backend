@@ -9,6 +9,7 @@ interface UserRating extends CreateUserRating {
     _id?: ID;
     from_id: ID;
     to_id: ID;
+    createdAt: Date;
 }
 
 export { UserRating, CreateUserRating };

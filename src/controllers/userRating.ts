@@ -15,7 +15,7 @@ import { UserRatingDto } from "@validators/userRating";
 
 export default class UserRatingController implements Controller {
     path = "/";
-    router = Router({ mergeParams: true });
+    router = Router();
     borrow = borrowModel;
     user = userModel;
 
@@ -25,7 +25,7 @@ export default class UserRatingController implements Controller {
 
     private initRoutes() {
         this.router.all("*", authenticationMiddleware);
-        this.router.get(this.path, this.getAllUserRatingByBorrowId);
+        this.router.get(`${this.path}:id`, this.getAllUserRatingByBorrowId);
         this.router.post(`${this.path}:userId`, validationMiddleware(UserRatingDto), this.createUserRatingByBorrowId);
         // this.router.delete(`${this.path}/:userId`, [authenticationMiddleware, authorizationMiddleware(["admin"])], this.deleteBookRatingByBookId);
     }

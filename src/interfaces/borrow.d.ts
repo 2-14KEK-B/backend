@@ -1,15 +1,16 @@
-import { Book } from "./book";
 import type ID from "./id";
+import type { Book } from "./book";
+import type { UserRating } from "./userRating";
 
 interface Borrow {
     _id: ID;
     from_id: ID;
+    to_id: ID;
     createdAt: Date;
     updatedAt: Date;
-    to_id: ID;
     verified: boolean;
     books: (Book | ID)[];
-    user_ratings?: ID[];
+    user_ratings?: (UserRating | ID)[];
 }
 
 interface CreateBorrow {

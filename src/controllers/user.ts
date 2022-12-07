@@ -10,6 +10,7 @@ import HttpError from "@exceptions/Http";
 import type Controller from "@interfaces/controller";
 import type { ModifyUser, User } from "@interfaces/user";
 import type { FilterQuery, SortOrder } from "mongoose";
+import UserRatingController from "./userRating";
 
 export default class UserController implements Controller {
     path = "/user";
@@ -17,6 +18,7 @@ export default class UserController implements Controller {
     private user = userModel;
 
     constructor() {
+        this.router.use(`${this.path}/rate`, new UserRatingController().router);
         this.initializeRoutes();
     }
 

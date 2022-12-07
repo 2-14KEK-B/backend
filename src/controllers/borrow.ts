@@ -1,5 +1,4 @@
 import { Router, Request, Response, NextFunction } from "express";
-import UserRatingController from "./userRating";
 import authentication from "@middlewares/authentication";
 import authorization from "@middlewares/authorization";
 import validation from "@middlewares/validation";
@@ -24,7 +23,6 @@ export default class BorrowController implements Controller {
 
     constructor() {
         this.initializeRoutes();
-        this.router.use(`${this.path}/:id/rate`, new UserRatingController().router);
     }
 
     private initializeRoutes() {

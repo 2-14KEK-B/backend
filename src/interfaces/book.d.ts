@@ -1,5 +1,5 @@
-import { BookRating } from "./bookRating";
 import type ID from "./id";
+import type { BookRating } from "./bookRating";
 
 interface Book {
     _id: ID;
