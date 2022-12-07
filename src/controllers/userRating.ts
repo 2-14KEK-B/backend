@@ -1,3 +1,4 @@
+import userRatingModel from "@models/userRating";
 import { Router, Request, Response, NextFunction } from "express";
 // import { Types } from "mongoose";
 import validationMiddleware from "@middlewares/validation";
@@ -18,6 +19,7 @@ export default class UserRatingController implements Controller {
     router = Router();
     borrow = borrowModel;
     user = userModel;
+    userRating = userRatingModel;
 
     constructor() {
         this.initRoutes();
@@ -25,36 +27,68 @@ export default class UserRatingController implements Controller {
 
     private initRoutes() {
         this.router.all("*", authenticationMiddleware);
-        this.router.get(`${this.path}:id`, this.getAllUserRatingByBorrowId);
-        this.router.post(`${this.path}:userId`, validationMiddleware(UserRatingDto), this.createUserRatingByBorrowId);
+        this.router.get(this.path, this.getAllUserRating);
+        this.router.get(`${this.path}:id`, this.getUserRatingById);
+        this.router.post(this.path, validationMiddleware(UserRatingDto), this.createUserRatingByBorrowId);
         // this.router.delete(`${this.path}/:userId`, [authenticationMiddleware, authorizationMiddleware(["admin"])], this.deleteBookRatingByBookId);
     }
 
-    private getAllUserRatingByBorrowId = async (req: Request, res: Response, next: NextFunction) => {
+    private getAllUserRating = async (
+        req: Request<unknown, unknown, unknown, { user?: string }>,
+        res: Response,
+        next: NextFunction,
+    ) => {
         try {
-            const borrowId = req.params["id"];
-            if (await isIdNotValid(this.borrow, [borrowId], next)) return;
+            const userId = req.session.userId as string;
 
-            const userRatings = await this.borrow
-                .findById(borrowId, { user_ratings: 1 })
-                .populate("user_ratings")
+            const { user_ratings } = await this.user
+                .findById(userId, { user_ratings: 1, _id: 0 })
+                .populate({ path: "user_ratings", populate: { path: "from_me to_me" } })
                 .lean<{ user_ratings: UserRating[] }>()
                 .exec();
-            console.log(userRatings);
-            if (!userRatings) return next(new HttpError("Failed to get user ratings of the borrow"));
 
-            res.json(userRatings);
+            // const userRatings = await this.borrow
+            //     .findById(userId, { user_ratings: 1 })
+            //     .populate("user_ratings")
+            //     .lean<{ user_ratings: UserRating[] }>()
+            //     .exec();
+            // console.log(userRatings);
+            if (!user_ratings) return next(new HttpError("Failed to get user ratings of the borrow"));
+
+            res.json(user_ratings);
         } catch (error) {
             next(new HttpError(error));
         }
     };
 
-    private createUserRatingByBorrowId = async (req: Request, res: Response, next: NextFunction) => {
+    private getUserRatingById = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const id = req.params["id"] as string;
+
+            const rating = await this.userRating
+                .findById(id)
+                .lean<UserRating>()
+                .exec();
+            console.log(rating);0
+            if (!rating) return next(new HttpError("Failed to get user ratings of the borrow"));
+
+            res.json(rating);
+        } catch (error) {
+            next(new HttpError(error));
+        }
+    };
+
+    private createUserRatingByBorrowId = async (
+        req: Request<unknown, unknown, CreateUserRating, { user: string; borrow: string }>,
+        res: Response,
+        next: NextFunction,
+    ) => {
         try {
             // const myId = req.session.userId as string;
-            const borrowId = req.params["id"];
-            const userId = req.params["userId"];
+            const borrowId = req.query.borrow;
             if (await isIdNotValid(this.borrow, [borrowId], next)) return;
+            const userId = req.query.user;
+            if (await isIdNotValid(this.user, [userId], next)) return;
 
             // const book = await this.borrow.findOne({ _id: borrowId, "ratings.from_id": userId }).lean<Book>().exec();
             // if (book) return next(new HttpError("Already rated this book."));
@@ -71,7 +105,12 @@ export default class UserRatingController implements Controller {
 
             // res.json(ratedBook);
 
-            res.json({ borrow: await borrowModel.findById(borrowId), user: await userModel.findById(userId), data: rateData });
+            res.json({
+                borrow: await this.borrow.findById(borrowId),
+                user: await this.user.findById(userId),
+                data: rateData,
+            });
+            // res.sendStatus(200);
         } catch (error) {
             next(new HttpError(error));
         }

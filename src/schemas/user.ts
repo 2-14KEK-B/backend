@@ -1,15 +1,6 @@
 import { Schema } from "mongoose";
 import type { User } from "@interfaces/user";
 
-// const userRating = new Schema({
-//     user_id: {
-//         type: Schema.Types.ObjectId,
-//         ref: "User",
-//     },
-//     comment: String,
-//     rate: { type: Boolean, required: true },
-// });
-
 const userSchema = new Schema<User>(
     {
         username: { type: String },
@@ -25,7 +16,6 @@ const userSchema = new Schema<User>(
         messages: [{ type: Schema.Types.ObjectId, ref: "Message" }],
         borrows: [{ type: Schema.Types.ObjectId, ref: "Borrow" }],
         user_ratings: {
-            // { type: Schema.Types.ObjectId, ref: "UserRating" },
             from_me: [{ type: Schema.Types.ObjectId, ref: "UserRating" }],
             to_me: [{ type: Schema.Types.ObjectId, ref: "UserRating" }],
         },
