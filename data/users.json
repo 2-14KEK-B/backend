@@ -3,6 +3,12 @@
         "_id": {
             "$oid": "6357b544447026c9b91950fd"
         },
+        "createdAt": {
+            "$date": "2022-10-25T10:07:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2022-10-25T10:07:00.000Z"
+        },
         "password": "$2b$10$VfmyHNA42h2KdsKJ5SZhnePV24GT9zQsgZjJdamZ0jPczVAQNSlSq",
         "email": "test@test.com",
         "email_is_verified": false,
@@ -26,11 +32,22 @@
                 "$oid": "6357f9bf7b60ee488385f955"
             }
         ],
-        "user_ratings": []
+        "rated_books": [
+            {
+                "$oid": "635aaacf447026c9b91950fd"
+            }
+        ],
+        "user_ratings": {}
     },
     {
         "_id": {
             "$oid": "6357b59c447026c9b9195100"
+        },
+        "createdAt": {
+            "$date": "2022-10-25T10:08:28.000Z"
+        },
+        "updatedAt": {
+            "$date": "2022-10-25T10:08:28.000Z"
         },
         "password": "$2b$10$933CxPbXlAj47L2ssgMw/OcnQB0q/YvjzplELbj8yxbR22ZBF.OLC",
         "email": "test2@test.com",
@@ -45,6 +62,11 @@
         "borrows": [
             {
                 "$oid": "6357f9bf7b60ee488385f955"
+            }
+        ],
+        "rated_books": [
+            {
+                "$oid": "635ab8df447026c9b91950fd"
             }
         ],
         "user_ratings": []

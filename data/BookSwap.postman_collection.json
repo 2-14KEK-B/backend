@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "42bbe727-baa3-4b6d-b656-77352501dcde",
+		"_postman_id": "89fa902e-7c98-4f9d-b547-737bb68c2c23",
 		"name": "BookSwap_dev",
 		"description": "Vizsgamunka",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
@@ -37,7 +37,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"email\": \"test2@test.com\",\r\n    \"password\": \"4321\"\r\n}",
+							"raw": "{\r\n    \"email\": \"test@test.com\",\r\n    \"password\": \"1234\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -144,6 +144,110 @@
 		{
 			"name": "books",
 			"item": [
+				{
+					"name": "rating",
+					"item": [
+						{
+							"name": "get all by book id",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/book/rate/6357d9e43441ea127321696d",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"book",
+										"rate",
+										"6357d9e43441ea127321696d"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "delete by book id",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/book/rate/6357d9e43441ea127321696d",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"book",
+										"rate",
+										"6357d9e43441ea127321696d"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "create by book id",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"rate\": 1,\r\n    \"comment\": \"szoszi\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URL}}/book/rate/6357d9e43441ea127321696d",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"book",
+										"rate",
+										"6357d9e43441ea127321696d"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "paginate",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/book?sort=asc",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"book"
+							],
+							"query": [
+								{
+									"key": "sort",
+									"value": "asc"
+								},
+								{
+									"key": "limit",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "skip",
+									"value": "1",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
 				{
 					"name": "get all",
 					"request": {
@@ -303,6 +407,39 @@
 					"response": []
 				},
 				{
+					"name": "paginate",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/borrow?sort=asc",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"borrow"
+							],
+							"query": [
+								{
+									"key": "sort",
+									"value": "asc"
+								},
+								{
+									"key": "limit",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "skip",
+									"value": "1",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "create",
 					"request": {
 						"method": "POST",
@@ -379,6 +516,48 @@
 			"name": "messages",
 			"item": [
 				{
+					"name": "get all",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/message/all",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"message",
+								"all"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get by id paginate",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/message/635803e76fe4028063397763?sort=asc",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"message",
+								"635803e76fe4028063397763"
+							],
+							"query": [
+								{
+									"key": "sort",
+									"value": "asc"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "create",
 					"request": {
 						"method": "POST",
@@ -399,42 +578,6 @@
 							],
 							"path": [
 								"message"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "get all",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{URL}}/message/all",
-							"host": [
-								"{{URL}}"
-							],
-							"path": [
-								"message",
-								"all"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "get by id",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{URL}}/message/635803e76fe4028063397763",
-							"host": [
-								"{{URL}}"
-							],
-							"path": [
-								"message",
-								"635803e76fe4028063397763"
 							]
 						}
 					},
@@ -464,18 +607,17 @@
 			"name": "users",
 			"item": [
 				{
-					"name": "get users",
+					"name": "get users paginate",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{URL}}/user/all",
+							"raw": "{{URL}}/user",
 							"host": [
 								"{{URL}}"
 							],
 							"path": [
-								"user",
-								"all"
+								"user"
 							]
 						}
 					},
