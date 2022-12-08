@@ -30,7 +30,7 @@ export default class UserController implements Controller {
             .route(`${this.path}/:id`)
             .get(this.getUserById)
             .patch(validation(ModifyUserDto, true), this.modifyUserById)
-            .delete(authorization(["admin"]), this.deleteUserById);
+            .delete(this.deleteUserById);
     }
 
     private getAllUsers = async (
@@ -81,7 +81,7 @@ export default class UserController implements Controller {
 
     private getMyUserInfo = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const userId = req.session.userId;
+            const userId = req.session["userId"];
 
             const user = await this.user
                 .findById(userId, "-password")
@@ -120,20 +120,17 @@ export default class UserController implements Controller {
         try {
             const userId = req.params["id"];
             if (await isIdNotValid(this.user, [userId], next)) return;
-            const loggedUser = await this.user //
-                .findById(req.session.userId)
-                .lean<User>()
-                .exec();
 
-            if (loggedUser.role != "admin") {
-                if (userId != loggedUser._id) {
+            if (req.session["role"] != "admin") {
+                if (req.session["userId"] != userId) {
                     return next(new HttpError("You cannot modify other user's data.", StatusCode.Forbidden));
                 }
             }
 
-            const userData = { ...req.body, updated_on: new Date() };
+            const userData: Partial<User> = { ...req.body, updatedAt: new Date() };
+
             const user = await this.user
-                .findByIdAndUpdate(userId, userData, { returnDocument: "after" })
+                .findByIdAndUpdate(userId, userData, { returnDocument: "after", projection: "-password" })
                 .lean<User>()
                 .exec();
             if (!user) return next(new HttpError("Failed to update user"));
@@ -149,11 +146,16 @@ export default class UserController implements Controller {
             const userId = req.params["id"];
             if (await isIdNotValid(this.user, [userId], next)) return;
 
-            const userRes = await this.user //
-                .findByIdAndDelete(userId)
-                .lean<User>()
+            if (req.session["role"] != "admin") {
+                if (req.session["userId"] != userId) {
+                    return next(new HttpError("You can not delete other user"));
+                }
+            }
+
+            const { acknowledged } = await this.user //
+                .deleteOne({ _id: userId })
                 .exec();
-            if (!userRes) return next(new HttpError("Failed to delete user"));
+            if (!acknowledged) return next(new HttpError("Failed to delete user"));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {

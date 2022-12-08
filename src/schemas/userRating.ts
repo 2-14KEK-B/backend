@@ -13,6 +13,11 @@ const userRatingSchema = new Schema<UserRating>(
             ref: "User",
             required: true,
         },
+        borrow_id: {
+            type: Schema.Types.ObjectId,
+            ref: "Borrow",
+            required: true,
+        },
         comment: String,
         rate: { type: Boolean, required: true },
     },

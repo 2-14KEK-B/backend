@@ -26,9 +26,10 @@ export default class AuthenticationController implements Controller {
 
     private checkIfLoggedIn = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            if (!req.session.userId) return next(new UnauthorizedException());
+            const userId = req.session["userId"];
+            if (!userId) return next(new UnauthorizedException());
             const user = await this.user
-                .findById(req.session.userId, "-password -books -borrows -messages -user_ratings")
+                .findById(userId, "-password -books -borrows -messages -user_ratings")
                 .lean<User>()
                 .exec();
 

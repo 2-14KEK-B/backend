@@ -20,6 +20,7 @@ export default class LogoutController implements Controller {
     private logout = async (req: Request, res: Response, next: NextFunction) => {
         try {
             delete req.session["userId"];
+            delete req.session["role"];
             req.session.destroy(error => {
                 if (error) {
                     console.log(new Error(error));

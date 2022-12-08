@@ -11,8 +11,7 @@ import { CreateBorrowDto, ModifyBorrowDto } from "@validators/borrow";
 import HttpError from "@exceptions/Http";
 import type Controller from "@interfaces/controller";
 import type { Borrow, CreateBorrow, ModifyBorrow } from "@interfaces/borrow";
-import type { User } from "@interfaces/user";
-import type { FilterQuery, SortOrder } from "mongoose";
+import type { FilterQuery, SortOrder, Types } from "mongoose";
 
 export default class BorrowController implements Controller {
     path = "/borrow";
@@ -46,7 +45,7 @@ export default class BorrowController implements Controller {
                 .lean<Borrow[]>()
                 .exec();
 
-            res.send(borrows);
+            res.json(borrows);
         } catch (error) {
             next(new HttpError(error.message));
         }
@@ -69,7 +68,7 @@ export default class BorrowController implements Controller {
         next: NextFunction,
     ) => {
         try {
-            const loggedInUserId = req.session.userId as string;
+            const loggedInUserId = req.session["userId"];
             const { skip, limit, sort, sortBy, userId } = req.query;
 
             let query: FilterQuery<Borrow> = { $or: [{ from_id: loggedInUserId }, { to_id: loggedInUserId }] };
@@ -78,11 +77,7 @@ export default class BorrowController implements Controller {
                 if (await isIdNotValid(this.user, [userId], next)) {
                     return;
                 }
-                const { role } = await this.user //
-                    .findById(loggedInUserId)
-                    .lean<User>()
-                    .exec();
-                if (role != "admin") {
+                if (req.session["role"] != "admin") {
                     return next(new HttpError("You cannot get other user's borrows.", StatusCode.Forbidden));
                 }
                 query = { $or: [{ from_id: userId }, { to_id: userId }] };
@@ -114,12 +109,12 @@ export default class BorrowController implements Controller {
 
             const borrow = await this.borrow //
                 .findById(borrowId)
-                .populate(["books"])
+                .populate("books")
                 .lean<Borrow>()
                 .exec();
             if (!borrow) return next(new HttpError(`Failed to get borrow by id ${borrowId}`));
 
-            res.send(borrow);
+            res.json(borrow);
         } catch (error) {
             next(new HttpError(error.message));
         }
@@ -127,7 +122,7 @@ export default class BorrowController implements Controller {
 
     private createBorrow = async (req: Request<unknown, unknown, CreateBorrow>, res: Response, next: NextFunction) => {
         try {
-            const userId = req.session.userId;
+            const userId = req.session["userId"];
             const { from_id, books } = req.body;
             if (await isIdNotValid(this.user, [from_id], next)) return;
             if (await isIdNotValid(this.book, books, next)) return;
@@ -150,7 +145,7 @@ export default class BorrowController implements Controller {
                 .exec();
             if (!acknowledged) return next(new HttpError("Failed to update users"));
 
-            res.send(newBorrow);
+            res.json(newBorrow);
         } catch (error) {
             next(new HttpError(error.message));
         }
@@ -162,24 +157,20 @@ export default class BorrowController implements Controller {
         next: NextFunction,
     ) => {
         try {
-            const userId = req.session.userId;
+            const loggedInUserId = req.session["userId"];
             const borrowId = req.params["id"];
             if (await isIdNotValid(this.borrow, [borrowId], next)) return;
 
-            const { role, borrows } = await this.user //
-                .findById(userId)
-                .lean<User>()
+            const { from_id, to_id } = await this.borrow //
+                .findById(borrowId, { from_id: 1, to_id: 1 })
+                .lean<{ from_id: Types.ObjectId; to_id: Types.ObjectId }>()
                 .exec();
 
-            if (role != "admin") {
-                if (!borrows.some(id => id.valueOf() === borrowId)) {
+            if (req.session["role"] != "admin") {
+                if (![from_id.toString(), to_id.toString()].includes(loggedInUserId as string)) {
                     return next(new HttpError("Unauthorized", StatusCode.Unauthorized));
                 }
-                const borrow = await this.borrow //
-                    .findById(borrowId)
-                    .lean<Borrow>()
-                    .exec();
-                if (borrow.from_id.valueOf() !== userId) {
+                if (from_id.toString() !== loggedInUserId) {
                     if (req.body.verified !== undefined) {
                         return next(new HttpError("You can not modify this value", StatusCode.Unauthorized));
                     }
@@ -187,7 +178,7 @@ export default class BorrowController implements Controller {
             }
 
             const modifiedBorrow = await this.borrow
-                .findByIdAndUpdate(borrowId, { ...req.body, updated_on: new Date() }, { returnDocument: "after" })
+                .findByIdAndUpdate(borrowId, { ...req.body, updatedAt: new Date() }, { returnDocument: "after" })
                 .lean<Borrow>()
                 .exec();
             if (!modifiedBorrow) return next(new HttpError("Failed to update borrow"));
@@ -204,19 +195,20 @@ export default class BorrowController implements Controller {
             if (await isIdNotValid(this.borrow, [borrowId], next)) return;
 
             const { from_id, to_id } = await this.borrow //
-                .findById(borrowId)
-                .lean<Borrow>()
+                .findById(borrowId, { from_id: 1, to_id: 1 })
+                .lean<{ from_id: Types.ObjectId; to_id: Types.ObjectId }>()
                 .exec();
             if (!from_id || !to_id) return next(new HttpError("Failed to get ids from borrow"));
 
-            const response = await this.borrow.findByIdAndDelete(borrowId);
-            if (!response) return next(new HttpError(`Failed to delete borrow by id ${borrowId}`));
+            const { acknowledged: successfullBorrowDelete } = await this.borrow //
+                .deleteOne({ _id: borrowId })
+                .exec();
+            if (!successfullBorrowDelete) return next(new HttpError(`Failed to delete borrow by id ${borrowId}`));
 
-            const { acknowledged } = await this.user.updateMany(
-                { _id: { $in: [from_id, to_id] } },
-                { $pull: { borrows: borrowId } },
-            );
-            if (!acknowledged) return next(new HttpError("Failed to update users"));
+            const { acknowledged: successfullDeleteFromUser } = await this.user
+                .updateMany({ _id: { $in: [from_id, to_id] } }, { $pull: { borrows: borrowId } })
+                .exec();
+            if (!successfullDeleteFromUser) return next(new HttpError("Failed to update users"));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {

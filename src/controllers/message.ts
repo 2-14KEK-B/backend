@@ -81,7 +81,7 @@ export default class MessageController implements Controller {
         next: NextFunction,
     ) => {
         try {
-            const from_id = req.session.userId;
+            const from_id = req.session["userId"];
             const to_id = req.params["id"];
             if (await isIdNotValid(this.user, [to_id], next)) return;
 
@@ -104,12 +104,13 @@ export default class MessageController implements Controller {
             } else {
                 messages = await this.message.create({
                     users: [new Types.ObjectId(from_id), new Types.ObjectId(to_id)],
+                    updatedAt: new Date(),
                     message_contents: [newMessageContent],
                 });
                 if (!messages) return next(new HttpError("Failed to create message"));
 
                 const { acknowledged } = await this.user.updateMany(
-                    { _id: { $in: [from_id, to_id] } },
+                    { _id: { $in: messages.users } },
                     { $push: { messages: { _id: messages._id } } },
                 );
                 if (!acknowledged) return next(new HttpError("Failed to update users"));
@@ -133,7 +134,8 @@ export default class MessageController implements Controller {
             if (!users) return next(new HttpError("Failed to get ids from messages"));
 
             const response = await this.message //
-                .findByIdAndDelete(messageId);
+                .deleteOne({ _id: messageId })
+                .exec();
             if (!response) return next(new HttpError(`Failed to delete message by id ${messageId}`));
 
             const { acknowledged } = await this.user.updateMany(

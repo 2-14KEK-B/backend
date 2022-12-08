@@ -9,10 +9,9 @@ import { CreateBookDto } from "@validators/book";
 import isIdNotValid from "@utils/idChecker";
 import StatusCode from "@utils/statusCodes";
 import HttpError from "@exceptions/Http";
-import { FilterQuery, Types, SortOrder } from "mongoose";
+import type { FilterQuery, Types, SortOrder } from "mongoose";
 import type Controller from "@interfaces/controller";
 import type { Book, CreateBook } from "@interfaces/book";
-import type { User } from "@interfaces/user";
 
 export default class BookController implements Controller {
     path = "/book";
@@ -46,7 +45,7 @@ export default class BookController implements Controller {
                 .lean<Book[]>()
                 .exec();
 
-            res.send(books);
+            res.json(books);
         } catch (error) {
             next(new HttpError(error));
         }
@@ -104,16 +103,16 @@ export default class BookController implements Controller {
 
     private getUserBooks = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const userId = req.session.userId;
+            const userId = req.session["userId"];
 
-            const user = await this.user //
-                .findOne({ _id: userId })
+            const { books } = await this.user //
+                .findById(userId, { books: 1 })
                 .populate("books")
-                .lean<User>()
+                .lean<{ books: Book[] }>()
                 .exec();
-            if (!user) return next(new HttpError(`Failed to get user by id ${userId}`));
+            if (!books) return next(new HttpError(`Failed to get user by id ${userId}`));
 
-            res.send(user.books);
+            res.json(books);
         } catch (error) {
             next(new HttpError(error));
         }
@@ -130,7 +129,7 @@ export default class BookController implements Controller {
                 .exec();
             if (!book) return next(new HttpError(`Failed to get book by id ${bookId}`));
 
-            res.send(book);
+            res.json(book);
         } catch (error) {
             next(new HttpError(error));
         }
@@ -138,20 +137,22 @@ export default class BookController implements Controller {
 
     private createBook = async (req: Request<unknown, CreateBook>, res: Response, next: NextFunction) => {
         try {
-            const userId = req.session.userId;
+            const userId = req.session["userId"];
             const newBook = await this.book //
                 .create({ ...req.body, uploader: userId });
             if (!newBook) return next(new HttpError("Failed to create book"));
 
-            const userRes = await this.user //
-                .findByIdAndUpdate(userId, {
-                    $push: { books: { _id: newBook._id } },
-                })
-                .lean<User>()
+            const { acknowledged } = await this.user //
+                .updateOne(
+                    { _id: userId },
+                    {
+                        $push: { books: { _id: newBook._id } },
+                    },
+                )
                 .exec();
-            if (!userRes) return next(new HttpError(`Failed to update user`));
+            if (!acknowledged) return next(new HttpError(`Failed to update user`));
 
-            res.send(newBook);
+            res.json(newBook);
         } catch (error) {
             next(new HttpError(error));
         }
@@ -162,8 +163,8 @@ export default class BookController implements Controller {
      */
     // private modifyBookById = async (req: Request, res: Response, next: NextFunction) => {
     //     try {
-    //         const userId = req.session.userId;
-    //         const bookId: string = req.params.id;
+    //         const userId = req.session["userId"];
+    //         const bookId: string = req.params["id"];
     //         if (await isIdNotValid(this.book, [bookId], next)) return;
 
     //         const now = new Date();
@@ -173,7 +174,7 @@ export default class BookController implements Controller {
 
     //         await this.user.findByIdAndUpdate(userId, { $push: { books: { _id: newBook._id } } });
 
-    //         res.send(newBook);
+    //         res.json(newBook);
     //     } catch (error) {
     //         next(new HttpError(error));
     //     }
@@ -181,35 +182,28 @@ export default class BookController implements Controller {
 
     private deleteBookById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
         try {
-            const userId = req.session.userId;
+            const userId = req.session["userId"];
             const bookId = req.params["id"];
             if (await isIdNotValid(this.book, [bookId], next)) return;
 
-            const { role, books } = await this.user //
-                .findById(userId, { role: 1, books: 1 })
-                .lean<Partial<User>>()
+            const { uploader } = await this.book //
+                .findById(bookId)
+                .lean<{ uploader: Types.ObjectId }>()
                 .exec();
 
-            if (role != "admin") {
-                if (!books?.find(id => id.valueOf() === bookId)) {
+            if (req.session["role"] != "admin") {
+                if (uploader.toString() != userId) {
                     return next(new HttpError("Unauthorized", StatusCode.Unauthorized));
                 }
             }
 
-            const { _id, uploader } = await this.book //
-                .findByIdAndDelete(bookId)
-                .lean<Book>()
-                .exec();
-            if (!_id) return next(new HttpError(`Failed to delete book by id ${bookId}`));
+            const { acknowledged: successfullDeleteBook } = await this.book.deleteOne({ _id: bookId }).exec();
+            if (!successfullDeleteBook) return next(new HttpError(`Failed to delete book by id ${bookId}`));
 
-            const userRes = await this.user
-                .findByIdAndUpdate(
-                    new Types.ObjectId(uploader), //
-                    { $pull: { books: _id } },
-                )
-                .lean<User>()
+            const { acknowledged: successfullDeleteBookFromUser } = await this.user //
+                .updateOne({ _id: uploader }, { $pull: { books: bookId } })
                 .exec();
-            if (!userRes) return next(new HttpError(`Failed to update user`));
+            if (!successfullDeleteBookFromUser) return next(new HttpError(`Failed to update user`));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
