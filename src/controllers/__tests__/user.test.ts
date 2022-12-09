@@ -96,11 +96,16 @@ describe("USERS", () => {
             expect(res.statusCode).toBe(StatusCode.Forbidden);
             expect(res.body).toBe("You cannot modify other user's data.");
         });
-        it("DELETE /user/:id, should return statuscode 403", async () => {
+        it("DELETE /user/:id, should return statuscode 400 if it's not logged in user", async () => {
             expect.assertions(2);
             const res: Response = await agent.delete(`/user/${mockUser2Id.toString()}`);
-            expect(res.statusCode).toBe(StatusCode.Forbidden);
-            expect(res.body).toBe("Forbidden");
+            expect(res.statusCode).toBe(StatusCode.BadRequest);
+            expect(res.body).toBe("You can not delete other user");
+        });
+        it("DELETE /user/:id, should return statuscode 204", async () => {
+            expect.assertions(1);
+            const res: Response = await agent.delete(`/user/${mockUser1Id.toString()}`);
+            expect(res.statusCode).toBe(StatusCode.NoContent);
         });
     });
 
@@ -126,10 +131,15 @@ describe("USERS", () => {
         });
         it("GET /user?sort=asc&sortBy=createdAt, should return statuscode 200", async () => {
             expect.assertions(3);
+            const mockUser = await userModel.create({
+                email: "testemail@email.com",
+                password: hpw,
+                createdAt: new Date("2010-10-10"),
+            });
             const res: Response = await agent.get("/user?sort=asc&sortBy=createdAt");
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body).toBeInstanceOf(Array<User>);
-            expect(res.body[0].createdAt).toBe(mockUser1.createdAt?.toISOString());
+            expect(res.body[0].createdAt).toBe(mockUser.createdAt?.toISOString());
         });
         it("GET /user?keyword=testuser2@test.com, should return statuscode 200", async () => {
             expect.assertions(3);
@@ -140,27 +150,27 @@ describe("USERS", () => {
         });
         it("GET /user/:id, should return statuscode 200", async () => {
             expect.assertions(2);
-            const res: Response = await agent.get(`/user/${mockUser1Id.toString()}`);
+            const res: Response = await agent.get(`/user/${mockUser2Id.toString()}`);
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body).toBeInstanceOf(Object as unknown as User);
         });
         it("PATCH /user/:id, should return statuscode 200", async () => {
             expect.assertions(2);
             const newData: ModifyUser = { fullname: "John Doe" };
-            const res: Response = await agent.patch(`/user/${mockUser1Id.toString()}`).send(newData);
+            const res: Response = await agent.patch(`/user/${mockUser2Id.toString()}`).send(newData);
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body).toHaveProperty("fullname", newData.fullname);
         });
         it("DELETE /user/:id, should return statuscode 204", async () => {
             expect.assertions(1);
-            const res: Response = await agent.delete(`/user/${mockUser1Id.toString()}`);
+            const res: Response = await agent.delete(`/user/${mockUser2Id.toString()}`);
             expect(res.statusCode).toBe(StatusCode.NoContent);
         });
         it("DELETE /user/:id, should return statuscode 404 if user not found", async () => {
             expect.assertions(2);
-            const res: Response = await agent.delete(`/user/${mockUser1Id.toString()}`);
+            const res: Response = await agent.delete(`/user/${mockUser2Id.toString()}`);
             expect(res.statusCode).toBe(404);
-            expect(res.body).toBe(`This ${mockUser1Id.toString()} id is not valid.`);
+            expect(res.body).toBe(`This ${mockUser2Id.toString()} id is not valid.`);
         });
     });
 });

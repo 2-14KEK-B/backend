@@ -15,7 +15,10 @@ const userSchema = new Schema<User>(
         rated_books: [{ type: Schema.Types.ObjectId, ref: "Book" }],
         messages: [{ type: Schema.Types.ObjectId, ref: "Message" }],
         borrows: [{ type: Schema.Types.ObjectId, ref: "Borrow" }],
-        user_ratings: [{ type: Schema.Types.ObjectId, refPath: "borrow.user_ratings" }],
+        user_ratings: {
+            from_me: [{ type: Schema.Types.ObjectId, ref: "UserRating" }],
+            to_me: [{ type: Schema.Types.ObjectId, ref: "UserRating" }],
+        },
     },
     { timestamps: true, versionKey: false },
 );

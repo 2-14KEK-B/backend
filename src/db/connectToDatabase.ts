@@ -4,6 +4,7 @@ import userModel from "@models/user";
 import bookModel from "@models/book";
 import borrowModel from "@models/borrow";
 import messageModel from "@models/message";
+import userRatingModel from "@models/userRating";
 
 export default async function connectToDatabase(connectionString?: string): Promise<void> {
     try {
@@ -21,6 +22,7 @@ export default async function connectToDatabase(connectionString?: string): Prom
         await bookModel.init();
         await borrowModel.init();
         await messageModel.init();
+        await userRatingModel.init();
 
         connection.on("error", error => {
             console.log(`Mongoose error message: ${error}`);

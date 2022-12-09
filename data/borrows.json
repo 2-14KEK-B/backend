@@ -21,7 +21,14 @@
             }
         ],
         "verified": true,
-        "user_ratings": [],
+        "user_ratings": [
+            {
+                "$oid": "638906990097a84550cec128"
+            },
+            {
+                "$oid": "638916990097a84550cec129"
+            }
+        ],
         "__v": 0
     }
 ]

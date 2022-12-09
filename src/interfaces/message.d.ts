@@ -1,12 +1,13 @@
-import { Types } from "mongoose";
+import type ID from "./id";
 
-type ID = Types.ObjectId | string;
+interface CreateMessage {
+    content: string;
+}
 
-interface MessageContent {
+interface MessageContent extends CreateMessage {
     _id?: ID;
     createdAt: Date;
     sender_id: ID;
-    content: string;
 }
 
 interface Message {

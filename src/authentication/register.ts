@@ -41,11 +41,9 @@ export default class RegisterController implements Controller {
             });
             if (!newUser) return next(new HttpError("Something wrong with the user creation."));
 
-            newUser.password = undefined;
-
             res.json(`user created with ${newUser.email}`);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 }

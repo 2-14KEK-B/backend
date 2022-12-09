@@ -14,6 +14,7 @@ const bookRatingSchema = new Schema<BookRating>(
     { timestamps: { createdAt: true, updatedAt: false }, versionKey: false },
 );
 
+
 const bookSchema = new Schema<Book>(
     {
         uploader: {

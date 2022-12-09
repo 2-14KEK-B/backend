@@ -19,7 +19,34 @@
         "price": 0,
         "available": false,
         "for_borrow": true,
-        "ratings": [],
+        "ratings": [
+            {
+                "_id": {
+                    "$oid": "635aaacf447026c9b91950fd"
+                },
+                "from_id": {
+                    "$oid": "6357b544447026c9b91950fd"
+                },
+                "createdAt": {
+                    "$date": "2022-10-27T15:59:11.000Z"
+                },
+                "rate": 1,
+                "comment": "Not the best."
+            },
+            {
+                "_id": {
+                    "$oid": "635ab8df447026c9b91950fd"
+                },
+                "from_id": {
+                    "$oid": "6357b59c447026c9b9195100"
+                },
+                "createdAt": {
+                    "$date": "2022-10-27T16:59:11.000Z"
+                },
+                "rate": 5,
+                "comment": "Well done."
+            }
+        ],
         "__v": 0
     },
     {
