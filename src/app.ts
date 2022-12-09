@@ -48,10 +48,6 @@ export default class App {
         });
     }
 
-    public initSocketIO() {
-        return new Socket(this.httpServer, { cors: corsOptions });
-    }
-
     private initSession() {
         const MAX_AGE = 1000 * 60 * 60;
         const uri = process.env["TEST_URI"] || env.MONGO_URI;
@@ -81,8 +77,47 @@ export default class App {
     }
 
     public listen(): void {
+        this.initSocketIO();
+
         this.httpServer.listen(env.PORT, () => {
             console.log(`App listening on the port ${env.PORT}`);
+        });
+    }
+
+    private initSocketIO() {
+        const io = new Socket(this.httpServer, { cors: corsOptions });
+
+        let onlineUsers: { user_id: string; socket_id: string }[] = [];
+
+        io.on("connection", socket => {
+            socket.on("disconnecting", () => {
+                const disconnectedId = socket.id;
+                onlineUsers = onlineUsers.filter(user => user.socket_id !== disconnectedId);
+
+                onlineUsers.forEach(user => {
+                    socket.to(user.socket_id).emit(
+                        "other-users",
+                        onlineUsers.map(user => user.user_id),
+                    );
+                });
+            });
+            socket.on("add-user", (userId: string) => {
+                socket.emit(
+                    "other-users",
+                    onlineUsers.map(user => user.user_id),
+                );
+
+                onlineUsers.push({ user_id: userId, socket_id: socket.id });
+
+                socket.broadcast.emit("new-user", userId);
+            });
+
+            socket.on("send-msg", (data: { from: string; to: string; message: string }) => {
+                const sendUserSocket = onlineUsers.find(user => user.user_id === data.to);
+                if (sendUserSocket) {
+                    socket.to(sendUserSocket.socket_id).emit("msg-recieved", data);
+                }
+            });
         });
     }
 }

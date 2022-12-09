@@ -6,10 +6,8 @@ import BookController from "@controllers/book";
 import BorrowController from "@controllers/borrow";
 import MessageController from "@controllers/message";
 import connectToDatabase from "@db/connectToDatabase";
-import type { Server } from "socket.io";
 
 debug("express");
-let io: Server;
 
 (async () => {
     await connectToDatabase();
@@ -20,8 +18,5 @@ let io: Server;
         new MessageController(),
         new UserController(),
     ]);
-    io = app.initSocketIO();
     app.listen();
 })();
-
-export { io };
