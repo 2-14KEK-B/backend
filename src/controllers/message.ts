@@ -1,17 +1,17 @@
 import { Router, Request, Response, NextFunction } from "express";
-import messageModel from "@models/message";
 import authentication from "@middlewares/authentication";
 import authorization from "@middlewares/authorization";
 import validation from "@middlewares/validation";
+import messageModel from "@models/message";
 import userModel from "@models/user";
 import StatusCode from "@utils/statusCodes";
 import isIdNotValid from "@utils/idChecker";
+import sortByDate from "@utils/sortByDate";
 import CreateMessageDto from "@validators/message";
 import HttpError from "@exceptions/Http";
 import { SortOrder, Types } from "mongoose";
 import type { CreateMessageContent, Message, MessageContent } from "@interfaces/message";
 import type Controller from "@interfaces/controller";
-import sortByDate from "@utils/sortByDate";
 
 export default class MessageController implements Controller {
     path = "/message";
@@ -26,6 +26,7 @@ export default class MessageController implements Controller {
     private initializeRoutes() {
         this.router.all("*", authentication);
         this.router.get(`${this.path}/all`, authorization(["admin"]), this.getAllMessages);
+        this.router.get(this.path, this.getMessageByUserIds);
         this.router
             .route(`${this.path}/:id`)
             .get(this.getMessagesById)
@@ -62,6 +63,38 @@ export default class MessageController implements Controller {
                 .lean<{ message_contents: MessageContent[] }>()
                 .exec();
             if (!message_contents) return next(new HttpError(`Failed to get message by id ${messageId}`));
+
+            let sortedMessages = sortByDate(message_contents, sort || "desc");
+            sortedMessages = message_contents.slice(
+                Number.parseInt(skip as string) || 0,
+                Number.parseInt(limit as string) || 25,
+            );
+
+            res.json(sortedMessages);
+        } catch (error) {
+            next(new HttpError(error.message));
+        }
+    };
+
+    private getMessageByUserIds = async (
+        req: Request<unknown, unknown, unknown, { skip?: string; limit?: string; sort?: SortOrder; userId: string }>,
+        res: Response,
+        next: NextFunction,
+    ) => {
+        try {
+            const loggedInUserId = req.session["userId"];
+
+            const { skip, limit, sort, userId } = req.query;
+            if (await isIdNotValid(this.user, [userId, loggedInUserId], next)) return;
+
+            const { message_contents } = await this.message
+                .findOne(
+                    { users: { $in: [loggedInUserId, userId] } }, //
+                    { message_contents: 1 },
+                )
+                .lean<{ message_contents: MessageContent[] }>()
+                .exec();
+            if (!message_contents) return next(new HttpError(`Failed to get message by given user ids`));
 
             let sortedMessages = sortByDate(message_contents, sort || "desc");
             sortedMessages = message_contents.slice(

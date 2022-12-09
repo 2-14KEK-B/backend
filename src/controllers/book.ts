@@ -63,13 +63,14 @@ export default class BookController implements Controller {
                 sortBy?: string;
                 available?: string;
                 keyword?: string;
+                userId?: string;
             }
         >,
         res: Response,
         next: NextFunction,
     ) => {
         try {
-            const { skip, limit, sort, sortBy, available, keyword } = req.query;
+            const { skip, limit, sort, sortBy, available, keyword, userId } = req.query;
 
             const query: FilterQuery<Book> = { $and: [] };
             let sortQuery: { [_ in keyof Partial<Book>]: SortOrder } | string = {
@@ -78,6 +79,11 @@ export default class BookController implements Controller {
 
             if (available) {
                 query.$and?.push({ available: available == "true" });
+            }
+
+            if (userId) {
+                if (await isIdNotValid(this.user, [userId], next)) return;
+                query.$and?.push({ uploader: userId });
             }
 
             if (keyword) {
@@ -110,10 +116,9 @@ export default class BookController implements Controller {
         try {
             const userId = req.session["userId"];
 
-            const { books } = await this.user //
-                .findById(userId, { books: 1 })
-                .populate("books")
-                .lean<{ books: Book[] }>()
+            const books = await this.book //
+                .find({ uploader: userId })
+                .lean<Book[]>()
                 .exec();
             if (!books) return next(new HttpError(`Failed to get user by id ${userId}`));
 

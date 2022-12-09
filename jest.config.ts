@@ -1,10 +1,9 @@
 import { pathsToModuleNameMapper } from "ts-jest";
-import type { JestConfigWithTsJest } from "ts-jest";
 import { compilerOptions } from "./tsconfig.json";
+import type { JestConfigWithTsJest } from "ts-jest";
 
 const jestConfig: JestConfigWithTsJest = {
     roots: ["<rootDir>"],
-    preset: "ts-jest",
     verbose: true,
     expand: true,
     globalSetup: "<rootDir>/test/globalSetup.ts",
@@ -16,7 +15,14 @@ const jestConfig: JestConfigWithTsJest = {
     forceExit: true,
     maxWorkers: "50%",
     transform: {
-        "^.+\\.ts$": "ts-jest",
+        "^.+\\.ts$": [
+            "ts-jest",
+            {
+                diagnostics: {
+                    exclude: ["**"],
+                },
+            },
+        ],
     },
     testMatch: ["<rootDir>/**/__tests__/**/*.ts"],
     moduleFileExtensions: ["ts", "js", "json", "node"],
