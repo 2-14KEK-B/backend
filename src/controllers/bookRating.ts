@@ -1,5 +1,4 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { SortOrder, Types } from "mongoose";
 import validationMiddleware from "@middlewares/validation";
 import authenticationMiddleware from "@middlewares/authentication";
 import authorizationMiddleware from "@middlewares/authorization";
@@ -10,8 +9,8 @@ import StatusCode from "@utils/statusCodes";
 import { BookRatingDto } from "@validators/book";
 import HttpError from "@exceptions/Http";
 import sortByDate from "@utils/sortByDate";
+import type { SortOrder } from "mongoose";
 import type { Book } from "@interfaces/book";
-import type { User } from "@interfaces/user";
 import type Controller from "@interfaces/controller";
 import type { BookRating, CreateBookRating } from "@interfaces/bookRating";
 
@@ -54,7 +53,7 @@ export default class BookRatingController implements Controller {
 
             res.json(sortedRatings);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 
@@ -64,15 +63,14 @@ export default class BookRatingController implements Controller {
         next: NextFunction,
     ) => {
         try {
-            const userId = req.session.userId as string;
+            const userId = req.session["userId"];
             const bookId = req.params["id"];
             if (await isIdNotValid(this.book, [bookId], next)) return;
 
-            const book = await this.book //
-                .findOne({ _id: bookId, "ratings.from_id": userId })
-                .lean<Book>()
+            const alreadyRated = await this.book //
+                .exists({ _id: bookId, "ratings.from_id": userId })
                 .exec();
-            if (book) return next(new HttpError("Already rated this book."));
+            if (alreadyRated) return next(new HttpError("Already rated this book."));
 
             const ratedBook = await this.book
                 .findByIdAndUpdate(
@@ -84,46 +82,41 @@ export default class BookRatingController implements Controller {
                 .exec();
             if (!ratedBook) return next(new HttpError("Failed to rate book"));
 
-            const updatedUser = await this.user
-                .findByIdAndUpdate(userId, { $push: { rated_books: ratedBook?._id } }, { returnDocument: "after" })
-                .lean<User>()
+            const { acknowledged } = await this.user //
+                .updateOne({ _id: userId }, { $push: { rated_books: ratedBook._id } })
                 .exec();
-            if (!updatedUser) return next(new HttpError("Failed to update the user"));
+            if (!acknowledged) return next(new HttpError("Failed to update the user"));
 
             res.json(ratedBook);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 
     private deleteBookRatingByBookId = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
         try {
-            const userId = req.session.userId as string;
+            const userId = req.session["userId"];
             const bookId = req.params["id"];
             if (await isIdNotValid(this.book, [bookId], next)) return;
 
             const book = await this.book //
                 .findOne({ _id: bookId, "ratings.from_id": userId })
-                .lean<Book>()
                 .exec();
             if (!book) return next(new HttpError("You did not rate this book."));
 
-            const { acknowledged } = await this.book.updateOne(
-                { _id: bookId },
-                { $pull: { ratings: { from_id: new Types.ObjectId(userId) } } },
-            );
-
-            if (!acknowledged) return next(new HttpError("Failed to delete book"));
-
-            const updatedUser = await this.user
-                .findByIdAndUpdate(userId, { $pull: { rated_books: book?._id } }, { returnDocument: "after" })
-                .lean<User>()
+            const { acknowledged: successfullBookUpdate } = await this.book
+                .updateOne({ _id: bookId }, { $pull: { ratings: { from_id: userId } } })
                 .exec();
-            if (!updatedUser) return next(new HttpError("Failed to update the user"));
+            if (!successfullBookUpdate) return next(new HttpError("Failed to delete book"));
+
+            const { acknowledged: successfullUserUpdate } = await this.user
+                .updateOne({ _id: userId }, { $pull: { rated_books: book?._id } })
+                .exec();
+            if (!successfullUserUpdate) return next(new HttpError("Failed to update the user"));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 }

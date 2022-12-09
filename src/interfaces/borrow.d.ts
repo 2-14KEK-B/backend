@@ -1,24 +1,16 @@
-import { Types } from "mongoose";
-import { Book } from "./book";
-
-type ID = Types.ObjectId | string;
+import type ID from "./id";
+import type { Book } from "./book";
+import type { UserRating } from "./userRating";
 
 interface Borrow {
     _id: ID;
     from_id: ID;
+    to_id: ID;
     createdAt: Date;
     updatedAt: Date;
-    to_id: ID;
-    books: (Book | ID)[];
     verified: boolean;
-    user_ratings?: [
-        {
-            _id?: ID;
-            rating: boolean;
-            from_id: ID;
-            comment: string;
-        },
-    ];
+    books: (Book | ID)[];
+    user_ratings?: (UserRating | ID)[];
 }
 
 interface CreateBorrow {
@@ -31,9 +23,4 @@ interface ModifyBorrow {
     verified?: boolean;
 }
 
-interface UserRating {
-    rating: boolean;
-    comment?: string;
-}
-
-export { Borrow, CreateBorrow, ModifyBorrow, UserRating };
+export { Borrow, CreateBorrow, ModifyBorrow };

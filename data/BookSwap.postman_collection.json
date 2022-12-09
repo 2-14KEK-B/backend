@@ -351,6 +351,59 @@
 			"name": "borrows",
 			"item": [
 				{
+					"name": "user ratings",
+					"item": [
+						{
+							"name": "get by borrowId",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/borrow/6357f9bf7b60ee488385f955/rate",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"borrow",
+										"6357f9bf7b60ee488385f955",
+										"rate"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "create by borrowId",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"rate\": false\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URL}}/borrow/6357f9bf7b60ee488385f955/rate/6357b544447026c9b91950fd",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"borrow",
+										"6357f9bf7b60ee488385f955",
+										"rate",
+										"6357b544447026c9b91950fd"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
 					"name": "get all",
 					"event": [
 						{

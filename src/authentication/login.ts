@@ -40,10 +40,12 @@ export default class LoginController implements Controller {
 
             delete user["password"];
 
-            req.session.userId = user._id.toString();
+            req.session["userId"] = user._id.toString();
+            req.session["role"] = user.role;
+
             res.json(user);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 }
