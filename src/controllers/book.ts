@@ -47,7 +47,7 @@ export default class BookController implements Controller {
 
             res.json(books);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 
@@ -97,7 +97,7 @@ export default class BookController implements Controller {
 
             res.json(books);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 
@@ -114,7 +114,7 @@ export default class BookController implements Controller {
 
             res.json(books);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 
@@ -131,7 +131,7 @@ export default class BookController implements Controller {
 
             res.json(book);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 
@@ -154,7 +154,7 @@ export default class BookController implements Controller {
 
             res.json(newBook);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 
@@ -176,7 +176,7 @@ export default class BookController implements Controller {
 
     //         res.json(newBook);
     //     } catch (error) {
-    //         next(new HttpError(error));
+    //         next(new HttpError(error.message));
     //     }
     // };
 
@@ -207,7 +207,7 @@ export default class BookController implements Controller {
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 }

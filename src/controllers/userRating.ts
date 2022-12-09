@@ -1,17 +1,17 @@
-import userRatingModel from "@models/userRating";
 import { Router, Request, Response, NextFunction } from "express";
 import validationMiddleware from "@middlewares/validation";
 import authenticationMiddleware from "@middlewares/authentication";
 import authorizationMiddleware from "@middlewares/authorization";
+import userRatingModel from "@models/userRating";
 import borrowModel from "@models/borrow";
 import userModel from "@models/user";
 import isIdNotValid from "@utils/idChecker";
 import { UserRatingDto } from "@validators/userRating";
 import StatusCode from "@utils/statusCodes";
 import HttpError from "@exceptions/Http";
+import type { Types } from "mongoose";
 import type Controller from "@interfaces/controller";
 import type { CreateUserRating, UserRating } from "@interfaces/userRating";
-import type { Types } from "mongoose";
 
 export default class UserRatingController implements Controller {
     path = "/";
@@ -28,7 +28,7 @@ export default class UserRatingController implements Controller {
         this.router.all("*", authenticationMiddleware);
         this.router.get(`${this.path}all`, authorizationMiddleware(["admin"]), this.getAllUserRatings);
         this.router.get(`${this.path}myratings`, this.getUserRatingsByLoggedInUser);
-        this.router.delete(`${this.path}/:id`, this.deleteUserRatingById);
+        this.router.delete(`${this.path}:id`, this.deleteUserRatingById);
         this.router
             .route(this.path)
             .get(this.getUserRatingByUserOrBorrowId)
@@ -37,7 +37,7 @@ export default class UserRatingController implements Controller {
 
     private getAllUserRatings = async (_req: Request, res: Response, next: NextFunction) => {
         try {
-            const userRatings = this.userRating //
+            const userRatings = await this.userRating //
                 .find()
                 .lean<UserRating[]>()
                 .exec();
@@ -45,7 +45,7 @@ export default class UserRatingController implements Controller {
 
             res.json(userRatings);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 
@@ -57,29 +57,16 @@ export default class UserRatingController implements Controller {
         try {
             const userId = req.session["userId"];
 
-            const userRatings = this.userRating
+            const userRatings = await this.userRating
                 .find({ $or: [{ from_id: userId }, { to_id: userId }] })
                 .lean<UserRating[]>()
                 .exec();
-
-            // const { user_ratings } = await this.user
-            //     .findById(userId, { user_ratings: 1 })
-            //     .populate({ path: "user_ratings", populate: { path: "from_me to_me" } })
-            //     .lean<{ user_ratings: UserRating[] }>()
-            //     .exec();
-
-            // const userRatings = await this.borrow
-            //     .findById(userId, { user_ratings: 1 })
-            //     .populate("user_ratings")
-            //     .lean<{ user_ratings: UserRating[] }>()
-            //     .exec();
-            // console.log(userRatings);
 
             if (!userRatings) return next(new HttpError("Failed to get user ratings of the borrow"));
 
             res.json(userRatings);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 
@@ -91,35 +78,37 @@ export default class UserRatingController implements Controller {
         try {
             const { userId, borrowId } = req.query;
 
-            let ratings: UserRating[] | undefined;
+            let ratings: UserRating[] | { from_me: UserRating[]; to_me: UserRating[] } | undefined;
 
             if (userId) {
+                if (await isIdNotValid(this.user, [userId], next)) return;
+
                 const { user_ratings } = await this.user
                     .findById(userId, { user_ratings: 1 })
                     .populate({ path: "user_ratings", populate: { path: "from_me to_me" } })
                     .lean<{ user_ratings: UserRating[] }>()
                     .exec();
                 if (!user_ratings) return next(new HttpError("Failed to get user ratings of the user"));
+
                 ratings = user_ratings;
             } else if (borrowId) {
+                if (await isIdNotValid(this.borrow, [borrowId], next)) return;
+
                 const { user_ratings } = await this.borrow
-                    .findById(userId, { user_ratings: 1 })
+                    .findById(borrowId, { user_ratings: 1 })
                     .populate("user_ratings")
                     .lean<{ user_ratings: UserRating[] }>()
                     .exec();
                 if (!user_ratings) return next(new HttpError("Failed to get user ratings of the borrow"));
+
                 ratings = user_ratings;
             }
 
             if (!ratings) return next(new HttpError("You need to pass userId either borrowId"));
 
-            // const rating = await this.userRating.findById(id).lean<UserRating>().exec();
-            // console.log(rating);
-            // if (!rating) return next(new HttpError("Failed to get user ratings of the borrow"));
-
             res.json(ratings);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 
@@ -138,7 +127,7 @@ export default class UserRatingController implements Controller {
                 .findById(borrowId, { verified: 1 })
                 .lean<{ verified: boolean }>()
                 .exec();
-            if (!verified) return next(new HttpError());
+            if (!verified) return next(new HttpError("You can not rate user if borrow is not verified"));
 
             const rating = await this.userRating.create({
                 ...req.body,
@@ -146,51 +135,23 @@ export default class UserRatingController implements Controller {
                 to_id: toId,
                 borrow_id: borrowId,
             });
-            if (!rating) return next(new HttpError());
+            if (!rating) return next(new HttpError("Failed to create the user rating"));
 
             const { acknowledged: successfullBorrowUpdate } = await this.borrow.updateOne(
                 { _id: borrowId },
                 { $push: { user_ratings: rating._id } },
             );
-            if (!successfullBorrowUpdate) return next(new HttpError());
+            if (!successfullBorrowUpdate) return next(new HttpError("Failed to update borrow"));
 
-            const { isOk } = await this.user.bulkWrite([
+            const { nModified } = await this.user.bulkWrite([
                 { updateOne: { filter: { _id: myId }, update: { $push: { "user_ratings.from_me": rating._id } } } },
                 { updateOne: { filter: { _id: toId }, update: { $push: { "user_ratings.to_me": rating._id } } } },
             ]);
-            if (!isOk) return next();
-
-            // const { acknowledged: successfullFromUserUpdate } = await this.user.updateOne(
-            //     { _id: myId },
-            //     { $push: { "user_ratings.from_me": rating._id } },
-            // );
-            // if (!successfullFromUserUpdate) return next();
-
-            // const { acknowledged: successfullToUserUpdate } = await this.user.updateOne(
-            //     { _id: toId },
-            //     { $push: { "user_ratings.to_me": rating._id } },
-            // );
-            // if (!successfullToUserUpdate) return next();
-
-            // const book = await this.borrow.findOne({ _id: borrowId, "ratings.from_id": userId }).lean<Book>().exec();
-            // if (book) return next(new HttpError("Already rated this book."));
-
-            // const rateData: CreateUserRating = req.body;
-            // const ratedBook = await this.borrow
-            //     .findByIdAndUpdate(borrowId, { $push: { ratings: { ...rateData, from_id: userId } } }, { returnDocument: "after" })
-            //     .lean<Book>()
-            //     .exec();
-            // if (!ratedBook) return next(new HttpError("Failed to rate book"));
-
-            // const updatedUser = await this.user.findByIdAndUpdate(userId, { $push: { rated_books: ratedBook?._id } }, { returnDocument: "after" });
-            // if (!updatedUser) return next(new HttpError("Failed to update the user"));
-
-            // res.json(ratedBook);
+            if (nModified != 2) return next(new HttpError("Failed to update users"));
 
             res.json(rating);
-            // res.sendStatus(200);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 
@@ -206,14 +167,7 @@ export default class UserRatingController implements Controller {
                 .exec();
 
             if (req.session["role"] != "admin") {
-                // const { user_ratings } = await this.user
-                //     .findById(userId, { user_ratings: 1 })
-                //     .lean<{ user_ratings: { from_me: Types.ObjectId[]; to_me: Types.ObjectId[] } }>()
-                //     .exec();
-                // if (!user_ratings.to_me.includes(new Types.ObjectId(userId))) {
-                //     return next(new HttpError("You cannot delete other user's rating."));
-                // }
-                if (from_id.toString() != userId || to_id.toString() != userId) {
+                if (![from_id.toString(), to_id.toString()].includes(userId as string)) {
                     return next(new HttpError("You cannot delete other user's rating"));
                 }
             }
@@ -231,15 +185,15 @@ export default class UserRatingController implements Controller {
                 return next(new HttpError("Failed to update borrow"));
             }
 
-            const { isOk } = await this.user.bulkWrite([
+            const { nModified } = await this.user.bulkWrite([
                 { updateOne: { filter: { _id: from_id }, update: { $pull: { "user_ratings.from_me": rateId } } } },
                 { updateOne: { filter: { _id: to_id }, update: { $pull: { "user_ratings.to_me": rateId } } } },
             ]);
-            if (!isOk) return next(new HttpError("Failed to update users"));
+            if (nModified != 2) return next(new HttpError("Failed to update users"));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 }

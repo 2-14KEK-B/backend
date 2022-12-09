@@ -98,7 +98,7 @@ export default class BorrowController implements Controller {
 
             res.json(borrows);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 

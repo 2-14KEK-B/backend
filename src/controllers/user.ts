@@ -75,7 +75,7 @@ export default class UserController implements Controller {
 
             res.json(users);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 
@@ -91,7 +91,7 @@ export default class UserController implements Controller {
 
             res.json(user);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 
@@ -108,7 +108,7 @@ export default class UserController implements Controller {
 
             res.json(user);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 
@@ -137,7 +137,7 @@ export default class UserController implements Controller {
 
             res.json(user);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 
@@ -159,7 +159,7 @@ export default class UserController implements Controller {
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 }

@@ -53,7 +53,7 @@ export default class BookRatingController implements Controller {
 
             res.json(sortedRatings);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 
@@ -89,7 +89,7 @@ export default class BookRatingController implements Controller {
 
             res.json(ratedBook);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 
@@ -116,7 +116,7 @@ export default class BookRatingController implements Controller {
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 }

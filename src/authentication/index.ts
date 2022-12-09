@@ -35,7 +35,7 @@ export default class AuthenticationController implements Controller {
 
             res.json(user);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 }

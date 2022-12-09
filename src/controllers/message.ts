@@ -42,7 +42,7 @@ export default class MessageController implements Controller {
 
             res.json(messages);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 
@@ -71,7 +71,7 @@ export default class MessageController implements Controller {
 
             res.json(sortedMessages);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 
@@ -118,7 +118,7 @@ export default class MessageController implements Controller {
 
             res.json(messages._id);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 
@@ -146,7 +146,7 @@ export default class MessageController implements Controller {
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
-            next(new HttpError(error));
+            next(new HttpError(error.message));
         }
     };
 }
