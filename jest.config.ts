@@ -31,7 +31,6 @@ const jestConfig: JestConfigWithTsJest = {
     collectCoverageFrom: [
         "src/**/*.{ts,js}",
         "!src/**/*.d.ts",
-        "!src/utils/{getPaginated,roleChecker}.ts",
         "!src/db/*.ts",
         "!src/server.ts",
     ],

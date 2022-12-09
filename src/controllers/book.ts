@@ -6,6 +6,7 @@ import validation from "@middlewares/validation";
 import bookModel from "@models/book";
 import userModel from "@models/user";
 import { CreateBookDto } from "@validators/book";
+import getPaginated from "@utils/getPaginated";
 import isIdNotValid from "@utils/idChecker";
 import StatusCode from "@utils/statusCodes";
 import HttpError from "@exceptions/Http";
@@ -72,39 +73,24 @@ export default class BookController implements Controller {
         try {
             const { skip, limit, sort, sortBy, available, keyword, userId } = req.query;
 
-            const query: FilterQuery<Book> = { $and: [] };
-            let sortQuery: { [_ in keyof Partial<Book>]: SortOrder } | string = {
-                createdAt: sort,
-            };
+            let query: FilterQuery<Book> = {};
+            if (available || userId || keyword) {
+                query = { $and: [] };
+                if (available) {
+                    query.$and?.push({ available: available == "true" });
+                } else if (userId) {
+                    if (await isIdNotValid(this.user, [userId], next)) return;
+                    query.$and?.push({ uploader: userId });
+                } else if (keyword) {
+                    const regex = new RegExp(keyword, "i");
 
-            if (available) {
-                query.$and?.push({ available: available == "true" });
+                    query.$and?.push({
+                        $or: [{ author: { $regex: regex } }, { title: { $regex: regex } }],
+                    });
+                }
             }
 
-            if (userId) {
-                if (await isIdNotValid(this.user, [userId], next)) return;
-                query.$and?.push({ uploader: userId });
-            }
-
-            if (keyword) {
-                const regex = new RegExp(keyword, "i");
-
-                query.$and?.push({
-                    $or: [{ author: { $regex: regex } }, { title: { $regex: regex } }],
-                });
-            }
-
-            if (sort && sortBy) {
-                sortQuery = `${sort == "asc" ? "" : "-"}${sortBy}`;
-            }
-
-            const books = await this.book //
-                .find(query.$and?.length ? query : {})
-                .sort(sortQuery)
-                .skip(Number.parseInt(skip as string) || 0)
-                .limit(Number.parseInt(limit as string) || 10)
-                .lean<Book[]>()
-                .exec();
+            const books = await getPaginated(this.book, query, skip, limit, sort, sortBy);
 
             res.json(books);
         } catch (error) {

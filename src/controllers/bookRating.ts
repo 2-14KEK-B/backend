@@ -8,7 +8,7 @@ import isIdNotValid from "@utils/idChecker";
 import StatusCode from "@utils/statusCodes";
 import { BookRatingDto } from "@validators/book";
 import HttpError from "@exceptions/Http";
-import sortByDate from "@utils/sortByDate";
+import sortByDateAndSlice from "@utils/sortByDateAndSlice";
 import type { SortOrder } from "mongoose";
 import type { Book } from "@interfaces/book";
 import type Controller from "@interfaces/controller";
@@ -48,8 +48,7 @@ export default class BookRatingController implements Controller {
                 .exec();
             if (!ratings) return next(new HttpError("Failed to get rating of the book"));
 
-            let sortedRatings = sortByDate(ratings, sort || "desc");
-            sortedRatings = ratings.slice(Number.parseInt(skip as string) || 0, Number.parseInt(limit as string) || 10);
+            const sortedRatings = sortByDateAndSlice(ratings, sort, skip, limit);
 
             res.json(sortedRatings);
         } catch (error) {

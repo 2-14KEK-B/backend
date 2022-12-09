@@ -1,16 +1,17 @@
 import { Router, Request, Response, NextFunction } from "express";
+import UserRatingController from "./userRating";
 import authentication from "@middlewares/authentication";
 import authorization from "@middlewares/authorization";
 import validation from "@middlewares/validation";
 import userModel from "@models/user";
-import ModifyUserDto from "@validators/user";
-import isIdNotValid from "@utils/idChecker";
 import StatusCode from "@utils/statusCodes";
+import isIdNotValid from "@utils/idChecker";
+import getPaginated from "@utils/getPaginated";
+import ModifyUserDto from "@validators/user";
 import HttpError from "@exceptions/Http";
 import type Controller from "@interfaces/controller";
 import type { ModifyUser, User } from "@interfaces/user";
 import type { FilterQuery, SortOrder } from "mongoose";
-import UserRatingController from "./userRating";
 
 export default class UserController implements Controller {
     path = "/user";
@@ -60,18 +61,7 @@ export default class UserController implements Controller {
                 };
             }
 
-            let sortQuery: { [_ in keyof Partial<User>]: SortOrder } | string = {
-                createdAt: sort || "desc",
-            };
-            if (sort && sortBy) sortQuery = `${sort == "asc" ? "" : "-"}${sortBy}`;
-
-            const users = await this.user //
-                .find(query)
-                .sort(sortQuery)
-                .skip(Number.parseInt(skip as string) || 0)
-                .limit(Number.parseInt(limit as string) || 10)
-                .lean<User[]>()
-                .exec();
+            const users = await getPaginated(this.user, query, skip, limit, sort, sortBy);
 
             res.json(users);
         } catch (error) {

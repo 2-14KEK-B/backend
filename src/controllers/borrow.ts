@@ -7,6 +7,7 @@ import borrowModel from "@models/borrow";
 import userModel from "@models/user";
 import isIdNotValid from "@utils/idChecker";
 import StatusCode from "@utils/statusCodes";
+import getPaginated from "@utils/getPaginated";
 import { CreateBorrowDto, ModifyBorrowDto } from "@validators/borrow";
 import HttpError from "@exceptions/Http";
 import type Controller from "@interfaces/controller";
@@ -83,18 +84,7 @@ export default class BorrowController implements Controller {
                 query = { $or: [{ from_id: userId }, { to_id: userId }] };
             }
 
-            let sorting: { [_ in keyof Partial<Borrow>]: SortOrder } | string = {
-                createdAt: sort || "desc",
-            };
-            if (sort && sortBy) sorting = `${sort == "asc" ? "" : "-"}${sortBy}`;
-
-            const borrows = await this.borrow //
-                .find(query)
-                .sort(sorting)
-                .skip(Number.parseInt(skip as string) || 0)
-                .limit(Number.parseInt(limit as string) || 10)
-                .lean<Borrow[]>()
-                .exec();
+            const borrows = await getPaginated(this.borrow, query, skip, limit, sort, sortBy);
 
             res.json(borrows);
         } catch (error) {
