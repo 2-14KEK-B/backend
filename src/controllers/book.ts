@@ -61,6 +61,7 @@ export default class BookController implements Controller {
                 limit?: string;
                 sort?: SortOrder;
                 sortBy?: string;
+                available?: string;
                 keyword?: string;
             }
         >,
@@ -68,19 +69,23 @@ export default class BookController implements Controller {
         next: NextFunction,
     ) => {
         try {
-            const { skip, limit, sort, sortBy, keyword } = req.query;
+            const { skip, limit, sort, sortBy, available, keyword } = req.query;
 
-            let query: FilterQuery<Book> = {};
+            const query: FilterQuery<Book> = { $and: [] };
             let sortQuery: { [_ in keyof Partial<Book>]: SortOrder } | string = {
                 createdAt: sort,
             };
 
+            if (available) {
+                query.$and?.push({ available: available == "true" });
+            }
+
             if (keyword) {
                 const regex = new RegExp(keyword, "i");
 
-                query = {
+                query.$and?.push({
                     $or: [{ author: { $regex: regex } }, { title: { $regex: regex } }],
-                };
+                });
             }
 
             if (sort && sortBy) {
@@ -88,7 +93,7 @@ export default class BookController implements Controller {
             }
 
             const books = await this.book //
-                .find(query)
+                .find(query.$and?.length ? query : {})
                 .sort(sortQuery)
                 .skip(Number.parseInt(skip as string) || 0)
                 .limit(Number.parseInt(limit as string) || 10)

@@ -42,7 +42,13 @@ describe("BOOKS", () => {
             books: [mockBook1Id, mockBook2Id],
         },
         mockUser2: Partial<User> = { _id: mockUser2Id, email: "testuser2@test.com", password: pw, books: [] },
-        mockAdmin: Partial<User> = { _id: mockAdminId, email: "testadmin@test.com", password: pw, books: [], role: "admin" };
+        mockAdmin: Partial<User> = {
+            _id: mockAdminId,
+            email: "testadmin@test.com",
+            password: pw,
+            books: [],
+            role: "admin",
+        };
 
     beforeAll(async () => {
         server = new App([new AuthenticationController(), new BookController()]).getServer();
@@ -63,6 +69,21 @@ describe("BOOKS", () => {
             expect(res.body.length).toBe(2);
             expect(res.body[0].title).toBe(mockBook1.title);
             expect(res.body[1].title).toBe(mockBook2.title);
+        });
+        it("GET /book?available=true, should return statuscode 200 and only available books", async () => {
+            expect.assertions(3);
+            const notAvailableBook = await bookModel.create({
+                uploader: new Types.ObjectId(),
+                author: "Not Available",
+                title: "Not Available",
+                available: false,
+                for_borrow: true,
+            });
+            const res = await request(server).get("/book?available=true");
+            await bookModel.deleteOne({ _id: notAvailableBook._id.toString() });
+            expect(res.statusCode).toBe(StatusCode.OK);
+            expect(res.body).toBeInstanceOf(Array<Book>);
+            expect(res.body.length).toBe(2);
         });
         it("GET /book?limit=1, should return statuscode 200 and book array with one book in it", async () => {
             expect.assertions(3);
