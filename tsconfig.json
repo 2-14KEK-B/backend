@@ -27,6 +27,7 @@
             "@authentication/*": ["src/authentication/*"],
             "@config/*": ["src/config/*"],
             "@controllers/*": ["src/controllers/*"],
+            "@config/*": ["src/config/*"],
             "@db/*": ["src/db/*"],
             "@exceptions/*": ["src/exceptions/*"],
             "@interfaces/*": ["src/interfaces/*.d.ts"],

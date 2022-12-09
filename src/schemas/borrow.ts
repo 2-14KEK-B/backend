@@ -1,37 +1,39 @@
 import { Schema } from "mongoose";
 import type { Borrow } from "@interfaces/borrow";
 
-const borrowSchema = new Schema<Borrow>({
-    from_id: {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-        required: true,
-    },
-    to_id: {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-        required: true,
-    },
-    updated_on: { type: Date },
-    books: [
-        {
+const borrowSchema = new Schema<Borrow>(
+    {
+        from_id: {
             type: Schema.Types.ObjectId,
-            ref: "Book",
+            ref: "User",
             required: true,
         },
-    ],
-    verified: { type: Boolean, default: false },
-    user_ratings: [
-        {
-            rating: { type: Boolean, required: true },
-            from_id: {
+        to_id: {
+            type: Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+        },
+        books: [
+            {
                 type: Schema.Types.ObjectId,
-                ref: "User",
+                ref: "Book",
                 required: true,
             },
-            comment: String,
-        },
-    ],
-});
+        ],
+        verified: { type: Boolean, default: false },
+        user_ratings: [
+            {
+                rating: { type: Boolean, required: true },
+                from_id: {
+                    type: Schema.Types.ObjectId,
+                    ref: "User",
+                    required: true,
+                },
+                comment: String,
+            },
+        ],
+    },
+    { timestamps: true, versionKey: false },
+);
 
 export default borrowSchema;

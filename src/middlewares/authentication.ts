@@ -1,5 +1,5 @@
 import userModel from "@models/user";
-import isIdValid from "@utils/idChecker";
+import isIdNotValid from "@utils/idChecker";
 import UnauthorizedException from "@exceptions/Unauthorized";
 import type { Request, Response, NextFunction } from "express";
 
@@ -12,8 +12,7 @@ export default async function authenticationMiddleware(req: Request, _res: Respo
         return next(new UnauthorizedException());
     }
 
-    const user = await isIdValid(userModel, [userId], next);
-    if (!user) {
+    if (await isIdNotValid(userModel, [userId], next)) {
         return next(new UnauthorizedException());
     }
     next();

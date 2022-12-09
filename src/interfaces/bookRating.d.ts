@@ -5,6 +5,7 @@ type ID = Types.ObjectId | string;
 interface BookRating {
     _id?: ID;
     from_id: ID;
+    createdAt: Date;
     comment?: string;
     rate: number;
 }

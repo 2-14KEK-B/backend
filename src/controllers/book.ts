@@ -1,26 +1,18 @@
 import { Router, Request, Response, NextFunction } from "express";
+import BookRatingController from "./bookRating";
+import authorizationMiddleware from "@middlewares/authorization";
 import authentication from "@middlewares/authentication";
 import validation from "@middlewares/validation";
 import bookModel from "@models/book";
 import userModel from "@models/user";
-import {
-    // BookRatingDto,
-    CreateBookDto,
-    // ModifyBookDto,
-} from "@validators/book";
-import isIdValid from "@utils/idChecker";
+import { CreateBookDto } from "@validators/book";
+import isIdNotValid from "@utils/idChecker";
 import StatusCode from "@utils/statusCodes";
 import HttpError from "@exceptions/Http";
+import { FilterQuery, Types, SortOrder } from "mongoose";
 import type Controller from "@interfaces/controller";
-import type {
-    Book,
-    // BookRating,
-    CreateBook,
-    // ModifyBook
-} from "@interfaces/book";
-import { Types } from "mongoose";
+import type { Book, CreateBook } from "@interfaces/book";
 import type { User } from "@interfaces/user";
-import BookRatingController from "./bookRating";
 
 export default class BookController implements Controller {
     path = "/book";
@@ -29,24 +21,82 @@ export default class BookController implements Controller {
     private user = userModel;
 
     constructor() {
+        this.router.use(`${this.path}/rate`, new BookRatingController().router);
         this.initializeRoutes();
-        this.router.use(`${this.path}/:id/rate`, new BookRatingController().router);
     }
 
     private initializeRoutes() {
-        this.router.get(`${this.path}/all`, this.getAllBooks);
-        this.router.get(this.path, authentication, this.getUserBooks);
-        this.router.get(`${this.path}/:id`, authentication, this.getBookById);
-        this.router.post(this.path, [authentication, validation(CreateBookDto)], this.createBook);
-        // this.router.post(`${this.path}/:id/rate`, validation(BookRatingDto), this.createBookRating);
-        // this.router.patch(`${this.path}/:id`, [authentication, validation(ModifyBookDto), true], this.modifyBookById);  VERSIONING NEEDED!!!!!!!!!!
-        this.router.delete(`${this.path}/:id`, authentication, this.deleteBookById);
+        this.router.get(`${this.path}/all`, [authentication, authorizationMiddleware(["admin"])], this.getAllBooks);
+        this.router.get(`${this.path}/me`, authentication, this.getUserBooks);
+        this.router
+            .route(this.path)
+            .get(this.getBooks)
+            .post([authentication, validation(CreateBookDto)], this.createBook);
+        this.router
+            .route(`${this.path}/:id`)
+            .get(authentication, this.getBookById)
+            // .patch(`${this.path}/:id`, [authentication, validation(ModifyBookDto), true], this.modifyBookById),
+            .delete(authentication, this.deleteBookById);
     }
 
     private getAllBooks = async (_req: Request, res: Response, next: NextFunction) => {
         try {
-            const books = await this.book.find().lean<Book[]>().exec();
+            const books = await this.book //
+                .find()
+                .lean<Book[]>()
+                .exec();
+
             res.send(books);
+        } catch (error) {
+            next(new HttpError(error));
+        }
+    };
+
+    private getBooks = async (
+        req: Request<
+            unknown,
+            unknown,
+            unknown,
+            {
+                skip?: string;
+                limit?: string;
+                sort?: SortOrder;
+                sortBy?: string;
+                keyword?: string;
+            }
+        >,
+        res: Response,
+        next: NextFunction,
+    ) => {
+        try {
+            const { skip, limit, sort, sortBy, keyword } = req.query;
+
+            let query: FilterQuery<Book> = {};
+            let sortQuery: { [_ in keyof Partial<Book>]: SortOrder } | string = {
+                createdAt: sort,
+            };
+
+            if (keyword) {
+                const regex = new RegExp(keyword, "i");
+
+                query = {
+                    $or: [{ author: { $regex: regex } }, { title: { $regex: regex } }],
+                };
+            }
+
+            if (sort && sortBy) {
+                sortQuery = `${sort == "asc" ? "" : "-"}${sortBy}`;
+            }
+
+            const books = await this.book //
+                .find(query)
+                .sort(sortQuery)
+                .skip(Number.parseInt(skip as string) || 0)
+                .limit(Number.parseInt(limit as string) || 10)
+                .lean<Book[]>()
+                .exec();
+
+            res.json(books);
         } catch (error) {
             next(new HttpError(error));
         }
@@ -56,7 +106,11 @@ export default class BookController implements Controller {
         try {
             const userId = req.session.userId;
 
-            const user = await this.user.findOne({ _id: userId }).populate("books").lean<User>().exec();
+            const user = await this.user //
+                .findOne({ _id: userId })
+                .populate("books")
+                .lean<User>()
+                .exec();
             if (!user) return next(new HttpError(`Failed to get user by id ${userId}`));
 
             res.send(user.books);
@@ -65,12 +119,15 @@ export default class BookController implements Controller {
         }
     };
 
-    private getBookById = async (req: Request, res: Response, next: NextFunction) => {
+    private getBookById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
         try {
             const bookId = req.params["id"];
-            if (!(await isIdValid(this.book, [bookId], next))) return;
+            if (await isIdNotValid(this.book, [bookId], next)) return;
 
-            const book = await this.book.findById(bookId).lean<Book>().exec();
+            const book = await this.book //
+                .findById(bookId)
+                .lean<Book>()
+                .exec();
             if (!book) return next(new HttpError(`Failed to get book by id ${bookId}`));
 
             res.send(book);
@@ -79,50 +136,26 @@ export default class BookController implements Controller {
         }
     };
 
-    private createBook = async (req: Request, res: Response, next: NextFunction) => {
+    private createBook = async (req: Request<unknown, CreateBook>, res: Response, next: NextFunction) => {
         try {
             const userId = req.session.userId;
-            const bookData: CreateBook = req.body;
-            const newBook = await this.book.create({ ...bookData, uploader: userId });
+            const newBook = await this.book //
+                .create({ ...req.body, uploader: userId });
             if (!newBook) return next(new HttpError("Failed to create book"));
 
-            await this.user.findByIdAndUpdate(userId, { $push: { books: { _id: newBook._id } } }).exec();
+            const userRes = await this.user //
+                .findByIdAndUpdate(userId, {
+                    $push: { books: { _id: newBook._id } },
+                })
+                .lean<User>()
+                .exec();
+            if (!userRes) return next(new HttpError(`Failed to update user`));
 
             res.send(newBook);
         } catch (error) {
             next(new HttpError(error));
         }
     };
-
-    // private createBookRating = async (req: Request, res: Response, next: NextFunction) => {
-    //     try {
-    //         const userId = req.session.userId as string;
-    //         const bookId = req.params["_id"];
-    //         if (!(await isIdValid(this.book, [bookId], next))) return;
-
-    //         const book = await this.book.findById(bookId);
-
-    //         const ratedAlready = book?.ratings?.find(rating => {
-    //             rating.from_id.toString() === userId.toString();
-    //         });
-    //         if (ratedAlready) return next(new HttpError("Already rated this book."));
-
-    //         const rateData: BookRating = req.body;
-    //         book?.ratings?.push({ ...rateData, from_id: userId });
-
-    //         const ratedBook = await book?.save();
-    //         if (!ratedBook) return next(new HttpError("Failed to rate book"));
-
-    //         const updatedUser = await this.user.findByIdAndUpdate(userId, { $push: { rated_books: book?._id } });
-    //         if (!updatedUser) return next(new HttpError("Failed to update the user"));
-
-    //         // // const rating = await this.book.updateOne({ _id: bookId }, { ...rateData, uploader: userId }, { returnDocument: "after" });
-
-    //         res.json(book);
-    //     } catch (error) {
-    //         next(new HttpError(error));
-    //     }
-    // };
 
     /**
     TODO: Versioning
@@ -131,7 +164,7 @@ export default class BookController implements Controller {
     //     try {
     //         const userId = req.session.userId;
     //         const bookId: string = req.params.id;
-    //         if (!(await isIdValid(this.book, [bookId], next))) return;
+    //         if (await isIdNotValid(this.book, [bookId], next)) return;
 
     //         const now = new Date();
     //         const bookData: ModifyBook = req.body;
@@ -146,26 +179,36 @@ export default class BookController implements Controller {
     //     }
     // };
 
-    private deleteBookById = async (req: Request, res: Response, next: NextFunction) => {
+    private deleteBookById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
         try {
             const userId = req.session.userId;
-
             const bookId = req.params["id"];
-            if (!bookId) return;
-            if (!(await isIdValid(this.book, [bookId], next))) return;
+            if (await isIdNotValid(this.book, [bookId], next)) return;
 
-            const loggedUser = await this.user.findById(userId).lean<User>().exec();
+            const { role, books } = await this.user //
+                .findById(userId, { role: 1, books: 1 })
+                .lean<Partial<User>>()
+                .exec();
 
-            if (loggedUser.role != "admin") {
-                if (!loggedUser.books.find(id => id.toString() === bookId)) {
+            if (role != "admin") {
+                if (!books?.find(id => id.valueOf() === bookId)) {
                     return next(new HttpError("Unauthorized", StatusCode.Unauthorized));
                 }
             }
 
-            const bookRes = await this.book.findByIdAndDelete(bookId).lean<Book>().exec();
-            if (!bookRes) return next(new HttpError(`Failed to delete book by id ${bookId}`));
+            const { _id, uploader } = await this.book //
+                .findByIdAndDelete(bookId)
+                .lean<Book>()
+                .exec();
+            if (!_id) return next(new HttpError(`Failed to delete book by id ${bookId}`));
 
-            const userRes = await this.user.findByIdAndUpdate(new Types.ObjectId(bookRes?.uploader), { $pull: { books: bookRes?._id } }).exec();
+            const userRes = await this.user
+                .findByIdAndUpdate(
+                    new Types.ObjectId(uploader), //
+                    { $pull: { books: _id } },
+                )
+                .lean<User>()
+                .exec();
             if (!userRes) return next(new HttpError(`Failed to update user`));
 
             res.sendStatus(StatusCode.NoContent);

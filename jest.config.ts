@@ -6,6 +6,7 @@ const jestConfig: JestConfigWithTsJest = {
     roots: ["<rootDir>"],
     preset: "ts-jest",
     verbose: true,
+    expand: true,
     globalSetup: "<rootDir>/test/globalSetup.ts",
     globalTeardown: "<rootDir>/test/globalTeardown.ts",
     setupFilesAfterEnv: ["<rootDir>/test/setupFilesAfterEnv.ts"],
@@ -21,7 +22,13 @@ const jestConfig: JestConfigWithTsJest = {
     moduleFileExtensions: ["ts", "js", "json", "node"],
     collectCoverage: true,
     coverageDirectory: "coverage",
-    collectCoverageFrom: ["src/**/*.{ts,js}", "!src/**/*.d.ts"],
+    collectCoverageFrom: [
+        "src/**/*.{ts,js}",
+        "!src/**/*.d.ts",
+        "!src/utils/{getPaginated,roleChecker}.ts",
+        "!src/db/*.ts",
+        "!src/server.ts",
+    ],
     moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, { prefix: "<rootDir>/" }),
 };
 

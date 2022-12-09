@@ -1,17 +1,22 @@
-import request, { Response } from "supertest";
-import { hash } from "bcrypt";
+import request, { Response, SuperAgentTest } from "supertest";
 import App from "../../app";
-import userModel from "@models/user";
 import AuthenticationController from "@authentication/index";
+import userModel from "@models/user";
 import StatusCode from "@utils/statusCodes";
 import type { Express } from "express";
+import type { User } from "@interfaces/user";
 
 describe("POST /auth/logout", () => {
     let server: Express;
-    const mockUser = { email: "test@test.com", password: "test1234" };
+    let agent: SuperAgentTest;
+    const pw = global.MOCK_PASSWORD,
+        hpw = global.MOCK_HASHED_PASSWORD,
+        mockUser: Partial<User> = { email: "test@test.com", password: pw };
 
     beforeAll(async () => {
         server = new App([new AuthenticationController()]).getServer();
+        agent = request.agent(server);
+        await userModel.create({ email: mockUser.email, password: hpw });
     });
 
     it("returns statuscode 401 if not already logged in", async () => {
@@ -24,11 +29,8 @@ describe("POST /auth/logout", () => {
 
     it("returns statuscode 200 if logout successfully", async () => {
         expect.assertions(2);
-        const password = await hash(mockUser.password, 10);
-        await userModel.create({ email: mockUser.email, password: password });
-        const loginRes = await request(server).post("/auth/login").send(mockUser);
-        const cookie = loginRes.headers["set-cookie"];
-        const res: Response = await request(server).post("/auth/logout").set("Cookie", cookie);
+        await agent.post("/auth/login").send({ email: mockUser.email, password: pw });
+        const res: Response = await agent.post("/auth/logout");
         expect(res.statusCode).toEqual(StatusCode.OK);
         expect(res.body).toEqual("Logged out successfully.");
     });

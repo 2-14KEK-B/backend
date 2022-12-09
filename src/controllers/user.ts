@@ -4,12 +4,12 @@ import authorization from "@middlewares/authorization";
 import validation from "@middlewares/validation";
 import userModel from "@models/user";
 import ModifyUserDto from "@validators/user";
-import isIdValid from "@utils/idChecker";
+import isIdNotValid from "@utils/idChecker";
 import StatusCode from "@utils/statusCodes";
-import UserNotFoundException from "@exceptions/UserNotFound";
 import HttpError from "@exceptions/Http";
 import type Controller from "@interfaces/controller";
 import type { ModifyUser, User } from "@interfaces/user";
+import type { FilterQuery, SortOrder } from "mongoose";
 
 export default class UserController implements Controller {
     path = "/user";
@@ -23,15 +23,54 @@ export default class UserController implements Controller {
     private initializeRoutes() {
         this.router.all("*", authentication);
         this.router.get(`${this.path}/me`, this.getMyUserInfo);
-        this.router.get(`${this.path}/all`, authorization(["admin"]), this.getAllUsers);
-        this.router.get(`${this.path}/:id`, this.getUserById);
-        this.router.patch(`${this.path}/:id`, validation(ModifyUserDto, true), this.modifyUserById);
-        this.router.delete(`${this.path}/:id`, authorization(["admin"]), this.deleteUserById);
+        this.router.get(this.path, authorization(["admin"]), this.getAllUsers);
+        this.router
+            .route(`${this.path}/:id`)
+            .get(this.getUserById)
+            .patch(validation(ModifyUserDto, true), this.modifyUserById)
+            .delete(authorization(["admin"]), this.deleteUserById);
     }
 
-    private getAllUsers = async (_req: Request, res: Response, next: NextFunction) => {
+    private getAllUsers = async (
+        req: Request<
+            unknown,
+            unknown,
+            unknown,
+            { skip?: string; limit?: string; sort?: SortOrder; sortBy?: string; keyword?: string }
+        >,
+        res: Response,
+        next: NextFunction,
+    ) => {
         try {
-            const users = await this.user.find().lean<User[]>().exec();
+            const { skip, limit, sort, sortBy, keyword } = req.query;
+
+            let query: FilterQuery<User> = {};
+
+            if (keyword) {
+                const regex = new RegExp(keyword, "i");
+
+                query = {
+                    $or: [
+                        { email: { $regex: regex } },
+                        { fullname: { $regex: regex } },
+                        { username: { $regex: regex } },
+                    ],
+                };
+            }
+
+            let sortQuery: { [_ in keyof Partial<User>]: SortOrder } | string = {
+                createdAt: sort || "desc",
+            };
+            if (sort && sortBy) sortQuery = `${sort == "asc" ? "" : "-"}${sortBy}`;
+
+            const users = await this.user //
+                .find(query)
+                .sort(sortQuery)
+                .skip(Number.parseInt(skip as string) || 0)
+                .limit(Number.parseInt(limit as string) || 10)
+                .lean<User[]>()
+                .exec();
+
             res.json(users);
         } catch (error) {
             next(new HttpError(error));
@@ -42,8 +81,11 @@ export default class UserController implements Controller {
         try {
             const userId = req.session.userId;
 
-            const user = await this.user.findById(userId, "-password").populate(["books", "borrows", "messages", "user_ratings"]).lean<User>().exec();
-            if (!user) return next(new UserNotFoundException(userId));
+            const user = await this.user
+                .findById(userId, "-password")
+                .populate(["books", "borrows", "messages", "user_ratings"])
+                .lean<User>()
+                .exec();
 
             res.json(user);
         } catch (error) {
@@ -51,17 +93,16 @@ export default class UserController implements Controller {
         }
     };
 
-    private getUserById = async (req: Request, res: Response, next: NextFunction) => {
+    private getUserById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
         try {
             const userId = req.params["id"];
-            if (!(await isIdValid(this.user, [userId], next))) return;
+            if (await isIdNotValid(this.user, [userId], next)) return;
 
             const user = await this.user
                 .findById(userId, "-password -email_is_verified -role -messages")
                 .populate("user_ratings")
                 .lean<User>()
                 .exec();
-            if (!user) return next(new UserNotFoundException(userId));
 
             res.json(user);
         } catch (error) {
@@ -69,20 +110,30 @@ export default class UserController implements Controller {
         }
     };
 
-    private modifyUserById = async (req: Request, res: Response, next: NextFunction) => {
+    private modifyUserById = async (
+        req: Request<{ id: string }, unknown, ModifyUser>,
+        res: Response,
+        next: NextFunction,
+    ) => {
         try {
             const userId = req.params["id"];
-            if (!(await isIdValid(this.user, [userId], next))) return;
-            const loggedUser = await this.user.findById(req.session.userId).lean<User>().exec();
+            if (await isIdNotValid(this.user, [userId], next)) return;
+            const loggedUser = await this.user //
+                .findById(req.session.userId)
+                .lean<User>()
+                .exec();
 
             if (loggedUser.role != "admin") {
                 if (userId != loggedUser._id) {
-                    return next(new HttpError("Unauthorized", StatusCode.Forbidden));
+                    return next(new HttpError("You cannot modify other user's data.", StatusCode.Forbidden));
                 }
             }
 
-            const userData: ModifyUser = { ...req.body, updated_on: new Date() };
-            const user = await this.user.findByIdAndUpdate(userId, userData, { returnDocument: "after" }).lean<User>().exec();
+            const userData = { ...req.body, updated_on: new Date() };
+            const user = await this.user
+                .findByIdAndUpdate(userId, userData, { returnDocument: "after" })
+                .lean<User>()
+                .exec();
             if (!user) return next(new HttpError("Failed to update user"));
 
             res.json(user);
@@ -91,13 +142,16 @@ export default class UserController implements Controller {
         }
     };
 
-    private deleteUserById = async (req: Request, res: Response, next: NextFunction) => {
+    private deleteUserById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
         try {
             const userId = req.params["id"];
-            if (!(await isIdValid(this.user, [userId], next))) return;
+            if (await isIdNotValid(this.user, [userId], next)) return;
 
-            const successResponse = await this.user.findByIdAndDelete(userId).exec();
-            if (!successResponse) return next(new UserNotFoundException(userId));
+            const userRes = await this.user //
+                .findByIdAndDelete(userId)
+                .lean<User>()
+                .exec();
+            if (!userRes) return next(new HttpError("Failed to delete user"));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
