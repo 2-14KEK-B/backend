@@ -66,12 +66,14 @@ describe("MESSAGES", () => {
 
     describe("MESSAGES, not logged in", () => {
         it("any PATH, should return statuscode 401", async () => {
-            expect.assertions(4);
+            expect.assertions(5);
             const allRes = await request(server).get("/message/all");
-            const idRes = await request(server).get(`/message/${mockMessageId}`);
+            const userRes = await request(server).get(`/message?userId=${mockUser1Id.toString()}`);
+            const idRes = await request(server).get(`/message/${mockMessageId.toString()}`);
             const postRes = await request(server).post("/message");
-            const deleteRes = await request(server).delete(`/message/${mockMessageId}`);
+            const deleteRes = await request(server).delete(`/message/${mockMessageId.toString()}`);
             expect(allRes.statusCode).toBe(StatusCode.Unauthorized);
+            expect(userRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(idRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(postRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(deleteRes.statusCode).toBe(StatusCode.Unauthorized);
@@ -95,11 +97,17 @@ describe("MESSAGES", () => {
             expect(res.statusCode).toBe(StatusCode.Forbidden);
             expect(res.body).toBe("Forbidden");
         });
+        it("GET /message?userId=id, should return statuscode 200", async () => {
+            expect.assertions(2);
+            const res: Response = await agentForUser1.get(`/message?userId=${mockUser2Id.toString()}`);
+            expect(res.statusCode).toBe(StatusCode.OK);
+            expect(res.body).toBeInstanceOf(Array<MessageContent>);
+        });
         it("GET /message/:id, should return statuscode 200", async () => {
             expect.assertions(2);
-            const res: Response = await agentForUser1.get(`/message/${mockMessageId}`);
+            const res: Response = await agentForUser1.get(`/message/${mockMessageId.toString()}`);
             expect(res.statusCode).toBe(StatusCode.OK);
-            expect(res.body).toBeInstanceOf(Object as unknown as Message);
+            expect(res.body).toBeInstanceOf(Array<MessageContent>);
         });
         it("POST /message/:toId, should return statuscode 200", async () => {
             expect.assertions(1);
@@ -115,7 +123,7 @@ describe("MESSAGES", () => {
         });
         it("DELETE /message/:id, should return statuscode 200", async () => {
             expect.assertions(2);
-            const res: Response = await agentForUser1.delete(`/message/${mockMessageId}`);
+            const res: Response = await agentForUser1.delete(`/message/${mockMessageId.toString()}`);
             expect(res.statusCode).toBe(StatusCode.Forbidden);
             expect(res.body).toBe("Forbidden");
         });
@@ -137,7 +145,7 @@ describe("MESSAGES", () => {
         });
         it("DELETE /message/:id, should return statuscode 200", async () => {
             expect.assertions(1);
-            const res: Response = await agent.delete(`/message/${mockMessageId}`);
+            const res: Response = await agent.delete(`/message/${mockMessageId.toString()}`);
             expect(res.statusCode).toBe(StatusCode.NoContent);
         });
     });
