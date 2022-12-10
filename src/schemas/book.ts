@@ -11,9 +11,8 @@ const bookRatingSchema = new Schema<BookRating>(
         comment: String,
         rate: { type: Number, required: true },
     },
-    { timestamps: { createdAt: true, updatedAt: false }, versionKey: false },
+    { timestamps: true, versionKey: false },
 );
-
 
 const bookSchema = new Schema<Book>(
     {
