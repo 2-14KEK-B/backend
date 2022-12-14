@@ -3,7 +3,7 @@ import validationMiddleware from "@middlewares/validation";
 import LoginDto from "@validators/login";
 import HttpError from "@exceptions/Http";
 import WrongCredentialsException from "@exceptions/WrongCredentials";
-import type { Model } from "mongoose";
+import type { FilterQuery, Model } from "mongoose";
 import type { NextFunction, Request, Response, Router } from "express";
 import type { LoginCred } from "@interfaces/authentication";
 import type { User } from "@interfaces/user";
@@ -27,10 +27,15 @@ export default class LoginController implements Controller {
 
     private login = async (req: Request<unknown, unknown, LoginCred>, res: Response, next: NextFunction) => {
         try {
-            const { email, password } = req.body;
+            const { email, username, password } = req.body;
+
+            let query: FilterQuery<User> = { email: email };
+            if (username) {
+                query = { username: username };
+            }
 
             const user = await this.userModel //
-                .findOne({ email: email })
+                .findOne(query)
                 .lean<User>()
                 .exec();
             if (!user) return next(new WrongCredentialsException());

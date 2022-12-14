@@ -62,13 +62,18 @@ describe("BOOKS", () => {
 
     describe("BOOKS without logged in", () => {
         it("GET /book, should return statuscode 200", async () => {
-            expect.assertions(5);
+            expect.assertions(3);
             const res = await request(server).get("/book");
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body).toBeInstanceOf(Array<Book>);
             expect(res.body.length).toBe(2);
-            expect(res.body[0].title).toBe(mockBook1.title);
-            expect(res.body[1].title).toBe(mockBook2.title);
+        });
+        it("GET /book?userId=id, should return statuscode 200", async () => {
+            expect.assertions(3);
+            const res = await request(server).get(`/book?userId=${mockUser1Id.toString()}`);
+            expect(res.statusCode).toBe(StatusCode.OK);
+            expect(res.body).toBeInstanceOf(Array<Book>);
+            expect(res.body[0].uploader).toBe(mockUser1Id.toString());
         });
         it("GET /book?available=true, should return statuscode 200 and only available books", async () => {
             expect.assertions(3);

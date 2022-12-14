@@ -11,6 +11,7 @@ export default async function connectToDatabase(connectionString?: string): Prom
         const uri = connectionString || env.MONGO_URI;
         await connect(uri);
         set("strictQuery", false);
+        // set("debug", { shell: true });
 
         if (env.isProduction) {
             console.log("Connected to MongoDB server.");

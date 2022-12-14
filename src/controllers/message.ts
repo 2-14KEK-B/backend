@@ -1,17 +1,17 @@
 import { Router, Request, Response, NextFunction } from "express";
-import messageModel from "@models/message";
 import authentication from "@middlewares/authentication";
 import authorization from "@middlewares/authorization";
 import validation from "@middlewares/validation";
+import messageModel from "@models/message";
 import userModel from "@models/user";
 import StatusCode from "@utils/statusCodes";
 import isIdNotValid from "@utils/idChecker";
+import sortByDateAndSlice from "@utils/sortByDateAndSlice";
 import CreateMessageDto from "@validators/message";
 import HttpError from "@exceptions/Http";
 import { SortOrder, Types } from "mongoose";
 import type { CreateMessageContent, Message, MessageContent } from "@interfaces/message";
 import type Controller from "@interfaces/controller";
-import sortByDate from "@utils/sortByDate";
 
 export default class MessageController implements Controller {
     path = "/message";
@@ -26,6 +26,7 @@ export default class MessageController implements Controller {
     private initializeRoutes() {
         this.router.all("*", authentication);
         this.router.get(`${this.path}/all`, authorization(["admin"]), this.getAllMessages);
+        this.router.get(this.path, this.getMessageByUserIds);
         this.router
             .route(`${this.path}/:id`)
             .get(this.getMessagesById)
@@ -33,10 +34,26 @@ export default class MessageController implements Controller {
             .delete(authorization(["admin"]), this.deleteMessageById);
     }
 
-    private getAllMessages = async (_req: Request, res: Response, next: NextFunction) => {
+    private getAllMessages = async (
+        req: Request<unknown, unknown, unknown, { skip?: string; limit?: string; sort?: SortOrder; sortBy?: string }>,
+        res: Response,
+        next: NextFunction,
+    ) => {
         try {
+            const { skip, limit, sort, sortBy } = req.query;
+
+            let sortQuery: { [_ in keyof Partial<Message>]: SortOrder } | string = {
+                createdAt: sort || "desc",
+            };
+            if (sort && sortBy) {
+                sortQuery = `${sort == "asc" ? "" : "-"}${sortBy}`;
+            }
+
             const messages = await this.message //
                 .find()
+                .sort(sortQuery)
+                .skip(Number.parseInt(skip as string) || 0)
+                .limit(Number.parseInt(limit as string) || 10)
                 .lean<Message[]>()
                 .exec();
 
@@ -63,11 +80,39 @@ export default class MessageController implements Controller {
                 .exec();
             if (!message_contents) return next(new HttpError(`Failed to get message by id ${messageId}`));
 
-            let sortedMessages = sortByDate(message_contents, sort || "desc");
+            let sortedMessages = sortByDateAndSlice(message_contents, sort || "desc");
             sortedMessages = message_contents.slice(
                 Number.parseInt(skip as string) || 0,
                 Number.parseInt(limit as string) || 25,
             );
+
+            res.json(sortedMessages);
+        } catch (error) {
+            next(new HttpError(error.message));
+        }
+    };
+
+    private getMessageByUserIds = async (
+        req: Request<unknown, unknown, unknown, { skip?: string; limit?: string; sort?: SortOrder; userId: string }>,
+        res: Response,
+        next: NextFunction,
+    ) => {
+        try {
+            const loggedInUserId = req.session["userId"];
+
+            const { skip, limit, sort, userId } = req.query;
+            if (await isIdNotValid(this.user, [userId, loggedInUserId], next)) return;
+
+            const { message_contents } = await this.message
+                .findOne(
+                    { users: { $in: [loggedInUserId, userId] } }, //
+                    { message_contents: 1 },
+                )
+                .lean<{ message_contents: MessageContent[] }>()
+                .exec();
+            if (!message_contents) return next(new HttpError(`Failed to get message by given user ids`));
+
+            const sortedMessages = sortByDateAndSlice(message_contents, sort, skip, limit);
 
             res.json(sortedMessages);
         } catch (error) {
@@ -85,34 +130,31 @@ export default class MessageController implements Controller {
             const to_id = req.params["id"];
             if (await isIdNotValid(this.user, [to_id], next)) return;
 
+            const query = { $in: [from_id, to_id] };
+
             const newMessageContent: CreateMessageContent = {
                 sender_id: new Types.ObjectId(from_id),
                 content: req.body.content,
             };
             let messages = await this.message //
-                .findOne({ users: { $in: [from_id, to_id] } })
+                .exists({ users: query })
                 .exec();
 
             if (messages) {
-                messages.message_contents.push({ ...newMessageContent, createdAt: new Date() });
-
-                const newMessage = await messages
+                const { acknowledged } = await this.message
                     .updateOne({ $push: { message_contents: { newMessageContent } } })
-                    .lean<Message>()
                     .exec();
-                if (!newMessage) return next(new HttpError("Failed to create message"));
+                if (!acknowledged) return next(new HttpError("Failed to add message content"));
             } else {
                 messages = await this.message.create({
                     users: [new Types.ObjectId(from_id), new Types.ObjectId(to_id)],
-                    updatedAt: new Date(),
                     message_contents: [newMessageContent],
                 });
                 if (!messages) return next(new HttpError("Failed to create message"));
 
-                const { acknowledged } = await this.user.updateMany(
-                    { _id: { $in: messages.users } },
-                    { $push: { messages: { _id: messages._id } } },
-                );
+                const { acknowledged } = await this.user
+                    .updateMany({ _id: query }, { $push: { messages: { _id: messages._id } } })
+                    .exec();
                 if (!acknowledged) return next(new HttpError("Failed to update users"));
             }
 
@@ -128,21 +170,20 @@ export default class MessageController implements Controller {
             if (await isIdNotValid(this.message, [messageId], next)) return;
 
             const { users } = await this.message //
-                .findById(messageId)
-                .lean<Message>()
+                .findById(messageId, { users: 1 })
+                .lean<{ users: Types.ObjectId[] }>()
                 .exec();
             if (!users) return next(new HttpError("Failed to get ids from messages"));
 
-            const response = await this.message //
+            const { acknowledged: successfullDeleteMessage } = await this.message //
                 .deleteOne({ _id: messageId })
                 .exec();
-            if (!response) return next(new HttpError(`Failed to delete message by id ${messageId}`));
+            if (!successfullDeleteMessage) return next(new HttpError(`Failed to delete message by id ${messageId}`));
 
-            const { acknowledged } = await this.user.updateMany(
-                { _id: { $in: users } },
-                { $pull: { messages: messageId } },
-            );
-            if (!acknowledged) return next(new HttpError("Failed to update users"));
+            const { acknowledged: successfullUpdateUsers } = await this.user
+                .updateMany({ _id: { $in: users } }, { $pull: { messages: messageId } })
+                .exec();
+            if (!successfullUpdateUsers) return next(new HttpError("Failed to update users"));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {

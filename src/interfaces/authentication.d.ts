@@ -1,6 +1,11 @@
-interface LoginCred {
+interface RegisterCred {
     email: string;
     password: string;
 }
 
-export { LoginCred, LoginCred as RegisterCred };
+interface LoginCred extends RegisterCred {
+    email?: string;
+    username?: string;
+}
+
+export { LoginCred, RegisterCred };
