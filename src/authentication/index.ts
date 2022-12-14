@@ -29,7 +29,9 @@ export default class AuthenticationController implements Controller {
             const userId = req.session["userId"];
             if (!userId) return next(new UnauthorizedException());
             const user = await this.user
-                .findById(userId, "-password -books -borrows -messages -user_ratings")
+                .findById(userId)
+                .populate(["messages", "borrows", "rated_books", "books"])
+                .populate({ path: "user_ratings", populate: { path: "from_me to_me" } })
                 .lean<User>()
                 .exec();
 

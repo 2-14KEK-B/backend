@@ -37,7 +37,9 @@ export default class LoginController implements Controller {
             }
 
             const user = await this.userModel //
-                .findOne(query)
+                .findOne(query, { password: 1 })
+                .populate(["messages", "borrows", "rated_books", "books"])
+                .populate({ path: "user_ratings", populate: { path: "from_me to_me" } })
                 .lean<User>()
                 .exec();
             if (!user) return next(new WrongCredentialsException());
@@ -79,6 +81,8 @@ export default class LoginController implements Controller {
 
             const user = await this.userModel //
                 .findOne({ email: data.email })
+                .populate(["messages", "borrows", "rated_books", "books"])
+                .populate({ path: "user_ratings", populate: { path: "from_me to_me" } })
                 .lean<User>()
                 .exec();
 

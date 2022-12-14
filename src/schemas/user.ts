@@ -5,7 +5,7 @@ const userSchema = new Schema<User>(
     {
         username: { type: String },
         fullname: { type: String },
-        password: { type: String, required: true },
+        password: { type: String, required: true, select: 0 },
         email: { type: String, required: true },
         email_is_verified: { type: Boolean, default: false },
         locale: { type: String, default: "hu-HU" },
