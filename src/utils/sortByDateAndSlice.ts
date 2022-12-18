@@ -16,6 +16,9 @@ export default function sortByDateAndSlice<T extends { createdAt: Date }>(
 ): Array<T> | [] {
     if (array.length == 0) return [];
 
+    const skipAsNumber = Number.parseInt(skip as string) || 0;
+    const limitAsNumber = Number.parseInt(limit as string) || 25 + skipAsNumber;
+
     return array
         .sort((a, b) => {
             if (Array<SortOrder>("asc", "ascending", 1).includes(sort)) {
@@ -24,5 +27,5 @@ export default function sortByDateAndSlice<T extends { createdAt: Date }>(
                 return a.createdAt.getTime() - b.createdAt.getTime();
             }
         })
-        .slice(Number.parseInt(skip as string) || 0, Number.parseInt(limit as string) || 10);
+        .slice(skipAsNumber, limitAsNumber);
 }

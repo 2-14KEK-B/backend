@@ -101,7 +101,7 @@ export default class App {
                     );
                 });
             });
-            socket.on("add-user", (userId: string) => {
+            socket.on("user-online", (userId: string) => {
                 socket.emit(
                     "other-users",
                     onlineUsers.map(user => user.user_id),

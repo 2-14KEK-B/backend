@@ -4,20 +4,18 @@ import RegisterDto from "@validators/register";
 import HttpError from "@exceptions/Http";
 import UserAlreadyExistsException from "@exceptions/UserAlreadyExists";
 import type { NextFunction, Request, Response, Router } from "express";
-import type { Model } from "mongoose";
 import type Controller from "@interfaces/controller";
-import type { User } from "@interfaces/user";
 import type { RegisterCred } from "@interfaces/authentication";
+import userModel from "@models/user";
 
 export default class RegisterController implements Controller {
     path: string;
     router: Router;
-    private userModel: Model<User>;
+    private user = userModel;
 
-    constructor(path: string, router: Router, model: Model<User>) {
+    constructor(path: string, router: Router) {
         this.path = path;
         this.router = router;
-        this.userModel = model;
         this.initializeRoute();
     }
 
@@ -29,13 +27,12 @@ export default class RegisterController implements Controller {
         try {
             const { email, password } = req.body;
 
-            if (await this.userModel.exists({ email: email }))
-                return next(new UserAlreadyExistsException(req.body.email));
+            if (await this.user.exists({ email: email })) return next(new UserAlreadyExistsException(req.body.email));
 
             const hashedPassword = await hash(password, 10);
             if (!hashedPassword) return next(new HttpError("Something wrong with the password."));
 
-            const newUser = await this.userModel.create({
+            const newUser = await this.user.create({
                 ...req.body,
                 password: hashedPassword,
             });

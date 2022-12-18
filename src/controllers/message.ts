@@ -80,11 +80,7 @@ export default class MessageController implements Controller {
                 .exec();
             if (!message_contents) return next(new HttpError(`Failed to get message by id ${messageId}`));
 
-            let sortedMessages = sortByDateAndSlice(message_contents, sort || "desc");
-            sortedMessages = message_contents.slice(
-                Number.parseInt(skip as string) || 0,
-                Number.parseInt(limit as string) || 25,
-            );
+            const sortedMessages = sortByDateAndSlice(message_contents, sort || "asc", skip, limit);
 
             res.json(sortedMessages);
         } catch (error) {
@@ -142,9 +138,10 @@ export default class MessageController implements Controller {
 
             if (messages) {
                 const { acknowledged } = await this.message
-                    .updateOne({ $push: { message_contents: { newMessageContent } } })
+                    .updateOne({ $push: { message_contents: { ...newMessageContent } } })
                     .exec();
                 if (!acknowledged) return next(new HttpError("Failed to add message content"));
+                res.json({ ...newMessageContent, createdAt: new Date() });
             } else {
                 messages = await this.message.create({
                     users: [new Types.ObjectId(from_id), new Types.ObjectId(to_id)],
@@ -156,9 +153,9 @@ export default class MessageController implements Controller {
                     .updateMany({ _id: query }, { $push: { messages: { _id: messages._id } } })
                     .exec();
                 if (!acknowledged) return next(new HttpError("Failed to update users"));
-            }
 
-            res.json(messages._id);
+                return res.json(messages);
+            }
         } catch (error) {
             next(new HttpError(error.message));
         }

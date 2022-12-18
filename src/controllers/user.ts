@@ -73,11 +73,7 @@ export default class UserController implements Controller {
         try {
             const userId = req.session["userId"];
 
-            const user = await this.user
-                .findById(userId, "-password")
-                .populate(["books", "borrows", "messages", "user_ratings"])
-                .lean<User>()
-                .exec();
+            const user = await this.user.getInitialData(userId as string);
 
             res.json(user);
         } catch (error) {
@@ -91,7 +87,7 @@ export default class UserController implements Controller {
             if (await isIdNotValid(this.user, [userId], next)) return;
 
             const user = await this.user
-                .findById(userId, "-password -email_is_verified -role -messages")
+                .findById(userId, "-email_is_verified -role -messages")
                 .populate("user_ratings")
                 .lean<User>()
                 .exec();

@@ -23,4 +23,23 @@ const userSchema = new Schema<User>(
     { timestamps: true, versionKey: false },
 );
 
+userSchema.statics["getInitialData"] = function (userId: string): User {
+    return this.findById(userId)
+        .populate(["borrows", "rated_books", "books"])
+        .populate({
+            path: "messages",
+            options: {
+                projection: {
+                    message_contents: { $slice: -25 },
+                },
+            },
+            populate: {
+                path: "users",
+                select: "fullname username email",
+            },
+        })
+        .populate({ path: "user_ratings", populate: { path: "from_me to_me" } })
+        .exec();
+};
+
 export default userSchema;
