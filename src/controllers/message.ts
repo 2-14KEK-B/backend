@@ -24,7 +24,7 @@ export default class MessageController implements Controller {
     }
 
     private initializeRoutes() {
-        this.router.all(`${this.path}/*`, authentication);
+        this.router.all(`${this.path}*`, authentication);
         this.router.get(`${this.path}/all`, authorization(["admin"]), this.getAllMessages);
         this.router.get(this.path, this.getMessageByUserIds);
         this.router

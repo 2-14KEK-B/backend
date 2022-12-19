@@ -58,6 +58,7 @@ export default class LoginController implements Controller {
         }
     };
 
+    /* istanbul ignore next */
     private loginAndRegisterWithGoogle = async (
         req: Request<unknown, unknown, { token: string }>,
         res: Response,

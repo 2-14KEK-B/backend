@@ -28,12 +28,7 @@ const jestConfig: JestConfigWithTsJest = {
     moduleFileExtensions: ["ts", "js", "json", "node"],
     collectCoverage: true,
     coverageDirectory: "coverage",
-    collectCoverageFrom: [
-        "src/**/*.{ts,js}",
-        "!src/**/*.d.ts",
-        "!src/db/*.ts",
-        "!src/server.ts",
-    ],
+    collectCoverageFrom: ["src/**/*.{ts,js}", "!src/**/*.d.ts", "!src/db/*.ts", "!src/server.ts", "!src/app.ts"],
     moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, { prefix: "<rootDir>/" }),
 };
 
