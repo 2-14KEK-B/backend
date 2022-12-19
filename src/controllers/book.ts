@@ -33,8 +33,8 @@ export default class BookController implements Controller {
             .get(this.getBooks)
             .post([authentication, validation(CreateBookDto)], this.createBook);
         this.router
-            .route(`${this.path}/:id`)
-            .get(authentication, this.getBookById)
+            .route(`${this.path}/:id([0-9a-fA-F]{24})`)
+            .get(this.getBookById)
             // .patch(`${this.path}/:id`, [authentication, validation(ModifyBookDto), true], this.modifyBookById),
             .delete(authentication, this.deleteBookById);
     }

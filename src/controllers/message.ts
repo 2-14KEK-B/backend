@@ -24,11 +24,11 @@ export default class MessageController implements Controller {
     }
 
     private initializeRoutes() {
-        this.router.all("*", authentication);
+        this.router.all(`${this.path}/*`, authentication);
         this.router.get(`${this.path}/all`, authorization(["admin"]), this.getAllMessages);
         this.router.get(this.path, this.getMessageByUserIds);
         this.router
-            .route(`${this.path}/:id`)
+            .route(`${this.path}/:id([0-9a-fA-F]{24})`)
             .get(this.getMessagesById)
             .post(validation(CreateMessageDto), this.createMessage)
             .delete(authorization(["admin"]), this.deleteMessageById);
@@ -126,7 +126,7 @@ export default class MessageController implements Controller {
             const to_id = req.params["id"];
             if (await isIdNotValid(this.user, [to_id], next)) return;
 
-            const query = { $in: [from_id, to_id] };
+            const query = { $all: [from_id, to_id] };
 
             const newMessageContent: CreateMessageContent = {
                 sender_id: new Types.ObjectId(from_id),
@@ -138,7 +138,7 @@ export default class MessageController implements Controller {
 
             if (messages) {
                 const { acknowledged } = await this.message
-                    .updateOne({ $push: { message_contents: { ...newMessageContent } } })
+                    .updateOne({ users: query }, { $push: { message_contents: { ...newMessageContent } } })
                     .exec();
                 if (!acknowledged) return next(new HttpError("Failed to add message content"));
                 res.json({ ...newMessageContent, createdAt: new Date() });

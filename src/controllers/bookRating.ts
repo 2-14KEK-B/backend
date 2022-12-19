@@ -26,11 +26,11 @@ export default class BookRatingController implements Controller {
 
     private initRoutes() {
         this.router
-            .route(`${this.path}:bookId/:rateId`)
+            .route(`${this.path}:bookId([0-9a-fA-F]{24})/:rateId([0-9a-fA-F]{24})`)
             .patch([authenticationMiddleware, validationMiddleware(BookRatingDto, true)], this.modifyBookRating)
             .delete([authenticationMiddleware, authorizationMiddleware(["admin"])], this.deleteBookRating);
         this.router
-            .route(`${this.path}:id`)
+            .route(`${this.path}:id([0-9a-fA-F]{24})`)
             .get(this.getBookRatingByBookId)
             .post([authenticationMiddleware, validationMiddleware(BookRatingDto)], this.createBookRatingByBookId)
             .delete(authenticationMiddleware, this.deleteBookRatingByBookId);

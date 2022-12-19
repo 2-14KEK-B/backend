@@ -24,14 +24,13 @@ export default class UserController implements Controller {
     }
 
     private initializeRoutes() {
-        this.router.all("*", authentication);
-        this.router.get(`${this.path}/me`, this.getMyUserInfo);
-        this.router.get(this.path, authorization(["admin"]), this.getAllUsers);
+        this.router.get(`${this.path}/me`, authentication, this.getMyUserInfo);
+        this.router.get(this.path, [authentication, authorization(["admin"])], this.getAllUsers);
         this.router
-            .route(`${this.path}/:id`)
+            .route(`${this.path}/:id([0-9a-fA-F]{24})`)
             .get(this.getUserById)
-            .patch(validation(ModifyUserDto, true), this.modifyUserById)
-            .delete(this.deleteUserById);
+            .patch([authentication, validation(ModifyUserDto, true)], this.modifyUserById)
+            .delete(authentication, this.deleteUserById);
     }
 
     private getAllUsers = async (
@@ -87,8 +86,21 @@ export default class UserController implements Controller {
             if (await isIdNotValid(this.user, [userId], next)) return;
 
             const user = await this.user
-                .findById(userId, "-email_is_verified -role -messages")
-                .populate("user_ratings")
+                .findById(userId, "-email_is_verified -role -messages -rated_books")
+                .populate({ path: "books" })
+                .populate({
+                    path: "borrows",
+                    select: "books from_id to_id verified",
+                    populate: { path: "books", select: "author available createdAt for_borrow price title picture" },
+                })
+                .populate({
+                    path: "user_ratings",
+                    populate: {
+                        path: "from_me to_me",
+                        select: "from_id to_id createdAt rate comment",
+                        populate: { path: "from_id to_id" },
+                    },
+                })
                 .lean<User>()
                 .exec();
 
