@@ -64,6 +64,7 @@ export default class UserController implements Controller {
 
             res.json(users);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -76,6 +77,7 @@ export default class UserController implements Controller {
 
             res.json(user);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -106,6 +108,7 @@ export default class UserController implements Controller {
 
             res.json(user);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -135,6 +138,7 @@ export default class UserController implements Controller {
 
             res.json(user);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -157,6 +161,7 @@ export default class UserController implements Controller {
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };

@@ -45,6 +45,7 @@ export default class UserRatingController implements Controller {
 
             res.json(userRatings);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -66,6 +67,7 @@ export default class UserRatingController implements Controller {
 
             res.json(userRatings);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -108,6 +110,7 @@ export default class UserRatingController implements Controller {
 
             res.json(ratings);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -151,6 +154,7 @@ export default class UserRatingController implements Controller {
 
             res.json(rating);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -193,6 +197,7 @@ export default class UserRatingController implements Controller {
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };

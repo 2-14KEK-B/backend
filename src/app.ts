@@ -10,6 +10,8 @@ import env from "@config/validateEnv";
 import corsOptions from "@config/corsOptions";
 import StatusCode from "@utils/statusCodes";
 import type Controller from "@interfaces/controller";
+import type { Message, MessageContent } from "@interfaces/message";
+import type { User } from "@interfaces/user";
 
 export default class App {
     public app: Express;
@@ -92,30 +94,50 @@ export default class App {
         io.on("connection", socket => {
             socket.on("disconnecting", () => {
                 const disconnectedId = socket.id;
+                console.log(
+                    disconnectedId,
+                    onlineUsers.find(u => u.socket_id == disconnectedId),
+                );
                 onlineUsers = onlineUsers.filter(user => user.socket_id !== disconnectedId);
 
-                onlineUsers.forEach(user => {
-                    socket.to(user.socket_id).emit(
-                        "other-users",
-                        onlineUsers.map(user => user.user_id),
-                    );
-                });
+                // onlineUsers.forEach(user => {
+                //     socket.to(user.socket_id).emit(
+                //         "other-users",
+                //         onlineUsers.map(user => user.user_id),
+                //     );
+                // });
             });
             socket.on("user-online", (userId: string) => {
-                socket.emit(
-                    "other-users",
-                    onlineUsers.map(user => user.user_id),
-                );
+                // socket.emit(
+                //     "other-users",
+                //     onlineUsers.map(user => user.user_id),
+                // );
 
                 onlineUsers.push({ user_id: userId, socket_id: socket.id });
-
-                socket.broadcast.emit("new-user", userId);
+                console.log(onlineUsers);
+                // socket.broadcast.emit("new-user", userId);
             });
 
-            socket.on("send-msg", (data: { from: string; to: string; message: string }) => {
+            socket.on("send-msg", (data: { from: string; to: string; message: string }, sender?: User) => {
                 const sendUserSocket = onlineUsers.find(user => user.user_id === data.to);
                 if (sendUserSocket) {
-                    socket.to(sendUserSocket.socket_id).emit("msg-recieved", data);
+                    const now = new Date();
+                    const messageContent: MessageContent = {
+                        content: data.message,
+                        createdAt: now,
+                        sender_id: data.from,
+                    };
+                    const message: Message = {
+                        createdAt: now,
+                        updatedAt: now,
+                        users: [data.from, data.to],
+                        message_contents: [messageContent],
+                    };
+                    if (sender) {
+                        socket.to(sendUserSocket.socket_id).emit("msg-recieved", message, sender);
+                    } else {
+                        socket.to(sendUserSocket.socket_id).emit("msg-recieved", messageContent);
+                    }
                 }
             });
         });

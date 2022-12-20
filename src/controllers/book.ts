@@ -48,6 +48,7 @@ export default class BookController implements Controller {
 
             res.json(books);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -94,6 +95,7 @@ export default class BookController implements Controller {
 
             res.json(books);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -110,6 +112,7 @@ export default class BookController implements Controller {
 
             res.json(books);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -127,6 +130,7 @@ export default class BookController implements Controller {
 
             res.json(book);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -150,6 +154,7 @@ export default class BookController implements Controller {
 
             res.json(newBook);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -203,6 +208,7 @@ export default class BookController implements Controller {
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };

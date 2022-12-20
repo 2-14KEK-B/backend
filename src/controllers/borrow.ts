@@ -48,6 +48,7 @@ export default class BorrowController implements Controller {
 
             res.json(borrows);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -88,6 +89,7 @@ export default class BorrowController implements Controller {
 
             res.json(borrows);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -106,6 +108,7 @@ export default class BorrowController implements Controller {
 
             res.json(borrow);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -137,6 +140,7 @@ export default class BorrowController implements Controller {
 
             res.json(newBorrow);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -175,6 +179,7 @@ export default class BorrowController implements Controller {
 
             res.json(modifiedBorrow);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -202,6 +207,7 @@ export default class BorrowController implements Controller {
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };

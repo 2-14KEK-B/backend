@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from "express";
 import validationMiddleware from "@middlewares/validation";
 import authenticationMiddleware from "@middlewares/authentication";
+import authorizationMiddleware from "@middlewares/authorization";
 import bookModel from "@models/book";
 import userModel from "@models/user";
 import isIdNotValid from "@utils/idChecker";
@@ -12,7 +13,6 @@ import type { SortOrder } from "mongoose";
 import type { Book } from "@interfaces/book";
 import type Controller from "@interfaces/controller";
 import type { BookRating, CreateOrModifyBookRating } from "@interfaces/bookRating";
-import authorizationMiddleware from "@middlewares/authorization";
 
 export default class BookRatingController implements Controller {
     path = "/";
@@ -56,6 +56,7 @@ export default class BookRatingController implements Controller {
 
             res.json(sortedRatings);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -92,6 +93,7 @@ export default class BookRatingController implements Controller {
 
             res.json(ratedBook);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -128,6 +130,7 @@ export default class BookRatingController implements Controller {
 
             res.json(ratedBook);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -155,6 +158,7 @@ export default class BookRatingController implements Controller {
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -188,6 +192,7 @@ export default class BookRatingController implements Controller {
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };

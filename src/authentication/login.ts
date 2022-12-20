@@ -54,6 +54,7 @@ export default class LoginController implements Controller {
 
             res.json(user);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -102,6 +103,7 @@ export default class LoginController implements Controller {
                 return res.send(newUser);
             }
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };

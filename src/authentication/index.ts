@@ -31,6 +31,7 @@ export default class AuthenticationController implements Controller {
 
             res.json(user);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };

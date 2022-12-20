@@ -26,6 +26,7 @@ export default class MessageController implements Controller {
     private initializeRoutes() {
         this.router.all(`${this.path}*`, authentication);
         this.router.get(`${this.path}/all`, authorization(["admin"]), this.getAllMessages);
+        this.router.get(`${this.path}/my`, this.getLoggedInUserMessages);
         this.router.get(this.path, this.getMessageByUserIds);
         this.router
             .route(`${this.path}/:id([0-9a-fA-F]{24})`)
@@ -59,6 +60,35 @@ export default class MessageController implements Controller {
 
             res.json(messages);
         } catch (error) {
+            /* istanbul ignore next */
+            next(new HttpError(error.message));
+        }
+    };
+
+    private getLoggedInUserMessages = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const loggedInUserId = req.session.userId;
+
+            const { messages } = await this.user
+                .findById(loggedInUserId, { messages: 1 })
+                .populate({
+                    path: "messages",
+                    options: {
+                        projection: {
+                            message_contents: { $slice: -25 },
+                        },
+                    },
+                    populate: {
+                        path: "users",
+                        select: "fullname username email picture",
+                    },
+                })
+                .lean<{ messages: Message[] }>()
+                .exec();
+
+            res.json(messages);
+        } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -84,6 +114,7 @@ export default class MessageController implements Controller {
 
             res.json(sortedMessages);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -112,6 +143,7 @@ export default class MessageController implements Controller {
 
             res.json(sortedMessages);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -126,19 +158,20 @@ export default class MessageController implements Controller {
             const to_id = req.params["id"];
             if (await isIdNotValid(this.user, [to_id], next)) return;
 
-            const query = { $all: [from_id, to_id] };
-
             const newMessageContent: CreateMessageContent = {
                 sender_id: new Types.ObjectId(from_id),
                 content: req.body.content,
             };
             let messages = await this.message //
-                .exists({ users: query })
+                .exists({ users: { $all: [from_id, to_id] } })
                 .exec();
 
-            if (messages) {
+            if (messages != null) {
                 const { acknowledged } = await this.message
-                    .updateOne({ users: query }, { $push: { message_contents: { ...newMessageContent } } })
+                    .updateOne(
+                        { users: { $all: [from_id, to_id] } },
+                        { $push: { message_contents: { ...newMessageContent } } },
+                    )
                     .exec();
                 if (!acknowledged) return next(new HttpError("Failed to add message content"));
                 res.json({ ...newMessageContent, createdAt: new Date() });
@@ -150,13 +183,14 @@ export default class MessageController implements Controller {
                 if (!messages) return next(new HttpError("Failed to create message"));
 
                 const { acknowledged } = await this.user
-                    .updateMany({ _id: query }, { $push: { messages: { _id: messages._id } } })
+                    .updateMany({ _id: { $in: [from_id, to_id] } }, { $push: { messages: { _id: messages._id } } })
                     .exec();
                 if (!acknowledged) return next(new HttpError("Failed to update users"));
 
                 return res.json(messages);
             }
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -184,6 +218,7 @@ export default class MessageController implements Controller {
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };

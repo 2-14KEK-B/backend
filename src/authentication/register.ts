@@ -40,6 +40,7 @@ export default class RegisterController implements Controller {
 
             res.json(`user created with ${newUser.email}`);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
