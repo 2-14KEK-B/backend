@@ -25,6 +25,7 @@
         "baseUrl": ".",
         "paths": {
             "@authentication/*": ["src/authentication/*"],
+            "@config/*": ["src/config/*"],
             "@controllers/*": ["src/controllers/*"],
             "@config/*": ["src/config/*"],
             "@db/*": ["src/db/*"],
@@ -40,6 +41,6 @@
     "ts-node": {
         "require": ["tsconfig-paths/register"]
     },
-    "include": ["src/**/*.ts", "config/*.ts", "**/*.test.ts", "jest.config.ts"],
+    "include": ["src/**/*.ts", "test/*.ts", "**/*.test.ts", "jest.config.ts"],
     "exclude": ["node_modules", "dist", "data", "coverage"]
 }

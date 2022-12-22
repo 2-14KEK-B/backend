@@ -39,18 +39,22 @@ describe("USERS", () => {
     });
 
     describe("USERS, not logged in", () => {
+        it("GET /user/:id, should return statuscode 200", async () => {
+            expect.assertions(2);
+            const res = await request(server).get(`/user/${mockUser1Id.toString()}`);
+            expect(res.statusCode).toBe(StatusCode.OK);
+            expect(res.body).toBeInstanceOf(Object as unknown as User);
+        });
         it("any PATH, should return statuscode 401", async () => {
-            expect.assertions(5);
-            const randomId = new Types.ObjectId();
+            expect.assertions(4);
+            const randomId = new Types.ObjectId().toString();
             const dummyUser: Partial<User> = { email: "justsomeemail@domain.com" };
             const meRes = await request(server).get("/user/me");
             const allRes = await request(server).get("/user");
-            const idRes = await request(server).get(`/user/${randomId}`);
             const patchRes = await request(server).patch(`/user/${randomId}`).send(dummyUser);
             const deleteRes = await request(server).delete(`/user/${randomId}`);
             expect(meRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(allRes.statusCode).toBe(StatusCode.Unauthorized);
-            expect(idRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(patchRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(deleteRes.statusCode).toBe(StatusCode.Unauthorized);
         });
@@ -75,12 +79,6 @@ describe("USERS", () => {
             const res: Response = await agent.get("/user");
             expect(res.statusCode).toBe(StatusCode.Forbidden);
             expect(res.body).toBe("Forbidden");
-        });
-        it("GET /user/:id, should return statuscode 200", async () => {
-            expect.assertions(2);
-            const res: Response = await agent.get(`/user/${mockUser2Id.toString()}`);
-            expect(res.statusCode).toBe(StatusCode.OK);
-            expect(res.body).toBeInstanceOf(Object as unknown as User);
         });
         it("PATCH /user/:id, should return statuscode 200, if it's the logged in user's", async () => {
             expect.assertions(2);
@@ -147,12 +145,6 @@ describe("USERS", () => {
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body).toBeInstanceOf(Array<User>);
             expect(res.body[0].email).toBe(mockUser2.email);
-        });
-        it("GET /user/:id, should return statuscode 200", async () => {
-            expect.assertions(2);
-            const res: Response = await agent.get(`/user/${mockUser2Id.toString()}`);
-            expect(res.statusCode).toBe(StatusCode.OK);
-            expect(res.body).toBeInstanceOf(Object as unknown as User);
         });
         it("PATCH /user/:id, should return statuscode 200", async () => {
             expect.assertions(2);

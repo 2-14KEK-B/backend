@@ -1,11 +1,12 @@
 import type ID from "./id";
+import type { User } from "./user";
 import type { BookRating } from "./bookRating";
 
 interface Book {
     _id: ID;
-    uploader: ID;
+    uploader: User | ID;
     createdAt: Date;
-    updatedAt: Date;
+    updatedAt?: Date;
     author: string;
     title: string;
     picture: string;
@@ -26,20 +27,14 @@ interface CreateBook {
     for_borrow: boolean;
 }
 
-interface ModifyBook extends CreateBook {
+interface ModifyBook {
     author?: string;
     title?: string;
     for_borrow?: boolean;
     available?: boolean;
-}
-
-interface Book extends CreateBook {
-    _id: ID;
-    uploader: ID;
-    updated_on?: Date;
-    available?: boolean;
-    ratings?: BookRating[];
-    __v?: number;
+    picture?: string;
+    category?: string[];
+    price?: number;
 }
 
 export { Book, CreateBook, ModifyBook };

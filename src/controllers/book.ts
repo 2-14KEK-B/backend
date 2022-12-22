@@ -33,8 +33,8 @@ export default class BookController implements Controller {
             .get(this.getBooks)
             .post([authentication, validation(CreateBookDto)], this.createBook);
         this.router
-            .route(`${this.path}/:id`)
-            .get(authentication, this.getBookById)
+            .route(`${this.path}/:id([0-9a-fA-F]{24})`)
+            .get(this.getBookById)
             // .patch(`${this.path}/:id`, [authentication, validation(ModifyBookDto), true], this.modifyBookById),
             .delete(authentication, this.deleteBookById);
     }
@@ -48,6 +48,7 @@ export default class BookController implements Controller {
 
             res.json(books);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -94,6 +95,7 @@ export default class BookController implements Controller {
 
             res.json(books);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -110,6 +112,7 @@ export default class BookController implements Controller {
 
             res.json(books);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -127,6 +130,7 @@ export default class BookController implements Controller {
 
             res.json(book);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -150,6 +154,7 @@ export default class BookController implements Controller {
 
             res.json(newBook);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -203,6 +208,7 @@ export default class BookController implements Controller {
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };

@@ -14,9 +14,4 @@ interface CreateOrModifyBookRating {
     comment?: string;
 }
 
-interface BookRating extends CreateBookRating {
-    _id?: ID;
-    from_id: ID;
-}
-
 export { BookRating, CreateOrModifyBookRating };

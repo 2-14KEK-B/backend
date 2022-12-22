@@ -1,18 +1,25 @@
 import express, { Express, json, Request, Response, urlencoded } from "express";
+import { createServer, Server } from "http";
+import { Server as Socket } from "socket.io";
 import session, { SessionOptions } from "express-session";
 import cors from "cors";
 import morgan from "morgan";
 import { createSessionStore } from "@db/sessionStore";
 import errorMiddleware from "@middlewares/error";
 import env from "@config/validateEnv";
+import corsOptions from "@config/corsOptions";
 import StatusCode from "@utils/statusCodes";
 import type Controller from "@interfaces/controller";
+import type { Message, MessageContent } from "@interfaces/message";
+import type { User } from "@interfaces/user";
 
 export default class App {
     public app: Express;
+    private httpServer: Server;
 
     constructor(controllers: Controller[]) {
         this.app = express();
+        this.httpServer = createServer(this.app);
         this.initSession();
         this.initializeMiddlewares();
         this.initializeControllers(controllers);
@@ -29,12 +36,7 @@ export default class App {
 
         this.app.use(json());
         this.app.use(urlencoded({ extended: true }));
-        this.app.use(
-            cors({
-                origin: ["http://localhost:4000", "http://127.0.0.1:4000", "https://bookswap.onrender.com"],
-                credentials: true,
-            }),
-        );
+        this.app.use(cors(corsOptions));
     }
 
     private initializeErrorHandling() {
@@ -77,8 +79,67 @@ export default class App {
     }
 
     public listen(): void {
-        this.app.listen(env.PORT, () => {
+        this.initSocketIO();
+
+        this.httpServer.listen(env.PORT, () => {
             console.log(`App listening on the port ${env.PORT}`);
+        });
+    }
+
+    private initSocketIO() {
+        const io = new Socket(this.httpServer, { cors: corsOptions });
+
+        let onlineUsers: { user_id: string; socket_id: string }[] = [];
+
+        io.on("connection", socket => {
+            socket.on("disconnecting", () => {
+                const disconnectedId = socket.id;
+                console.log(
+                    disconnectedId,
+                    onlineUsers.find(u => u.socket_id == disconnectedId),
+                );
+                onlineUsers = onlineUsers.filter(user => user.socket_id !== disconnectedId);
+
+                // onlineUsers.forEach(user => {
+                //     socket.to(user.socket_id).emit(
+                //         "other-users",
+                //         onlineUsers.map(user => user.user_id),
+                //     );
+                // });
+            });
+            socket.on("user-online", (userId: string) => {
+                // socket.emit(
+                //     "other-users",
+                //     onlineUsers.map(user => user.user_id),
+                // );
+
+                onlineUsers.push({ user_id: userId, socket_id: socket.id });
+                console.log(onlineUsers);
+                // socket.broadcast.emit("new-user", userId);
+            });
+
+            socket.on("send-msg", (data: { from: string; to: string; message: string }, sender?: User) => {
+                const sendUserSocket = onlineUsers.find(user => user.user_id === data.to);
+                if (sendUserSocket) {
+                    const now = new Date();
+                    const messageContent: MessageContent = {
+                        content: data.message,
+                        createdAt: now,
+                        sender_id: data.from,
+                    };
+                    const message: Message = {
+                        createdAt: now,
+                        updatedAt: now,
+                        users: [data.from, data.to],
+                        message_contents: [messageContent],
+                    };
+                    if (sender) {
+                        socket.to(sendUserSocket.socket_id).emit("msg-recieved", message, sender);
+                    } else {
+                        socket.to(sendUserSocket.socket_id).emit("msg-recieved", messageContent);
+                    }
+                }
+            });
         });
     }
 }

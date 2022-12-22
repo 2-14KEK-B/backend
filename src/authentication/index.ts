@@ -6,7 +6,6 @@ import userModel from "@models/user";
 import HttpError from "@exceptions/Http";
 import UnauthorizedException from "@exceptions/Unauthorized";
 import type Controller from "@interfaces/controller";
-import type { User } from "@interfaces/user";
 
 export default class AuthenticationController implements Controller {
     path = "/auth";
@@ -19,22 +18,20 @@ export default class AuthenticationController implements Controller {
 
     private initControllers() {
         this.router.get(this.path, this.checkIfLoggedIn);
-        new LoginController(this.path, this.router, this.user);
+        new LoginController(this.path, this.router);
         new LogoutController(this.path, this.router);
-        new RegisterController(this.path, this.router, this.user);
+        new RegisterController(this.path, this.router);
     }
 
     private checkIfLoggedIn = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const userId = req.session["userId"];
             if (!userId) return next(new UnauthorizedException());
-            const user = await this.user
-                .findById(userId, "-password -books -borrows -messages -user_ratings")
-                .lean<User>()
-                .exec();
+            const user = await this.user.getInitialData(userId);
 
             res.json(user);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };

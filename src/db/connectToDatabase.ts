@@ -9,9 +9,9 @@ import userRatingModel from "@models/userRating";
 export default async function connectToDatabase(connectionString?: string): Promise<void> {
     try {
         const uri = connectionString || env.MONGO_URI;
-        await connect(uri);
         set("strictQuery", false);
         // set("debug", { shell: true });
+        await connect(uri);
 
         if (env.isProduction) {
             console.log("Connected to MongoDB server.");

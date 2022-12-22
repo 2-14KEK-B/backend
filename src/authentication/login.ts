@@ -4,21 +4,21 @@ import LoginDto from "@validators/login";
 import HttpError from "@exceptions/Http";
 import WrongCredentialsException from "@exceptions/WrongCredentials";
 import { OAuth2Client } from "google-auth-library";
-import type { FilterQuery, Model } from "mongoose";
+import type { FilterQuery, Types } from "mongoose";
 import type { NextFunction, Request, Response, Router } from "express";
 import type { LoginCred } from "@interfaces/authentication";
 import type { User } from "@interfaces/user";
 import type Controller from "@interfaces/controller";
+import userModel from "@models/user";
 
 export default class LoginController implements Controller {
     path: string;
     router: Router;
-    private userModel: Model<User>;
+    private user = userModel;
 
-    constructor(path: string, router: Router, model: Model<User>) {
+    constructor(path: string, router: Router) {
         this.path = path;
         this.router = router;
-        this.userModel = model;
         this.initializeRoute();
     }
 
@@ -36,14 +36,16 @@ export default class LoginController implements Controller {
                 query = { username: username };
             }
 
-            const user = await this.userModel //
-                .findOne(query)
-                .lean<User>()
+            const existingUser = await this.user
+                .findOne(query, { password: 1 })
+                .lean<{ _id: Types.ObjectId; password: string }>()
                 .exec();
-            if (!user) return next(new WrongCredentialsException());
+            if (!existingUser) return next(new WrongCredentialsException());
 
-            const isPasswordMatching = await compare(password, user.password as string);
+            const isPasswordMatching = await compare(password, existingUser.password);
             if (!isPasswordMatching) return next(new WrongCredentialsException());
+
+            const user = await this.user.getInitialData(existingUser._id.toString());
 
             delete user["password"];
 
@@ -52,10 +54,12 @@ export default class LoginController implements Controller {
 
             res.json(user);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
 
+    /* istanbul ignore next */
     private loginAndRegisterWithGoogle = async (
         req: Request<unknown, unknown, { token: string }>,
         res: Response,
@@ -77,17 +81,15 @@ export default class LoginController implements Controller {
 
             if (!data) return next(new HttpError("Failed to receive data from google"));
 
-            const user = await this.userModel //
-                .findOne({ email: data.email })
-                .lean<User>()
-                .exec();
+            const userId = await this.user.exists({ email: data.email }).exec();
 
-            if (user) {
+            if (userId) {
+                const user = await this.user.getInitialData(userId as unknown as string);
                 req.session["userId"] = user._id;
                 req.session["role"] = user.role;
                 return res.send(user);
             } else {
-                const newUser = await this.userModel.create({
+                const newUser = await this.user.create({
                     ...data,
                     email_is_verified: data.email_verified,
                     fullname: data.name,
@@ -101,6 +103,7 @@ export default class LoginController implements Controller {
                 return res.send(newUser);
             }
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };

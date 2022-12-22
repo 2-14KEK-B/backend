@@ -26,14 +26,14 @@ export default class BorrowController implements Controller {
     }
 
     private initializeRoutes() {
-        this.router.all("*", authentication);
+        this.router.all(`${this.path}*`, authentication);
         this.router.get(`${this.path}/all`, authorization(["admin"]), this.getAllBorrows);
         this.router //
             .route(this.path)
             .get(this.getBorrows)
             .post(validation(CreateBorrowDto), this.createBorrow);
         this.router
-            .route(`${this.path}/:id`)
+            .route(`${this.path}/:id([0-9a-fA-F]{24})`)
             .get(this.getBorrowById)
             .patch(validation(ModifyBorrowDto, true), this.modifyBorrowById)
             .delete(authorization(["admin"]), this.deleteBorrowById);
@@ -48,6 +48,7 @@ export default class BorrowController implements Controller {
 
             res.json(borrows);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -88,6 +89,7 @@ export default class BorrowController implements Controller {
 
             res.json(borrows);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -106,6 +108,7 @@ export default class BorrowController implements Controller {
 
             res.json(borrow);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -137,6 +140,7 @@ export default class BorrowController implements Controller {
 
             res.json(newBorrow);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -175,6 +179,7 @@ export default class BorrowController implements Controller {
 
             res.json(modifiedBorrow);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
@@ -202,6 +207,7 @@ export default class BorrowController implements Controller {
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };

@@ -8,7 +8,7 @@ type ID = Types.ObjectId | string;
 interface User {
     _id: ID;
     createdAt: Date;
-    updatedAt: Date;
+    updatedAt?: Date;
     username: string;
     fullname: string;
     email: string;
@@ -19,7 +19,7 @@ interface User {
     role?: string;
     books: (Book | ID)[];
     messages: (Message | ID)[];
-    rated_books: ID[];
+    rated_books: (Book | ID)[];
     user_ratings: { from_me: ID[]; to_me: ID[] };
     borrows: (Borrow | ID)[];
 }
@@ -40,18 +40,6 @@ interface ModifyUser {
     email?: string;
     email_is_verified?: boolean;
     password?: string;
-}
-
-interface User extends CreateUser {
-    _id: ID;
-    updated_on?: Date;
-    email_is_verified?: boolean;
-    role?: string;
-    books: (Book | ID)[];
-    messages: (Message | ID)[];
-    rated_books: ID[];
-    borrows: (Borrow | ID)[];
-    user_ratings: { from_me: (UserRating | ID)[]; to_me: (UserRating | ID)[] };
 }
 
 export { User, CreateUser, ModifyUser };

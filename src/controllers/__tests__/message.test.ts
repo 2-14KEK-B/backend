@@ -66,13 +66,15 @@ describe("MESSAGES", () => {
 
     describe("MESSAGES, not logged in", () => {
         it("any PATH, should return statuscode 401", async () => {
-            expect.assertions(5);
+            expect.assertions(6);
             const allRes = await request(server).get("/message/all");
+            const myRes = await request(server).get("/message/all");
             const userRes = await request(server).get(`/message?userId=${mockUser1Id.toString()}`);
             const idRes = await request(server).get(`/message/${mockMessageId.toString()}`);
             const postRes = await request(server).post("/message");
             const deleteRes = await request(server).delete(`/message/${mockMessageId.toString()}`);
             expect(allRes.statusCode).toBe(StatusCode.Unauthorized);
+            expect(myRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(userRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(idRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(postRes.statusCode).toBe(StatusCode.Unauthorized);
@@ -96,6 +98,12 @@ describe("MESSAGES", () => {
             const res: Response = await agentForUser1.get("/message/all");
             expect(res.statusCode).toBe(StatusCode.Forbidden);
             expect(res.body).toBe("Forbidden");
+        });
+        it("GET /message/my, should return statuscode 200", async () => {
+            expect.assertions(2);
+            const res: Response = await agentForUser1.get("/message/my");
+            expect(res.statusCode).toBe(StatusCode.OK);
+            expect(res.body).toBeInstanceOf(Array<MessageContent>);
         });
         it("GET /message?userId=id, should return statuscode 200", async () => {
             expect.assertions(2);

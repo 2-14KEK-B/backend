@@ -5,7 +5,7 @@ const userSchema = new Schema<User>(
     {
         username: { type: String },
         fullname: { type: String },
-        password: { type: String, required: true },
+        password: { type: String, required: true, select: 0 },
         email: { type: String, required: true },
         email_is_verified: { type: Boolean, default: false },
         locale: { type: String, default: "hu-HU" },
@@ -22,5 +22,24 @@ const userSchema = new Schema<User>(
     },
     { timestamps: true, versionKey: false },
 );
+
+userSchema.statics["getInitialData"] = function (userId: string): User {
+    return this.findById(userId)
+        .populate(["borrows", "rated_books", "books"])
+        .populate({
+            path: "messages",
+            options: {
+                projection: {
+                    message_contents: { $slice: -25 },
+                },
+            },
+            populate: {
+                path: "users",
+                select: "fullname username email",
+            },
+        })
+        .populate({ path: "user_ratings", populate: { path: "from_me to_me" } })
+        .exec();
+};
 
 export default userSchema;

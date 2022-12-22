@@ -29,6 +29,7 @@ export default class LogoutController implements Controller {
                 res.json("Logged out successfully.");
             });
         } catch (error) {
+            /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
