@@ -35,7 +35,7 @@ userSchema.statics["getInitialData"] = function (userId: string): User {
             },
             populate: {
                 path: "users",
-                select: "fullname username email",
+                select: "fullname username email picture",
             },
         })
         .populate({ path: "user_ratings", populate: { path: "from_me to_me" } })
