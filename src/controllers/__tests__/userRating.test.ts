@@ -67,7 +67,7 @@ describe("USER RATING", () => {
         },
         mockBorrow: Partial<Borrow> = {
             _id: mockBorrowId,
-            books: [mockBookId],
+            books: [{ _id: mockBookId, _version: 1 }],
             from_id: mockUser1Id,
             to_id: mockUser2Id,
             verified: true,

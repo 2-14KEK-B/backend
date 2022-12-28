@@ -15,9 +15,12 @@ const borrowSchema = new Schema<Borrow>(
         },
         books: [
             {
-                type: Schema.Types.ObjectId,
-                ref: "Book",
-                required: true,
+                _id: {
+                    type: Schema.Types.ObjectId,
+                    ref: "Book",
+                    required: true,
+                },
+                _version: { type: Number, required: true },
             },
         ],
         verified: { type: Boolean, default: false },

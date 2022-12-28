@@ -3,7 +3,12 @@ import type { User } from "./user";
 import type { BookRating } from "./bookRating";
 
 interface Book {
-    _id: ID;
+    _id:
+        | ID
+        | {
+              _id: ID;
+              _version: number;
+          };
     uploader: User | ID;
     createdAt: Date;
     updatedAt?: Date;
@@ -15,7 +20,11 @@ interface Book {
     available?: boolean;
     for_borrow: boolean;
     ratings?: BookRating[];
-    __v?: number;
+    _validity?: {
+        start?: Date;
+        end?: Date;
+    };
+    _version?: number;
 }
 
 interface CreateBook {

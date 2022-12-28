@@ -118,7 +118,9 @@ export default class BorrowController implements Controller {
             const userId = req.session["userId"];
             const { from_id, books } = req.body;
             if (await isIdNotValid(this.user, [from_id], next)) return;
-            if (await isIdNotValid(this.book, books, next)) return;
+
+            const bookIds = books.map(book => book._id as string);
+            if (await isIdNotValid(this.book, bookIds, next)) return;
 
             const newBorrow = await this.borrow //
                 .create({
