@@ -1,5 +1,6 @@
 import { Schema } from "mongoose";
 import type { User } from "@interfaces/user";
+import paginate from "mongoose-paginate-v2";
 
 const userSchema = new Schema<User>(
     {
@@ -41,5 +42,7 @@ userSchema.statics["getInitialData"] = function (userId: string): User {
         .populate({ path: "user_ratings", populate: { path: "from_me to_me" } })
         .exec();
 };
+
+userSchema.plugin(paginate);
 
 export default userSchema;

@@ -1,6 +1,9 @@
-import { model } from "mongoose";
+import { Model, model, PaginateModel } from "mongoose";
 import borrowSchema from "@schemas/borrow";
+import type { Borrow } from "@interfaces/borrow";
 
-const borrowModel = model("Borrow", borrowSchema, "borrows");
+interface BorrowModel extends PaginateModel<Borrow>, Model<Borrow> {}
+
+const borrowModel = model<Borrow, BorrowModel>("Borrow", borrowSchema, "borrows");
 
 export default borrowModel;

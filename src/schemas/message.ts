@@ -1,4 +1,5 @@
 import { Schema } from "mongoose";
+import paginate from "mongoose-paginate-v2";
 import type { Message, MessageContent } from "@interfaces/message";
 
 const messageContentSchema = new Schema<MessageContent>(
@@ -26,5 +27,7 @@ const messageSchema = new Schema<Message>(
     },
     { timestamps: true, versionKey: false },
 );
+
+messageSchema.plugin(paginate);
 
 export default messageSchema;

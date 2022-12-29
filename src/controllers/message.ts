@@ -104,15 +104,43 @@ export default class MessageController implements Controller {
 
             const { skip, limit, sort } = req.query;
 
-            const { message_contents } = await this.message //
-                .findById(messageId, { message_contents: 1 })
-                .lean<{ message_contents: MessageContent[] }>()
+            const skipAsNum = Number.parseInt(skip as string) || 0,
+                limitAsNum = Number.parseInt(limit as string) || 25,
+                sortAsNum = sort == "asc" ? 1 : -1 || 1;
+
+            const messages = await this.message
+                .aggregate<{ docs: MessageContent[]; count: number }>([
+                    { $match: { _id: new Types.ObjectId(messageId) } },
+                    {
+                        $project: {
+                            _id: 0,
+                            docs: {
+                                $reverseArray: {
+                                    $slice: [
+                                        {
+                                            $sortArray: {
+                                                input: "$message_contents",
+                                                sortBy: {
+                                                    createdAt: sortAsNum,
+                                                },
+                                            },
+                                        },
+                                        skipAsNum,
+                                        limitAsNum,
+                                    ],
+                                },
+                            },
+                            totalDocs: { $size: "$message_contents" },
+                        },
+                    },
+                ])
                 .exec();
-            if (!message_contents) return next(new HttpError(`Failed to get message by id ${messageId}`));
 
-            const sortedMessages = sortByDateAndSlice(message_contents, sort || "asc", skip, limit);
-
-            res.json(sortedMessages);
+            if (messages[0]) {
+                res.json(messages[0]);
+            } else {
+                res.json({ docs: [], count: 0 });
+            }
         } catch (error) {
             /* istanbul ignore next */
             next(new HttpError(error.message));

@@ -1,4 +1,5 @@
 import { Schema } from "mongoose";
+import paginate from "mongoose-paginate-v2";
 import type { Book } from "@interfaces/book";
 import type { BookRating } from "@interfaces/bookRating";
 
@@ -31,5 +32,7 @@ const bookSchema = new Schema<Book>(
     },
     { timestamps: true },
 );
+
+bookSchema.plugin(paginate);
 
 export default bookSchema;

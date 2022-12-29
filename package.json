@@ -24,6 +24,7 @@
         "express-session": "^1.17.3",
         "google-auth-library": "^8.7.0",
         "mongoose": "6.8.1",
+        "mongoose-paginate-v2": "^1.7.1",
         "morgan": "^1.10.0",
         "socket.io": "^4.5.4"
     },
@@ -35,7 +36,7 @@
         "@types/express-session": "^1.17.5",
         "@types/jest": "^29.2.4",
         "@types/morgan": "^1.9.3",
-        "@types/node": "^18.11.17",
+        "@types/node": "^18.11.18",
         "@types/supertest": "^2.0.12",
         "@types/validator": "^13.7.10",
         "@typescript-eslint/eslint-plugin": "^5.47.0",

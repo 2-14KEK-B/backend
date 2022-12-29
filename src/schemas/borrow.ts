@@ -1,4 +1,5 @@
 import { Schema } from "mongoose";
+import paginate from "mongoose-paginate-v2";
 import type { Borrow } from "@interfaces/borrow";
 
 const borrowSchema = new Schema<Borrow>(
@@ -25,5 +26,7 @@ const borrowSchema = new Schema<Borrow>(
     },
     { timestamps: true, versionKey: false },
 );
+
+borrowSchema.plugin(paginate);
 
 export default borrowSchema;

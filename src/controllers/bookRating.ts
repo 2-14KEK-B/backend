@@ -8,8 +8,7 @@ import isIdNotValid from "@utils/idChecker";
 import StatusCode from "@utils/statusCodes";
 import { BookRatingDto } from "@validators/book";
 import HttpError from "@exceptions/Http";
-import sortByDateAndSlice from "@utils/sortByDateAndSlice";
-import type { SortOrder } from "mongoose";
+import { SortOrder, Types } from "mongoose";
 import type { Book } from "@interfaces/book";
 import type Controller from "@interfaces/controller";
 import type { BookRating, CreateOrModifyBookRating } from "@interfaces/bookRating";
@@ -46,15 +45,41 @@ export default class BookRatingController implements Controller {
             if (await isIdNotValid(this.book, [bookId], next)) return;
             const { skip, limit, sort } = req.query;
 
-            const { ratings } = await this.book //
-                .findById(bookId, { ratings: 1 })
-                .lean<{ ratings: BookRating[] }>()
+            const skipAsNum = Number.parseInt(skip as string) || 0,
+                limitAsNum = Number.parseInt(limit as string) || 1,
+                sortAsNum = sort == "asc" ? 1 : -1 || 1;
+
+            const ratings = await this.book
+                .aggregate<{ docs: BookRating[]; count: number }>([
+                    { $match: { _id: new Types.ObjectId(bookId) } },
+                    {
+                        $project: {
+                            _id: 0,
+                            docs: {
+                                $slice: [
+                                    {
+                                        $sortArray: {
+                                            input: "$ratings",
+                                            sortBy: {
+                                                createdAt: sortAsNum,
+                                            },
+                                        },
+                                    },
+                                    skipAsNum,
+                                    limitAsNum,
+                                ],
+                            },
+                            totalDocs: { $size: "$ratings" },
+                        },
+                    },
+                ])
                 .exec();
-            if (!ratings) return next(new HttpError("Failed to get rating of the book"));
 
-            const sortedRatings = sortByDateAndSlice(ratings, sort, skip, limit);
-
-            res.json(sortedRatings);
+            if (ratings[0]) {
+                res.json(ratings[0]);
+            } else {
+                res.json({ docs: [], count: 0 });
+            }
         } catch (error) {
             /* istanbul ignore next */
             next(new HttpError(error.message));
