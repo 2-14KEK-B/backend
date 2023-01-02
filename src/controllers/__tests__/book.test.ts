@@ -6,12 +6,13 @@ import BookController from "@controllers/book";
 import AuthenticationController from "@authentication/index";
 import StatusCode from "@utils/statusCodes";
 import { Types } from "mongoose";
-import type { Express } from "express";
+import type { PaginateResult } from "mongoose";
+import type { Application } from "express";
 import type { Book, CreateBook } from "@interfaces/book";
 import type { User } from "@interfaces/user";
 
 describe("BOOKS", () => {
-    let server: Express;
+    let server: Application;
     const pw = global.MOCK_PASSWORD,
         hpw = global.MOCK_HASHED_PASSWORD,
         mockBook1Id = new Types.ObjectId(),
@@ -61,82 +62,48 @@ describe("BOOKS", () => {
     });
 
     describe("BOOKS without logged in", () => {
+        it("GET /book/borrow, should return statuscode 200", async () => {
+            expect.assertions(3);
+            const res = await request(server).get("/book/borrow");
+            expect(res.statusCode).toBe(StatusCode.OK);
+            expect(res.body).toBeInstanceOf(Object as unknown as PaginateResult<Book>);
+            expect(res.body.docs.length).toBe(2);
+        });
+        it("GET /book/lend, should return statuscode 200", async () => {
+            expect.assertions(3);
+            const res = await request(server).get("/book/lend");
+            expect(res.statusCode).toBe(StatusCode.OK);
+            expect(res.body).toBeInstanceOf(Object as unknown as PaginateResult<Book>);
+            expect(res.body.docs.length).toBe(0);
+        });
         it("GET /book/:id, should return statuscode 200", async () => {
             expect.assertions(2);
             const res: Response = await request(server).get(`/book/${mockBook1Id.toString()}`);
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body).toBeInstanceOf(Object as unknown as Book);
         });
-        it("GET /book, should return statuscode 200", async () => {
-            expect.assertions(3);
-            const res = await request(server).get("/book");
-            expect(res.statusCode).toBe(StatusCode.OK);
-            expect(res.body).toBeInstanceOf(Array<Book>);
-            expect(res.body.length).toBe(2);
-        });
-        it("GET /book?userId=id, should return statuscode 200", async () => {
-            expect.assertions(3);
-            const res = await request(server).get(`/book?userId=${mockUser1Id.toString()}`);
-            expect(res.statusCode).toBe(StatusCode.OK);
-            expect(res.body).toBeInstanceOf(Array<Book>);
-            expect(res.body[0].uploader).toBe(mockUser1Id.toString());
-        });
-        it("GET /book?available=true, should return statuscode 200 and only available books", async () => {
-            expect.assertions(3);
-            const notAvailableBook = await bookModel.create({
-                uploader: new Types.ObjectId(),
-                author: "Not Available",
-                title: "Not Available",
-                available: false,
-                for_borrow: true,
-            });
-            const res = await request(server).get("/book?available=true");
-            await bookModel.deleteOne({ _id: notAvailableBook._id.toString() });
-            expect(res.statusCode).toBe(StatusCode.OK);
-            expect(res.body).toBeInstanceOf(Array<Book>);
-            expect(res.body.length).toBe(2);
-        });
-        it("GET /book?limit=1, should return statuscode 200 and book array with one book in it", async () => {
-            expect.assertions(3);
-            const res = await request(server).get("/book?limit=1");
-            expect(res.statusCode).toBe(StatusCode.OK);
-            expect(res.body).toBeInstanceOf(Array<Book>);
-            expect(res.body.length).toBe(1);
-        });
-        it("GET /book?keyword=Second, should return statuscode 200 and book array with book where keyword in book title or author", async () => {
-            expect.assertions(4);
-            const res = await request(server).get("/book?keyword=Second");
-            expect(res.statusCode).toBe(StatusCode.OK);
-            expect(res.body).toBeInstanceOf(Array<Book>);
-            expect(res.body.length).toBe(1);
-            expect(res.body[0].title).toBe(mockBook2.title);
-        });
-        it("GET /book?sort=desc&sortBy=author, should return statuscode 200 and book array with sorted books by author field", async () => {
-            expect.assertions(5);
-            const res = await request(server).get("/book?sort=desc&sortBy=author");
-            expect(res.statusCode).toBe(StatusCode.OK);
-            expect(res.body).toBeInstanceOf(Array<Book>);
-            expect(res.body.length).toBe(2);
-            expect(res.body[0].title).toBe(mockBook2.title);
-            expect(res.body[1].title).toBe(mockBook1.title);
-        });
         it("any other PATH than GET /book, should return statuscode 401", async () => {
-            expect.assertions(4);
+            expect.assertions(7);
+            const anyRandomId = new Types.ObjectId().toString();
             const newBook: CreateBook = { title: "asd", author: "asdasd", for_borrow: true };
-            const allRes = await request(server).get("/book/all");
-            const allByUserRes = await request(server).get(`/book/me`);
+            const adminBooksRes = await request(server).get("/admin/book");
+            const loggedInRes = await request(server).get("/user/me/book");
             const postRes = await request(server).post("/book").send(newBook);
-            // const patchRes = await request(server).patch("/borrow/id");
-            const deleteRes = await request(server).delete(`/book/${mockBook1Id.toString()}`);
-            expect(allRes.statusCode).toBe(StatusCode.Unauthorized);
-            expect(allByUserRes.statusCode).toBe(StatusCode.Unauthorized);
+            const patchRes = await request(server).patch(`/book/${anyRandomId}`).send({ title: "asd" });
+            const adminPatchRes = await request(server).patch(`/admin/book/${anyRandomId}`).send({ title: "asd" });
+            const deleteRes = await request(server).delete(`/book/${anyRandomId}`);
+            const adminDeleteRes = await request(server).delete(`/admin/book/${anyRandomId}`);
+            expect(adminBooksRes.statusCode).toBe(StatusCode.Unauthorized);
+            expect(loggedInRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(postRes.statusCode).toBe(StatusCode.Unauthorized);
-            // expect(patchRes.statusCode).toBe(StatusCode.Unauthorized);
+            expect(patchRes.statusCode).toBe(StatusCode.Unauthorized);
+            expect(adminPatchRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(deleteRes.statusCode).toBe(StatusCode.Unauthorized);
+            expect(adminDeleteRes.statusCode).toBe(StatusCode.Unauthorized);
         });
     });
 
-    describe("BOOKS with logged in as user", () => {
+    describe("BOOKS, logged in as user", () => {
         let agentForUser1: SuperAgentTest;
         let agentForUser2: SuperAgentTest;
 
@@ -146,22 +113,11 @@ describe("BOOKS", () => {
             await agentForUser1.post("/auth/login").send({ email: mockUser1.email, password: pw });
             await agentForUser2.post("/auth/login").send({ email: mockUser2.email, password: pw });
         });
-        it("GET /book/all, should return statuscode 403", async () => {
-            expect.assertions(1);
-            const res: Response = await agentForUser2.get("/book/all");
-            expect(res.statusCode).toBe(StatusCode.Forbidden);
-        });
-        it("GET /book, should return statuscode 200 and a book array with 2 books in it", async () => {
+        it("GET /user/me/book, should return statuscode 200", async () => {
             expect.assertions(2);
-            const res: Response = await agentForUser1.get("/book/me");
+            const res: Response = await agentForUser2.get("/user/me/book");
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body).toBeInstanceOf(Array<Book>);
-        });
-        it("GET /book, should return statuscode 200 and empty array", async () => {
-            expect.assertions(2);
-            const res: Response = await agentForUser2.get("/book/me");
-            expect(res.statusCode).toBe(StatusCode.OK);
-            expect(res.body).toStrictEqual([]);
         });
         it("POST /book, should return statuscode 200", async () => {
             expect.assertions(2);
@@ -170,15 +126,17 @@ describe("BOOKS", () => {
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body).toBeInstanceOf(Object as unknown as Book);
         });
+        it("PATCH /book/:id, should return statuscode 204 if logged in user uploaded the book", async () => {
+            expect.assertions(2);
+            const update = { title: "asd" };
+            const res: Response = await agentForUser1.patch(`/book/${mockBook1Id.toString()}`).send(update);
+            expect(res.statusCode).toBe(StatusCode.OK);
+            expect(res.body).toBeInstanceOf(Object as unknown as Book);
+        });
         it("DELETE /book/:id, should return statuscode 204 if logged in user uploaded the book", async () => {
             expect.assertions(1);
             const res: Response = await agentForUser1.delete(`/book/${mockBook1Id.toString()}`);
             expect(res.statusCode).toBe(StatusCode.NoContent);
-        });
-        it("DELETE /book/:id, should return statuscode 401 if not logged in user uploaded the book", async () => {
-            expect.assertions(1);
-            const res: Response = await agentForUser2.delete(`/book/${mockBook2Id.toString()}`);
-            expect(res.statusCode).toBe(StatusCode.Unauthorized);
         });
     });
 
@@ -189,15 +147,30 @@ describe("BOOKS", () => {
             agent = request.agent(server);
             await agent.post("/auth/login").send({ email: mockAdmin.email, password: pw });
         });
-        it("GET /book/all, should return statuscode 200 and array of Books", async () => {
+        it("GET /admin/book, should return statuscode 200 and array of Books", async () => {
             expect.assertions(2);
-            const res: Response = await agent.get("/book/all");
+            const res: Response = await agent.get("/admin/book");
             expect(res.statusCode).toBe(StatusCode.OK);
-            expect(res.body).toBeInstanceOf(Array<Book>);
+            expect(res.body).toBeInstanceOf(Object as unknown as PaginateResult<Book>);
         });
-        it("DELETE /book/:id, should return statuscode 204", async () => {
+        it("GET /admin/book?available=true&keyword=Beta&uploader=mockUser1Id, should return statuscode 200 and array of Books", async () => {
+            expect.assertions(3);
+            const res: Response = await agent.get(
+                `/admin/book?available=true&keyword=Beta&uploader=${mockUser1Id.toString()}`,
+            );
+            expect(res.statusCode).toBe(StatusCode.OK);
+            expect(res.body).toBeInstanceOf(Object as unknown as PaginateResult<Book>);
+            expect(res.body.docs.length).toBe(1);
+        });
+        it("PATCH /admin/book/:id, should return statuscode 204", async () => {
+            expect.assertions(2);
+            const res: Response = await agent.patch(`/admin/book/${mockBook2Id.toString()}`).send({ title: "asd" });
+            expect(res.statusCode).toBe(StatusCode.OK);
+            expect(res.body.title).toBe("asd");
+        });
+        it("DELETE /admin/book/:id, should return statuscode 204", async () => {
             expect.assertions(1);
-            const res: Response = await agent.delete(`/book/${mockBook2Id.toString()}`);
+            const res: Response = await agent.delete(`/admin/book/${mockBook2Id.toString()}`);
             expect(res.statusCode).toBe(StatusCode.NoContent);
         });
     });

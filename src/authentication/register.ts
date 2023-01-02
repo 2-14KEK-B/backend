@@ -1,4 +1,5 @@
 import { hash } from "bcrypt";
+import userModel from "@models/user";
 import validationMiddleware from "@middlewares/validation";
 import RegisterDto from "@validators/register";
 import HttpError from "@exceptions/Http";
@@ -6,7 +7,6 @@ import UserAlreadyExistsException from "@exceptions/UserAlreadyExists";
 import type { NextFunction, Request, Response, Router } from "express";
 import type Controller from "@interfaces/controller";
 import type { RegisterCred } from "@interfaces/authentication";
-import userModel from "@models/user";
 
 export default class RegisterController implements Controller {
     path: string;

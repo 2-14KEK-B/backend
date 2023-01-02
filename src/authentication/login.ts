@@ -1,15 +1,15 @@
+import { OAuth2Client } from "google-auth-library";
 import { compare } from "bcrypt";
+import userModel from "@models/user";
 import validationMiddleware from "@middlewares/validation";
 import LoginDto from "@validators/login";
 import HttpError from "@exceptions/Http";
 import WrongCredentialsException from "@exceptions/WrongCredentials";
-import { OAuth2Client } from "google-auth-library";
 import type { FilterQuery, Types } from "mongoose";
 import type { NextFunction, Request, Response, Router } from "express";
 import type { LoginCred } from "@interfaces/authentication";
 import type { User } from "@interfaces/user";
 import type Controller from "@interfaces/controller";
-import userModel from "@models/user";
 
 export default class LoginController implements Controller {
     path: string;

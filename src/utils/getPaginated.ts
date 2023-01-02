@@ -23,12 +23,15 @@ export default async function getPaginated<T extends { createdAt: Date }>(
     } as { [_ in keyof Partial<T>]: SortOrder } | string;
 
     if (sortBy) {
-        sorting = `${sort == "asc" ? "" : "-"}${sortBy.toString()}`;
+        sorting = `${sort == "desc" ? "-" : ""}${sortBy.toString()}`;
     }
 
+    const skipAsNum = Number.parseInt(skip as string),
+        limitAsNum = Number.parseInt(limit as string);
+
     const result = await model.paginate(query || {}, {
-        offset: Number.parseInt(skip as string) || 0,
-        limit: Number.parseInt(limit as string) || 10,
+        offset: isNaN(skipAsNum) ? 0 : skipAsNum,
+        limit: isNaN(limitAsNum) ? 10 : limitAsNum,
         sort: sorting,
         lean: true,
         leanWithId: false,

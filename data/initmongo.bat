@@ -23,7 +23,7 @@ ECHO ---------- Importing to the local database ----------
 %import% --uri=%local%  --collection=borrows --drop --file=borrows.json --jsonArray
 %import% --uri=%local%  --collection=books --drop --file=books.json --jsonArray
 %import% --uri=%local%  --collection=messages --drop --file=messages.json --jsonArray
-%import% --uri=%local%  --collection=user_ratings --drop --file=user_ratings.json --jsonArray
+%import% --uri=%local%  --collection=user_rates --drop --file=user_rates.json --jsonArray
 GOTO END
 
 :EXPORT
@@ -34,7 +34,7 @@ ECHO ---------- Exporting from the local database ----------
 %export% --uri=%local% --collection=borrows --out=borrows.json --jsonArray --pretty
 %export% --uri=%local% --collection=books --out=books.json --jsonArray --pretty
 %export% --uri=%local% --collection=messages --out=messages.json --jsonArray --pretty
-%export% --uri=%local% --collection=user_ratings --out=user_ratings.json --jsonArray --pretty
+%export% --uri=%local% --collection=user_rates --out=user_rates.json --jsonArray --pretty
 GOTO END
 
 :END

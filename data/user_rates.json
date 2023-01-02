@@ -3,13 +3,13 @@
         "_id": {
             "$oid": "638906990097a84550cec128"
         },
-        "from_id": {
+        "from": {
             "$oid": "6357b544447026c9b91950fd"
         },
-        "to_id": {
+        "to": {
             "$oid": "6357b59c447026c9b9195100"
         },
-        "borrow_id": {
+        "borrow": {
             "$oid": "6357f9bf7b60ee488385f955"
         },
         "createdAt": {
@@ -22,13 +22,13 @@
         "_id": {
             "$oid": "638917990097a84550cec129"
         },
-        "from_id": {
+        "from": {
             "$oid": "6357b59c447026c9b9195100"
         },
-        "to_id": {
+        "to": {
             "$oid": "6357b544447026c9b91950fd"
         },
-        "borrow_id": {
+        "borrow": {
             "$oid": "6357f9bf7b60ee488385f955"
         },
         "createdAt": {

@@ -1,19 +1,20 @@
-import type { UserRating } from "@interfaces/userRating";
 import { Schema } from "mongoose";
+import paginate from "mongoose-paginate-v2";
+import type { UserRate } from "@interfaces/userRate";
 
-const userRatingSchema = new Schema<UserRating>(
+const userRateSchema = new Schema<UserRate>(
     {
-        from_id: {
+        from: {
             type: Schema.Types.ObjectId,
             ref: "User",
             required: true,
         },
-        to_id: {
+        to: {
             type: Schema.Types.ObjectId,
             ref: "User",
             required: true,
         },
-        borrow_id: {
+        borrow: {
             type: Schema.Types.ObjectId,
             ref: "Borrow",
             required: true,
@@ -24,4 +25,6 @@ const userRatingSchema = new Schema<UserRating>(
     { timestamps: { createdAt: true, updatedAt: false } },
 );
 
-export default userRatingSchema;
+userRateSchema.plugin(paginate);
+
+export default userRateSchema;

@@ -1,6 +1,6 @@
-import express, { Express, json, Request, Response, urlencoded } from "express";
-import { createServer, Server } from "http";
+import express, { Application, json, Request, Response, urlencoded } from "express";
 import { Server as Socket } from "socket.io";
+import { createServer, Server } from "http";
 import session, { SessionOptions } from "express-session";
 import cors from "cors";
 import morgan from "morgan";
@@ -14,19 +14,19 @@ import type { Message, MessageContent } from "@interfaces/message";
 import type { User } from "@interfaces/user";
 
 export default class App {
-    public app: Express;
-    private httpServer: Server;
+    public app: Application;
+    private server: Server;
 
     constructor(controllers: Controller[]) {
         this.app = express();
-        this.httpServer = createServer(this.app);
+        this.server = createServer(this.app);
         this.initSession();
         this.initializeMiddlewares();
         this.initializeControllers(controllers);
         this.initializeErrorHandling();
     }
 
-    public getServer(): Express {
+    public getServer(): Application {
         return this.app;
     }
 
@@ -35,7 +35,7 @@ export default class App {
         if (env.isProd) this.app.use(morgan("tiny"));
 
         this.app.use(json());
-        this.app.use(urlencoded({ extended: true }));
+        this.app.use(urlencoded({ extended: false }));
         this.app.use(cors(corsOptions));
     }
 
@@ -79,15 +79,16 @@ export default class App {
     }
 
     public listen(): void {
-        this.initSocketIO();
+        if (!env.isTest) this.initSocketIO();
 
-        this.httpServer.listen(env.PORT, () => {
+        this.app.listen(env.PORT, () => {
             console.log(`App listening on the port ${env.PORT}`);
         });
     }
 
     private initSocketIO() {
-        const io = new Socket(this.httpServer, { cors: corsOptions });
+        const io = new Socket(this.server, { cors: corsOptions });
+        this.app.io = io;
 
         let onlineUsers: { user_id: string; socket_id: string }[] = [];
 

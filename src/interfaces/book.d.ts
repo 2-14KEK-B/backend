@@ -1,6 +1,6 @@
 import type ID from "./id";
 import type { User } from "./user";
-import type { BookRating } from "./bookRating";
+import type { BookRate } from "./bookRate";
 
 interface Book {
     _id: ID;
@@ -14,7 +14,7 @@ interface Book {
     price?: number;
     available?: boolean;
     for_borrow: boolean;
-    ratings?: BookRating[];
+    rates?: BookRate[];
     __v?: number;
 }
 

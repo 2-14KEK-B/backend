@@ -2,6 +2,27 @@ import { Schema } from "mongoose";
 import paginate from "mongoose-paginate-v2";
 import type { Message, MessageContent } from "@interfaces/message";
 
+/**
+ * new Schema<Message>(
+    {
+        users: [
+            {
+                type: Schema.Types.ObjectId,
+                ref: "User",
+                required: true,
+            },
+        ],
+        message_contents: [{
+            sender_id: {
+                type: Schema.Types.ObjectId,
+                ref: "User",
+                required: true,
+            },
+            content: { type: String, required: true },
+        }],
+    })
+ */
+
 const messageContentSchema = new Schema<MessageContent>(
     {
         sender_id: {

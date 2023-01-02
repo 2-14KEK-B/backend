@@ -20,7 +20,7 @@ interface User {
     books: (Book | ID)[];
     messages: (Message | ID)[];
     rated_books: (Book | ID)[];
-    user_ratings: { from_me: ID[]; to_me: ID[] };
+    user_rates: { from: ID[]; to: ID[] };
     borrows: (Borrow | ID)[];
 }
 
