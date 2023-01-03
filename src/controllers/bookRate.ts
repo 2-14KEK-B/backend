@@ -27,8 +27,6 @@ export default class BookRateController implements Controller {
      *      GET
      *      - /book/:id/rate
      *  - usernek:
-     *      GET
-     *      - /book/:id/rate
      *      POST
      *      - /book/:id/rate
      *      PATCH

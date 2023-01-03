@@ -242,14 +242,26 @@ export default class UserRateController implements Controller {
 
     //ADMIN
     private adminGetUserRates = async (
-        req: Request<unknown, unknown, unknown, { skip: string; limit: string; sort: "asc" | "desc" }>,
+        req: Request<
+            unknown,
+            unknown,
+            unknown,
+            { skip?: string; limit?: string; sort?: "asc" | "desc"; sortBy?: string; keyword?: string }
+        >,
         res: Response,
         next: NextFunction,
     ) => {
         try {
-            const { skip, limit, sort } = req.query;
+            const { skip, limit, sort, sortBy } = req.query;
 
-            const userRates = await getPaginated(this.userRate, {}, skip, limit, sort);
+            // let query: FilterQuery<UserRate> = {};
+            // if (keyword) {
+            //     const regex = new RegExp(keyword, "i");
+
+            //     query = { _id: { $regex: regex } };
+            // }
+
+            const userRates = await getPaginated(this.userRate, {}, skip, limit, sort, sortBy);
 
             res.json(userRates);
         } catch (error) {

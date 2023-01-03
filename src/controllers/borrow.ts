@@ -212,14 +212,26 @@ export default class BorrowController implements Controller {
 
     // ADMIN
     private adminGetBorrows = async (
-        req: Request<unknown, unknown, unknown, { skip: string; limit: string; sort: "asc" | "desc" }>,
+        req: Request<
+            unknown,
+            unknown,
+            unknown,
+            { skip?: string; limit?: string; sort?: "asc" | "desc"; sortBy?: string; keyword?: string }
+        >,
         res: Response,
         next: NextFunction,
     ) => {
         try {
-            const { skip, limit, sort } = req.query;
+            const { skip, limit, sort, sortBy } = req.query;
 
-            const borrows = await getPaginated(this.borrow, {}, skip, limit, sort); //
+            // let query: FilterQuery<Borrow> = {};
+            // if (keyword) {
+            //     const regex = new RegExp(keyword, "i");
+
+            //     query = { _id: { $regex: regex } };
+            // }
+
+            const borrows = await getPaginated(this.borrow, {}, skip, limit, sort, sortBy);
 
             res.json(borrows);
         } catch (error) {

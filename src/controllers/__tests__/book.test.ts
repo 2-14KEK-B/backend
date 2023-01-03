@@ -58,7 +58,11 @@ describe("BOOKS", () => {
             { ...mockUser2, password: hpw },
             { ...mockAdmin, password: hpw },
         ]);
-        await bookModel.create([mockBook1, mockBook2]);
+        await bookModel.create([
+            mockBook1,
+            mockBook2,
+            { title: "test", author: test, available: true, for_borrow: false },
+        ]);
     });
 
     describe("BOOKS without logged in", () => {
@@ -69,12 +73,26 @@ describe("BOOKS", () => {
             expect(res.body).toBeInstanceOf(Object as unknown as PaginateResult<Book>);
             expect(res.body.docs.length).toBe(2);
         });
+        it("GET /book/borrow?keyword=Alpha, should return statuscode 200", async () => {
+            expect.assertions(3);
+            const res = await request(server).get("/book/borrow?keyword=Alpha");
+            expect(res.statusCode).toBe(StatusCode.OK);
+            expect(res.body).toBeInstanceOf(Object as unknown as PaginateResult<Book>);
+            expect(res.body.docs.length).toBe(1);
+        });
         it("GET /book/lend, should return statuscode 200", async () => {
             expect.assertions(3);
             const res = await request(server).get("/book/lend");
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body).toBeInstanceOf(Object as unknown as PaginateResult<Book>);
-            expect(res.body.docs.length).toBe(0);
+            expect(res.body.docs.length).toBe(1);
+        });
+        it("GET /book/lend?keyword=test, should return statuscode 200", async () => {
+            expect.assertions(3);
+            const res = await request(server).get("/book/lend?keyword=test");
+            expect(res.statusCode).toBe(StatusCode.OK);
+            expect(res.body).toBeInstanceOf(Object as unknown as PaginateResult<Book>);
+            expect(res.body.docs.length).toBe(1);
         });
         it("GET /book/:id, should return statuscode 200", async () => {
             expect.assertions(2);

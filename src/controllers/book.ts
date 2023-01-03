@@ -28,7 +28,7 @@ export default class BookController implements Controller {
      * Kell:
      *  - mindenkinek:
      *      GET
-     *      - /book/borrow? (????)
+     *      - /book/borrow?
      *      - /book/lend?
      *      - /book/:id
      *  - usernek:
@@ -73,14 +73,28 @@ export default class BookController implements Controller {
     }
 
     private getBooksForBorrow = async (
-        req: Request<unknown, unknown, unknown, { skip: string; limit: string; sort: "asc" | "desc" }>,
+        req: Request<
+            unknown,
+            unknown,
+            unknown,
+            { skip: string; limit: string; sort: "asc" | "desc"; keyword?: string }
+        >,
         res: Response,
         next: NextFunction,
     ) => {
         try {
-            const { skip, limit, sort } = req.query;
+            const { skip, limit, sort, keyword } = req.query;
 
-            const books = await getPaginated(this.book, { available: true, for_borrow: true }, skip, limit, sort);
+            const query: FilterQuery<Book> = { $and: [{ available: true }, { for_borrow: true }] };
+            if (keyword) {
+                const regex = new RegExp(keyword, "i");
+
+                query.$and?.push({
+                    $or: [{ author: { $regex: regex } }, { title: { $regex: regex } }],
+                });
+            }
+
+            const books = await getPaginated(this.book, query, skip, limit, sort);
             if (!books) return next(new HttpError(`Failed to get books`));
 
             res.json(books);
@@ -90,14 +104,28 @@ export default class BookController implements Controller {
         }
     };
     private getBooksForLend = async (
-        req: Request<unknown, unknown, unknown, { skip: string; limit: string; sort: "asc" | "desc" }>,
+        req: Request<
+            unknown,
+            unknown,
+            unknown,
+            { skip: string; limit: string; sort: "asc" | "desc"; keyword?: string }
+        >,
         res: Response,
         next: NextFunction,
     ) => {
         try {
-            const { skip, limit, sort } = req.query;
+            const { skip, limit, sort, keyword } = req.query;
 
-            const books = await getPaginated(this.book, { available: true, for_borrow: false }, skip, limit, sort);
+            const query: FilterQuery<Book> = { $and: [{ available: true }, { for_borrow: false }] };
+            if (keyword) {
+                const regex = new RegExp(keyword, "i");
+
+                query.$and?.push({
+                    $or: [{ author: { $regex: regex } }, { title: { $regex: regex } }],
+                });
+            }
+
+            const books = await getPaginated(this.book, query, skip, limit, sort);
             if (!books) return next(new HttpError(`Failed to get books`));
 
             res.json(books);
@@ -220,33 +248,22 @@ export default class BookController implements Controller {
                 limit?: string;
                 sort?: SortOrder;
                 sortBy?: string;
-                available?: string;
                 keyword?: string;
-                userId?: string;
             }
         >,
         res: Response,
         next: NextFunction,
     ) => {
         try {
-            const { skip, limit, sort, sortBy, available, keyword, userId } = req.query;
+            const { skip, limit, sort, sortBy, keyword } = req.query;
 
             let query: FilterQuery<Book> = {};
-            if (available || userId || keyword) {
-                query = { $and: [] };
-                if (available) {
-                    query.$and?.push({ available: available == "true" });
-                }
-                if (userId) {
-                    query.$and?.push({ uploader: userId });
-                }
-                if (keyword) {
-                    const regex = new RegExp(keyword, "i");
+            if (keyword) {
+                const regex = new RegExp(keyword, "i");
 
-                    query.$and?.push({
-                        $or: [{ author: { $regex: regex } }, { title: { $regex: regex } }],
-                    });
-                }
+                query = {
+                    $or: [{ author: { $regex: regex } }, { title: { $regex: regex } }],
+                };
             }
 
             const books = await getPaginated(this.book, query, skip, limit, sort, sortBy);

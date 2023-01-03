@@ -79,14 +79,12 @@ export default class App {
     }
 
     public listen(): void {
-        if (!env.isTest) this.initSocketIO();
-
-        this.app.listen(env.PORT, () => {
+        this.server.listen(env.PORT, () => {
             console.log(`App listening on the port ${env.PORT}`);
         });
     }
 
-    private initSocketIO() {
+    public initSocketIO() {
         const io = new Socket(this.server, { cors: corsOptions });
         this.app.io = io;
 

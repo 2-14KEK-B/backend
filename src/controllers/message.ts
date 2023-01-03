@@ -71,6 +71,7 @@ export default class MessageController implements Controller {
                     options: {
                         projection: {
                             message_contents: { $slice: -25 },
+                            totalCount: { $size: "$message_contents" },
                         },
                     },
                     populate: {
@@ -103,27 +104,7 @@ export default class MessageController implements Controller {
 
             const skipAsNum = Number.parseInt(skip as string),
                 limitAsNum = Number.parseInt(limit as string),
-                sortAsNum = sort == "desc" ? -1 : 1;
-
-            // const messages = await this.message
-            //     .findOne(
-            //         { users: { $all: [userId, loggedInUserId] } },
-            //         {
-            //             message_contents: {
-            //                 $reverseArray: {
-            //                     $slice: [
-            //                         "$message_contents",
-            //                         isNaN(skipAsNum) ? 25 : skipAsNum,
-            //                         isNaN(limitAsNum) ? 25 : limitAsNum,
-            //                     ],
-            //                 },
-            //             },
-            //             totalCount: { $size: "$message_contents" },
-            //         },
-            //     )
-            //     .sort({ "message_contents.createdAt": sortAsNum })
-            //     .lean<{ _id: string; message_contents: MessageContent[]; totalCount: number }>()
-            //     .exec();
+                sortAsNum = sort == "asc" ? 1 : -1;
 
             const messages = await this.message
                 .aggregate<{ docs: MessageContent[]; count: number }>([
@@ -167,10 +148,10 @@ export default class MessageController implements Controller {
                 ])
                 .exec();
 
-            if (messages[0]) {
+            if (messages) {
                 res.json(messages[0]);
             } else {
-                res.json({ docs: [], totalCount: 0 });
+                return next(new HttpError("Failed to get message contents by this user"));
             }
         } catch (error) {
             /* istanbul ignore next */
@@ -227,14 +208,26 @@ export default class MessageController implements Controller {
 
     // ADMIN
     private adminGetMessages = async (
-        req: Request<unknown, unknown, unknown, { skip?: string; limit?: string; sort?: "asc" | "desc" }>,
+        req: Request<
+            unknown,
+            unknown,
+            unknown,
+            { skip?: string; limit?: string; sort?: "asc" | "desc"; sortBy?: string; keyword?: string }
+        >,
         res: Response,
         next: NextFunction,
     ) => {
         try {
-            const { skip, limit, sort } = req.query;
+            const { skip, limit, sort, sortBy } = req.query;
 
-            const messages = await getPaginated(this.message, {}, skip, limit, sort);
+            // let query: FilterQuery<Message> = {};
+            // if (keyword) {
+            //     const regex = new RegExp(keyword, "i");
+
+            //     query = { _id: { $regex: regex } };
+            // }
+
+            const messages = await getPaginated(this.message, {}, skip, limit, sort, sortBy);
 
             res.json(messages);
         } catch (error) {
