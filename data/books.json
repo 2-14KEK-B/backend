@@ -19,12 +19,12 @@
         "price": 0,
         "available": false,
         "for_borrow": true,
-        "ratings": [
+        "rates": [
             {
                 "_id": {
                     "$oid": "635aaacf447026c9b91950fd"
                 },
-                "from_id": {
+                "from": {
                     "$oid": "6357b544447026c9b91950fd"
                 },
                 "createdAt": {
@@ -37,7 +37,7 @@
                 "_id": {
                     "$oid": "635ab8df447026c9b91950fd"
                 },
-                "from_id": {
+                "from": {
                     "$oid": "6357b59c447026c9b9195100"
                 },
                 "createdAt": {
@@ -69,7 +69,7 @@
         "price": 0,
         "available": true,
         "for_borrow": true,
-        "ratings": [],
+        "rates": [],
         "__v": 0
     }
 ]

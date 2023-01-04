@@ -1,14 +1,15 @@
 import { Schema } from "mongoose";
+import paginate from "mongoose-paginate-v2";
 import type { Borrow } from "@interfaces/borrow";
 
 const borrowSchema = new Schema<Borrow>(
     {
-        from_id: {
+        from: {
             type: Schema.Types.ObjectId,
             ref: "User",
             required: true,
         },
-        to_id: {
+        to: {
             type: Schema.Types.ObjectId,
             ref: "User",
             required: true,
@@ -21,9 +22,11 @@ const borrowSchema = new Schema<Borrow>(
             },
         ],
         verified: { type: Boolean, default: false },
-        user_ratings: [{ type: Schema.Types.ObjectId, ref: "UserRating" }],
+        user_rates: [{ type: Schema.Types.ObjectId, ref: "UserRate" }],
     },
     { timestamps: true, versionKey: false },
 );
+
+borrowSchema.plugin(paginate);
 
 export default borrowSchema;

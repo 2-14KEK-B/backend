@@ -35,16 +35,16 @@
         ],
         "rated_books": [
             {
-                "$oid": "635aaacf447026c9b91950fd"
+                "$oid": "6357d9e43441ea127321696d"
             }
         ],
-        "user_ratings": {
-            "from_me": [
+        "user_rates": {
+            "from": [
                 {
                     "$oid": "638906990097a84550cec128"
                 }
             ],
-            "to_me": [
+            "to": [
                 {
                     "$oid": "638917990097a84550cec129"
                 }
@@ -79,16 +79,16 @@
         ],
         "rated_books": [
             {
-                "$oid": "635ab8df447026c9b91950fd"
+                "$oid": "6357d9e43441ea127321696d"
             }
         ],
-        "user_ratings": {
-            "from_me": [
+        "user_rates": {
+            "from": [
                 {
                     "$oid": "638917990097a84550cec129"
                 }
             ],
-            "to_me": [
+            "to": [
                 {
                     "$oid": "638906990097a84550cec128"
                 }

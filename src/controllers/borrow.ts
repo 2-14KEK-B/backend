@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from "express";
-import authentication from "@middlewares/authentication";
-import authorization from "@middlewares/authorization";
+import authenticationMiddleware from "@middlewares/authentication";
+import authorizationMiddleware from "@middlewares/authorization";
 import validation from "@middlewares/validation";
 import bookModel from "@models/book";
 import borrowModel from "@models/borrow";
@@ -12,10 +12,9 @@ import { CreateBorrowDto, ModifyBorrowDto } from "@validators/borrow";
 import HttpError from "@exceptions/Http";
 import type Controller from "@interfaces/controller";
 import type { Borrow, CreateBorrow, ModifyBorrow } from "@interfaces/borrow";
-import type { FilterQuery, SortOrder, Types } from "mongoose";
+import type { Types } from "mongoose";
 
 export default class BorrowController implements Controller {
-    path = "/borrow";
     router = Router();
     private user = userModel;
     private book = bookModel;
@@ -25,67 +24,217 @@ export default class BorrowController implements Controller {
         this.initializeRoutes();
     }
 
+    /**
+     * Kell
+     *  - usernek
+     *      GET
+     *      - /user/me/borrow
+     *      - /borrow/:id
+     *      POST
+     *      - /borrow
+     *      PATCH
+     *      - /borrow/:id
+     *      DELETE
+     *      - /borrow/:id
+     *  - adminnak
+     *      GET
+     *      - /admin/borrow
+     *      - /borrow/:id
+     *      PATCH
+     *      - /admin/borrow/:id
+     *      DELETE
+     *      - /admin/borrow/:id
+     */
+
     private initializeRoutes() {
-        this.router.all(`${this.path}*`, authentication);
-        this.router.get(`${this.path}/all`, authorization(["admin"]), this.getAllBorrows);
-        this.router //
-            .route(this.path)
-            .get(this.getBorrows)
-            .post(validation(CreateBorrowDto), this.createBorrow);
+        // this.router.all(`${this.path}*`, authentication);
+        this.router.get("/user/me/borrow", authenticationMiddleware, this.getLoggedInUserBorrows);
+        this.router.post("/borrow", [authenticationMiddleware, validation(CreateBorrowDto)], this.createBorrow);
         this.router
-            .route(`${this.path}/:id([0-9a-fA-F]{24})`)
+            .route(`/borrow/:id([0-9a-fA-F]{24})`)
+            .all(authenticationMiddleware)
             .get(this.getBorrowById)
             .patch(validation(ModifyBorrowDto, true), this.modifyBorrowById)
-            .delete(authorization(["admin"]), this.deleteBorrowById);
+            .delete(this.deleteBorrowById);
+        // ADMIN
+        this.router.get(
+            `/admin/borrow`,
+            [authenticationMiddleware, authorizationMiddleware(["admin"])],
+            this.adminGetBorrows,
+        );
+        this.router
+            .route("/admin/borrow/:id([0-9a-fA-F]{24})")
+            .all([authenticationMiddleware, authorizationMiddleware(["admin"])])
+            .get(this.adminGetBorrowById)
+            .patch(this.adminModifyBorrowById)
+            .delete(this.adminDeleteBorrowById);
     }
 
-    private getAllBorrows = async (_req: Request, res: Response, next: NextFunction) => {
+    private getLoggedInUserBorrows = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const borrows = await this.borrow //
-                .find()
-                .lean<Borrow[]>()
-                .exec();
+            const loggedInUserId = req.session["userId"];
 
-            res.json(borrows);
+            const borrow = await this.borrow //
+                .findOne({ $or: [{ from: loggedInUserId }, { to: loggedInUserId }] })
+                .populate("books from to")
+                .populate({
+                    path: "from to",
+                    select: "username fullname email picture",
+                })
+                .populate({
+                    path: "user_rates",
+                    populate: {
+                        path: "from to",
+                        select: "comment rate createdAt",
+                    },
+                })
+                .lean<Borrow>()
+                .exec();
+            if (!borrow) return next(new HttpError(`Failed to get borrows`));
+
+            res.json(borrow);
+        } catch (error) {
+            /* istanbul ignore next */
+            next(new HttpError(error.message));
+        }
+    };
+    private getBorrowById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+        try {
+            const borrowId = req.params["id"];
+            if (await isIdNotValid(this.borrow, [borrowId], next)) return;
+            const loggedInUserId = req.session["userId"];
+
+            const borrow = await this.borrow //
+                .findOne({ _id: borrowId, $or: [{ from: loggedInUserId }, { to: loggedInUserId }] })
+                .populate("books")
+                .lean<Borrow>()
+                .exec();
+            if (!borrow) return next(new HttpError(`Failed to get borrow`));
+
+            res.json(borrow);
+        } catch (error) {
+            /* istanbul ignore next */
+            next(new HttpError(error.message));
+        }
+    };
+    private createBorrow = async (req: Request<unknown, unknown, CreateBorrow>, res: Response, next: NextFunction) => {
+        try {
+            const userId = req.session["userId"];
+            const { from, books } = req.body;
+            if (await isIdNotValid(this.user, [from], next)) return;
+            if (await isIdNotValid(this.book, books, next)) return;
+
+            const alreadyExist = await this.borrow.exists({ from: from, to: userId, books: { $in: [books] } }).exec();
+            if (alreadyExist != null) return next(new HttpError("You cannot create new borrow with this book"));
+
+            const newBorrow = await this.borrow //
+                .create({
+                    to: userId,
+                    from: from,
+                    books: [...books],
+                });
+            if (!newBorrow) return next(new HttpError("Failed to create borrow"));
+
+            const { acknowledged } = await this.user //
+                .updateMany(
+                    {
+                        _id: { $in: [from, userId] },
+                    },
+                    { $push: { borrows: { _id: newBorrow._id } } },
+                )
+                .exec();
+            if (!acknowledged) return next(new HttpError("Failed to update users"));
+
+            res.json(newBorrow);
+        } catch (error) {
+            /* istanbul ignore next */
+            next(new HttpError(error.message));
+        }
+    };
+    private modifyBorrowById = async (
+        req: Request<{ id: string }, unknown, ModifyBorrow>,
+        res: Response,
+        next: NextFunction,
+    ) => {
+        try {
+            const borrowId = req.params["id"];
+            if (await isIdNotValid(this.borrow, [borrowId], next)) return;
+            const loggedInUserId = req.session["userId"];
+
+            const borrowToModify = await this.borrow
+                .findOne({ _id: borrowId, $or: [{ from: loggedInUserId }, { to: loggedInUserId }] })
+                .lean<Borrow>()
+                .exec();
+            if (borrowToModify == null) return next(new HttpError("You cannot modify this borrow"));
+
+            if (req.body.verified && loggedInUserId != borrowToModify.from.toString())
+                return next(new HttpError("You cannot modify the 'verified' field"));
+
+            const modifiedBorrow = await this.borrow
+                .findByIdAndUpdate(borrowId, { ...req.body, updatedAt: new Date() }, { new: true })
+                .lean<Borrow>()
+                .exec();
+            if (!modifiedBorrow) return next(new HttpError("Failed to update borrow"));
+
+            res.json(modifiedBorrow);
+        } catch (error) {
+            /* istanbul ignore next */
+            next(new HttpError(error.message));
+        }
+    };
+    private deleteBorrowById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+        try {
+            const borrowId = req.params["id"];
+            if (await isIdNotValid(this.borrow, [borrowId], next)) return;
+            const loggedInUserId = req.session["userId"];
+
+            const borrowToDelete = await this.borrow //
+                .findOne({ _id: borrowId, $or: [{ from: loggedInUserId }, { to: loggedInUserId }] })
+                .lean<Borrow>()
+                .exec();
+            if (borrowToDelete == null) return next(new HttpError("You cannot delete this borrow"));
+
+            const { from, to } = borrowToDelete;
+
+            const { acknowledged: successfullBorrowDelete } = await this.borrow //
+                .deleteOne({ _id: borrowId })
+                .exec();
+            if (!successfullBorrowDelete) return next(new HttpError(`Failed to delete borrow`));
+
+            const { acknowledged: successfullDeleteFromUser } = await this.user
+                .updateMany({ _id: { $in: [from, to] } }, { $pull: { borrows: borrowId } })
+                .exec();
+            if (!successfullDeleteFromUser) return next(new HttpError("Failed to update users"));
+
+            res.sendStatus(StatusCode.NoContent);
         } catch (error) {
             /* istanbul ignore next */
             next(new HttpError(error.message));
         }
     };
 
-    private getBorrows = async (
+    // ADMIN
+    private adminGetBorrows = async (
         req: Request<
             unknown,
             unknown,
             unknown,
-            {
-                skip?: string;
-                limit?: string;
-                sort?: SortOrder;
-                sortBy?: string;
-                userId?: string;
-            }
+            { skip?: string; limit?: string; sort?: "asc" | "desc"; sortBy?: string; keyword?: string }
         >,
         res: Response,
         next: NextFunction,
     ) => {
         try {
-            const loggedInUserId = req.session["userId"];
-            const { skip, limit, sort, sortBy, userId } = req.query;
+            const { skip, limit, sort, sortBy } = req.query;
 
-            let query: FilterQuery<Borrow> = { $or: [{ from_id: loggedInUserId }, { to_id: loggedInUserId }] };
+            // let query: FilterQuery<Borrow> = {};
+            // if (keyword) {
+            //     const regex = new RegExp(keyword, "i");
 
-            if (userId && userId != loggedInUserId) {
-                if (await isIdNotValid(this.user, [userId], next)) {
-                    return;
-                }
-                if (req.session["role"] != "admin") {
-                    return next(new HttpError("You cannot get other user's borrows.", StatusCode.Forbidden));
-                }
-                query = { $or: [{ from_id: userId }, { to_id: userId }] };
-            }
+            //     query = { _id: { $regex: regex } };
+            // }
 
-            const borrows = await getPaginated(this.borrow, query, skip, limit, sort, sortBy);
+            const borrows = await getPaginated(this.borrow, {}, skip, limit, sort, sortBy);
 
             res.json(borrows);
         } catch (error) {
@@ -93,8 +242,7 @@ export default class BorrowController implements Controller {
             next(new HttpError(error.message));
         }
     };
-
-    private getBorrowById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+    private adminGetBorrowById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
         try {
             const borrowId = req.params["id"];
             if (await isIdNotValid(this.borrow, [borrowId], next)) return;
@@ -112,67 +260,17 @@ export default class BorrowController implements Controller {
             next(new HttpError(error.message));
         }
     };
-
-    private createBorrow = async (req: Request<unknown, unknown, CreateBorrow>, res: Response, next: NextFunction) => {
-        try {
-            const userId = req.session["userId"];
-            const { from_id, books } = req.body;
-            if (await isIdNotValid(this.user, [from_id], next)) return;
-            if (await isIdNotValid(this.book, books, next)) return;
-
-            const newBorrow = await this.borrow //
-                .create({
-                    to_id: userId,
-                    from_id: from_id,
-                    books: [...books],
-                });
-            if (!newBorrow) return next(new HttpError("Failed to create borrow"));
-
-            const { acknowledged } = await this.user //
-                .updateMany(
-                    {
-                        _id: { $in: [from_id, userId] },
-                    },
-                    { $push: { borrows: { _id: newBorrow._id } } },
-                )
-                .exec();
-            if (!acknowledged) return next(new HttpError("Failed to update users"));
-
-            res.json(newBorrow);
-        } catch (error) {
-            /* istanbul ignore next */
-            next(new HttpError(error.message));
-        }
-    };
-
-    private modifyBorrowById = async (
+    private adminModifyBorrowById = async (
         req: Request<{ id: string }, unknown, ModifyBorrow>,
         res: Response,
         next: NextFunction,
     ) => {
         try {
-            const loggedInUserId = req.session["userId"];
             const borrowId = req.params["id"];
             if (await isIdNotValid(this.borrow, [borrowId], next)) return;
 
-            const { from_id, to_id } = await this.borrow //
-                .findById(borrowId, { from_id: 1, to_id: 1 })
-                .lean<{ from_id: Types.ObjectId; to_id: Types.ObjectId }>()
-                .exec();
-
-            if (req.session["role"] != "admin") {
-                if (![from_id.toString(), to_id.toString()].includes(loggedInUserId as string)) {
-                    return next(new HttpError("Unauthorized", StatusCode.Unauthorized));
-                }
-                if (from_id.toString() !== loggedInUserId) {
-                    if (req.body.verified !== undefined) {
-                        return next(new HttpError("You can not modify this value", StatusCode.Unauthorized));
-                    }
-                }
-            }
-
             const modifiedBorrow = await this.borrow
-                .findByIdAndUpdate(borrowId, { ...req.body, updatedAt: new Date() }, { returnDocument: "after" })
+                .findByIdAndUpdate(borrowId, { ...req.body, updatedAt: new Date() }, { new: true })
                 .lean<Borrow>()
                 .exec();
             if (!modifiedBorrow) return next(new HttpError("Failed to update borrow"));
@@ -183,17 +281,16 @@ export default class BorrowController implements Controller {
             next(new HttpError(error.message));
         }
     };
-
-    private deleteBorrowById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+    private adminDeleteBorrowById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
         try {
             const borrowId = req.params["id"];
             if (await isIdNotValid(this.borrow, [borrowId], next)) return;
 
-            const { from_id, to_id } = await this.borrow //
-                .findById(borrowId, { from_id: 1, to_id: 1 })
-                .lean<{ from_id: Types.ObjectId; to_id: Types.ObjectId }>()
+            const { from, to } = await this.borrow //
+                .findById(borrowId, { from: 1, to: 1 })
+                .lean<{ from: Types.ObjectId; to: Types.ObjectId }>()
                 .exec();
-            if (!from_id || !to_id) return next(new HttpError("Failed to get ids from borrow"));
+            if (!from || !to) return next(new HttpError("Failed to get ids from borrow"));
 
             const { acknowledged: successfullBorrowDelete } = await this.borrow //
                 .deleteOne({ _id: borrowId })
@@ -201,7 +298,7 @@ export default class BorrowController implements Controller {
             if (!successfullBorrowDelete) return next(new HttpError(`Failed to delete borrow by id ${borrowId}`));
 
             const { acknowledged: successfullDeleteFromUser } = await this.user
-                .updateMany({ _id: { $in: [from_id, to_id] } }, { $pull: { borrows: borrowId } })
+                .updateMany({ _id: { $in: [from, to] } }, { $pull: { borrows: borrowId } })
                 .exec();
             if (!successfullDeleteFromUser) return next(new HttpError("Failed to update users"));
 
