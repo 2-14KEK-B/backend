@@ -124,6 +124,9 @@ export default class BorrowController implements Controller {
             if (await isIdNotValid(this.user, [from], next)) return;
             if (await isIdNotValid(this.book, books, next)) return;
 
+            const alreadyExist = await this.borrow.exists({ from: from, to: userId, books: { $in: [books] } }).exec();
+            if (alreadyExist != null) return next(new HttpError("You cannot create new borrow with this book"));
+
             const newBorrow = await this.borrow //
                 .create({
                     to: userId,

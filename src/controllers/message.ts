@@ -173,11 +173,11 @@ export default class MessageController implements Controller {
                 sender_id: new Types.ObjectId(from),
                 content: req.body.content,
             };
-            let messages = await this.message //
+            const exist = await this.message //
                 .exists({ users: { $all: [from, to] } })
                 .exec();
 
-            if (messages != null) {
+            if (exist != null) {
                 const { acknowledged } = await this.message
                     .updateOne(
                         { users: { $all: [from, to] } },
@@ -185,12 +185,21 @@ export default class MessageController implements Controller {
                     )
                     .exec();
                 if (!acknowledged) return next(new HttpError("Failed to add message content"));
-                res.json({ ...newMessageContent, createdAt: new Date() });
+                res.json({ message: { ...newMessageContent, createdAt: new Date() }, isNew: false });
             } else {
-                messages = await this.message.create({
+                const messages = await this.message.create({
                     users: [new Types.ObjectId(from), new Types.ObjectId(to)],
                     message_contents: [newMessageContent],
                 });
+
+                // const messages = await this.message
+                //     .findOne(
+                //         { users: { $all: [from, to] } },
+                //         { createdAt: 1, updatedAt: 1, message_contents: 1, totalCount: { $size: "$message_contents" } },
+                //     )
+                //     .populate({ path: "users", select: "username fullname email picture" })
+                //     .lean<Message>()
+                //     .exec();
                 if (!messages) return next(new HttpError("Failed to create message"));
 
                 const { acknowledged } = await this.user
@@ -198,7 +207,15 @@ export default class MessageController implements Controller {
                     .exec();
                 if (!acknowledged) return next(new HttpError("Failed to update users"));
 
-                return res.json(messages);
+                return res.json({
+                    message: {
+                        ...(
+                            await messages.populate({ path: "users", select: "username fullname email picture" })
+                        ).toJSON(),
+                        totalCount: 1,
+                    },
+                    isNew: true,
+                });
             }
         } catch (error) {
             /* istanbul ignore next */
