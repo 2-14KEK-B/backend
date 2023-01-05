@@ -188,7 +188,7 @@ export default class UserRateController implements Controller {
             ]);
             if (nModified != 2) return next(new HttpError("Failed to update users"));
 
-            res.json(rate);
+            res.json(await rate.populate({ path: "from to", select: "username fullname email picture" }));
         } catch (error) {
             /* istanbul ignore next */
             next(new HttpError(error.message));

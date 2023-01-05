@@ -140,6 +140,8 @@ export default class BookController implements Controller {
 
             const book = await this.book //
                 .findById(bookId)
+                .populate({ path: "uploader", select: "username fullname email picture" })
+                .populate({ path: "rates.from", select: "username fullname email picture" })
                 .lean<Book>()
                 .exec();
             if (!book) return next(new HttpError(`Failed to get book by id`));
