@@ -23,7 +23,7 @@ export default class MessageController implements Controller {
     }
 
     /**
-     * Kell
+     * Routok:
      *  - usernek
      *      GET
      *      - /user/me/message
@@ -40,13 +40,11 @@ export default class MessageController implements Controller {
 
     private initializeRoutes() {
         this.router.get(`/user/me/message`, authentication, this.getLoggedInUserMessages);
-        // this.router.get(this.path, this.getMessageByUserIds);
         this.router
             .route("/user/:id([0-9a-fA-F]{24})/message")
             .all(authentication)
             .get(authentication, this.getMessageContentsByUserId)
             .post(validation(CreateMessageDto), this.createMessage);
-
         // ADMIN
         this.router.get(`/admin/message`, [authentication, authorization(["admin"])], this.adminGetMessages);
         this.router
@@ -192,14 +190,6 @@ export default class MessageController implements Controller {
                     message_contents: [newMessageContent],
                 });
 
-                // const messages = await this.message
-                //     .findOne(
-                //         { users: { $all: [from, to] } },
-                //         { createdAt: 1, updatedAt: 1, message_contents: 1, totalCount: { $size: "$message_contents" } },
-                //     )
-                //     .populate({ path: "users", select: "username fullname email picture" })
-                //     .lean<Message>()
-                //     .exec();
                 if (!messages) return next(new HttpError("Failed to create message"));
 
                 const { acknowledged } = await this.user
@@ -236,13 +226,6 @@ export default class MessageController implements Controller {
     ) => {
         try {
             const { skip, limit, sort, sortBy } = req.query;
-
-            // let query: FilterQuery<Message> = {};
-            // if (keyword) {
-            //     const regex = new RegExp(keyword, "i");
-
-            //     query = { _id: { $regex: regex } };
-            // }
 
             const messages = await getPaginated(this.message, {}, skip, limit, sort, sortBy);
 

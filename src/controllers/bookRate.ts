@@ -22,7 +22,7 @@ export default class BookRateController implements Controller {
     }
 
     /**
-     * Kell:
+     * Routok:
      *  - mindenkinek:
      *      GET
      *      - /book/:id/rate

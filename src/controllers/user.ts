@@ -24,7 +24,7 @@ export default class UserController implements Controller {
     }
 
     /**
-     * Kell
+     * Routok:
      *  - mindenkinek
      *      GET
      *      - /user/:id

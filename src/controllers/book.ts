@@ -25,7 +25,7 @@ export default class BookController implements Controller {
     }
 
     /**
-     * Kell:
+     * Routok:
      *  - mindenkinek:
      *      GET
      *      - /book/borrow?
@@ -34,7 +34,6 @@ export default class BookController implements Controller {
      *  - usernek:
      *      GET
      *      - /user/me/book?
-     *      - /user/:id/book?
      *      POST
      *      - /book
      *      PATCH

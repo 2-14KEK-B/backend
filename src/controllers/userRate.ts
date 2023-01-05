@@ -24,14 +24,11 @@ export default class UserRateController implements Controller {
     }
 
     /**
-     * fel lesznek sorolva a logged in profilján az összes, egy adott usernek csak a to, a borronál csak a borrow idhoz tartozó
-     * adminnak csak a rate id kell
-     * Kell
+     * Routok:
      *  - usernek
      *      GET
      *      - /user/me/rate (all)
      *      - /user/:id/rate (to)
-     *      - /user/rate/:id ??
      *      - /borrow/:id/rate (max 2)
      *      POST
      *      - /user/:id/rate
@@ -49,7 +46,6 @@ export default class UserRateController implements Controller {
      */
 
     private initRoutes() {
-        // this.router.all(`/*`, authenticationMiddleware);
         this.router.get(`/user/me/rate`, authenticationMiddleware, this.getUserRatesByLoggedInUser);
         this.router
             .route(`/user/:id([0-9a-fA-F]{24})/rate`)
@@ -228,11 +224,6 @@ export default class UserRateController implements Controller {
 
             if (nModified != 2) return next(new HttpError("Failed to update users"));
 
-            // const { acknowledged: successfullUserUpdate } = await this.user //
-            //     .updateOne({ _id: userId }, { $pull: { user_rates: rateId } })
-            //     .exec();
-            // if (!successfullUserUpdate) return next(new HttpError("Failed to update user"));
-
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
             /* istanbul ignore next */
@@ -253,13 +244,6 @@ export default class UserRateController implements Controller {
     ) => {
         try {
             const { skip, limit, sort, sortBy } = req.query;
-
-            // let query: FilterQuery<UserRate> = {};
-            // if (keyword) {
-            //     const regex = new RegExp(keyword, "i");
-
-            //     query = { _id: { $regex: regex } };
-            // }
 
             const userRates = await getPaginated(this.userRate, {}, skip, limit, sort, sortBy);
 

@@ -25,7 +25,7 @@ export default class BorrowController implements Controller {
     }
 
     /**
-     * Kell
+     * Routok:
      *  - usernek
      *      GET
      *      - /user/me/borrow
@@ -39,7 +39,7 @@ export default class BorrowController implements Controller {
      *  - adminnak
      *      GET
      *      - /admin/borrow
-     *      - /borrow/:id
+     *      - /admin/borrow/:id
      *      PATCH
      *      - /admin/borrow/:id
      *      DELETE
@@ -47,7 +47,6 @@ export default class BorrowController implements Controller {
      */
 
     private initializeRoutes() {
-        // this.router.all(`${this.path}*`, authentication);
         this.router.get("/user/me/borrow", authenticationMiddleware, this.getLoggedInUserBorrows);
         this.router.post("/borrow", [authenticationMiddleware, validation(CreateBorrowDto)], this.createBorrow);
         this.router
@@ -226,13 +225,6 @@ export default class BorrowController implements Controller {
     ) => {
         try {
             const { skip, limit, sort, sortBy } = req.query;
-
-            // let query: FilterQuery<Borrow> = {};
-            // if (keyword) {
-            //     const regex = new RegExp(keyword, "i");
-
-            //     query = { _id: { $regex: regex } };
-            // }
 
             const borrows = await getPaginated(this.borrow, {}, skip, limit, sort, sortBy);
 
