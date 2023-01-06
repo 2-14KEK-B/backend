@@ -144,7 +144,13 @@ export default class BorrowController implements Controller {
                 .exec();
             if (!acknowledged) return next(new HttpError("Failed to update users"));
 
-            res.json(newBorrow);
+            res.json(
+                await newBorrow.populate([
+                    { path: "from to", select: "username fullname email picture" },
+                    { path: "books", select: "author title picture" },
+                    { path: "user_rates", populate: { path: "from to", select: "username fullname email picture" } },
+                ]),
+            );
         } catch (error) {
             /* istanbul ignore next */
             next(new HttpError(error.message));

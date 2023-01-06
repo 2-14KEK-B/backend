@@ -141,6 +141,7 @@ export default class UserRateController implements Controller {
 
             const rate = await this.userRate //
                 .findOneAndUpdate({ _id: rateId, from: loggedInUserId, to: userId }, req.body, { new: true })
+                .populate({ path: "from to", select: "username fullname email picture" })
                 .lean<UserRate>()
                 .exec();
 

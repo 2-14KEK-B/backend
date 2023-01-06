@@ -45,7 +45,6 @@ userSchema.statics["getInitialData"] = async function (userId: string): Promise<
                     },
                     {
                         path: "user_rates",
-                        select: "-borrow",
                         populate: { path: "to from", select: "username fullname picture email" },
                     },
                 ],

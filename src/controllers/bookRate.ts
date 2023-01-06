@@ -94,6 +94,8 @@ export default class BookRateController implements Controller {
 
             const ratedBook = await this.book
                 .findByIdAndUpdate(bookId, { $push: { rates: { ...req.body, from: userId } } }, { new: true })
+                .populate({ path: "uploader", select: "username fullname email picture" })
+                .populate({ path: "rates.from", select: "username fullname email picture" })
                 .lean<Book>()
                 .exec();
             if (!ratedBook) return next(new HttpError("Failed to rate book"));
@@ -119,22 +121,30 @@ export default class BookRateController implements Controller {
             if (await isIdNotValid(this.book, [bookId], next)) return;
             const userId = req.session["userId"];
 
-            const { rate, comment } = req.body;
+            const { rate: newRate, comment: newComment } = req.body;
 
             const bookWithRate = await this.book
                 .findOne({ _id: bookId, "rates._id": rateId, "rates.from": userId })
                 .exec();
             if (bookWithRate == null) return next(new HttpError("You do not have book rate to update"));
 
-            if (bookWithRate.rates && bookWithRate.rates[0]) {
-                if (rate) {
-                    bookWithRate.rates[0].rate = rate;
+            if (bookWithRate.rates && bookWithRate.rates.length > 0) {
+                const modifiableRate = bookWithRate.rates.find(rate => rate._id?.toString() == rateId);
+                if (modifiableRate) {
+                    if (newRate) {
+                        modifiableRate.rate = newRate;
+                    }
+                    if (newComment) {
+                        modifiableRate.comment = newComment;
+                    }
+                    const updatedBook = await bookWithRate.save();
+                    res.json(
+                        await updatedBook.populate([
+                            { path: "uploader", select: "username fullname email picture" },
+                            { path: "rates.from", select: "username fullname email picture" },
+                        ]),
+                    );
                 }
-                if (comment) {
-                    bookWithRate.rates[0].comment = comment;
-                }
-                const updatedBook = await bookWithRate.save();
-                res.json(updatedBook);
             } else {
                 return next(new HttpError("Failed to update book rate"));
             }
