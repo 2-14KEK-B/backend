@@ -177,6 +177,8 @@ export default class BorrowController implements Controller {
 
             const modifiedBorrow = await this.borrow
                 .findByIdAndUpdate(borrowId, { ...req.body, updatedAt: new Date() }, { new: true })
+                .populate({ path: "from to", select: "username fullname email picture" })
+                .populate({ path: "books", select: "username fullname email picture" })
                 .lean<Borrow>()
                 .exec();
             if (!modifiedBorrow) return next(new HttpError("Failed to update borrow"));
