@@ -43,11 +43,13 @@ describe("MESSAGES", () => {
                     sender_id: mockUser1Id,
                     content: "just_a_test",
                     createdAt: new Date(),
+                    seen: false,
                 },
                 {
                     sender_id: mockUser1Id,
                     content: "just_another_test",
                     createdAt: new Date(),
+                    seen: false,
                 },
             ],
         };
@@ -66,11 +68,12 @@ describe("MESSAGES", () => {
 
     describe("MESSAGES, not logged in", () => {
         it("any PATH, should return statuscode 401", async () => {
-            expect.assertions(6);
+            expect.assertions(7);
             const randomId = new Types.ObjectId().toString();
             const loggedInRes = await request(server).get("/user/me/message");
             const idRes = await request(server).get(`/user/${randomId}/message`);
             const postRes = await request(server).post(`/user/${randomId}/message`);
+            const patchSeen = await request(server).patch(`/message/${randomId}/seen`);
             const adminMessagesRes = await request(server).get("/admin/message");
             const adminDeleteRes = await request(server).delete(`/admin/message/${randomId}`);
             const adminDeleteContentRes = await request(server).delete(
@@ -79,6 +82,7 @@ describe("MESSAGES", () => {
             expect(loggedInRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(idRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(postRes.statusCode).toBe(StatusCode.Unauthorized);
+            expect(patchSeen.statusCode).toBe(StatusCode.Unauthorized);
             expect(adminMessagesRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(adminDeleteRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(adminDeleteContentRes.statusCode).toBe(StatusCode.Unauthorized);
@@ -123,6 +127,11 @@ describe("MESSAGES", () => {
             const newMessage: Partial<MessageContent> = { content: "newMessage" };
             const res: Response = await agentForUser1.post(`/user/${mockUser2Id.toString()}/message`).send(newMessage);
             expect(res.statusCode).toBe(StatusCode.OK);
+        });
+        it("PATCH /message/:id/seen, should return statuscode 204", async () => {
+            expect.assertions(1);
+            const res: Response = await agentForUser2.patch(`/message/${mockMessageId.toString()}/seen`);
+            expect(res.statusCode).toBe(StatusCode.NoContent);
         });
     });
 

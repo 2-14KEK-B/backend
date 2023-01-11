@@ -12,13 +12,18 @@ import type { Message, MessageContent } from "@interfaces/message";
                 required: true,
             },
         ],
+        createdAt: Date,
+        updatedAt: Date,
         message_contents: [{
             sender_id: {
                 type: Schema.Types.ObjectId,
                 ref: "User",
                 required: true,
             },
+            createdAt: Date,
+            updatedAt: Date,
             content: { type: String, required: true },
+            seen: { type: Boolean, default: false },
         }],
     })
  */
@@ -31,8 +36,9 @@ const messageContentSchema = new Schema<MessageContent>(
             required: true,
         },
         content: { type: String, required: true },
+        seen: { type: Boolean, default: false },
     },
-    { timestamps: { createdAt: true, updatedAt: false }, versionKey: false },
+    { timestamps: true, versionKey: false },
 );
 
 const messageSchema = new Schema<Message>(

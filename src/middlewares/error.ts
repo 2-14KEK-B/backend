@@ -10,7 +10,9 @@ export default async function errorMiddleware(
 ): Promise<void> {
     const status = error.status || 500;
     const message = error.message || "Something went wrong";
-    if (env.isDev) console.log("error: ", { status, message });
+    if (env.isDev) {
+        console.log("error: ", { status, message });
+    }
     res.status(status).json(message);
     next();
 }

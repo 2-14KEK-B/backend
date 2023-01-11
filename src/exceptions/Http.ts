@@ -8,6 +8,8 @@ export default class HttpError extends Error {
         Object.setPrototypeOf(this, new.target.prototype);
         this.name = Error.name;
         Error.captureStackTrace(this);
-        if (env.isDevelopment) console.log(this);
+        if (env.isDev) {
+            console.log(this);
+        }
     }
 }
