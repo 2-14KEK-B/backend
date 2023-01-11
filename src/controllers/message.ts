@@ -30,6 +30,8 @@ export default class MessageController implements Controller {
      *      - /user/:id/message?
      *      POST
      *      - /user/:id/message
+     *      PATCH
+     *      - /message/:id/seen
      *  - adminnak
      *      GET
      *      - /admin/message
@@ -45,6 +47,7 @@ export default class MessageController implements Controller {
             .all(authentication)
             .get(authentication, this.getMessageContentsByUserId)
             .post(validation(CreateMessageDto), this.createMessage);
+        this.router.patch("/message/:id([0-9a-fA-F]{24})/seen", authentication, this.updateSeenById);
         // ADMIN
         this.router.get(`/admin/message`, [authentication, authorization(["admin"])], this.adminGetMessages);
         this.router
@@ -207,6 +210,38 @@ export default class MessageController implements Controller {
                     isNew: true,
                 });
             }
+        } catch (error) {
+            /* istanbul ignore next */
+            next(new HttpError(error.message));
+        }
+    };
+
+    private updateSeenById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+        try {
+            const messageId = req.params["id"];
+            if (await isIdNotValid(this.message, [messageId], next)) return;
+            const loggedInUserId = req.session["userId"];
+
+            const { modifiedCount, matchedCount } = await this.message.updateOne(
+                { _id: new Types.ObjectId(messageId), users: new Types.ObjectId(loggedInUserId) },
+                {
+                    $set: {
+                        "message_contents.$[elem].seen": true,
+                    },
+                },
+                {
+                    arrayFilters: [
+                        {
+                            "elem.sender_id": { $ne: new Types.ObjectId(loggedInUserId) },
+                            "elem.seen": false,
+                        },
+                    ],
+                },
+            );
+            if (matchedCount != 1 || modifiedCount != 1)
+                return next(new HttpError("Failed to update the 'seen' fields of the message contents"));
+
+            res.sendStatus(204);
         } catch (error) {
             /* istanbul ignore next */
             next(new HttpError(error.message));

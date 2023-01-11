@@ -14,6 +14,7 @@ interface MessageContent {
     createdAt: Date;
     content: string;
     sender_id: ID;
+    seen: boolean;
 }
 
 interface CreateMessageContent {
