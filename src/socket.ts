@@ -5,14 +5,16 @@ import type { Server as HttpServer } from "http";
 
 interface ServerToClientEvents {
     "recieve-msg-cnt": (message: MessageContent) => void;
-    "msg-sent": () => void;
     "recieve-new-msg": (message: Message) => void;
+    "msg-sent": () => void;
+    "msg-seen": (userWhoSawId: string, messageId: string) => void;
 }
 
 interface ClientToServerEvents {
     "user-online": (userId: string) => void;
-    "send-msg-cnt": (data: { to: string; message: MessageContent }) => void;
-    "send-new-msg": (data: { to: string; message: Message }) => void;
+    "send-msg-cnt": (toId: string, message: MessageContent) => void;
+    "send-new-msg": (toId: string, message: Message) => void;
+    "msg-seen": (userWhoSawId: string, toId: string, messageId: string) => void;
 }
 
 export function initSocket(server: HttpServer) {
@@ -37,7 +39,7 @@ export function initSocket(server: HttpServer) {
             //     );
             // });
         });
-        socket.on("user-online", (userId: string) => {
+        socket.on("user-online", userId => {
             // socket.emit(
             //     "other-users",
             //     onlineUsers.map(user => user.user_id),
@@ -50,20 +52,25 @@ export function initSocket(server: HttpServer) {
             // socket.broadcast.emit("new-user", userId);
         });
 
-        socket.on("send-msg-cnt", (data: { to: string; message: MessageContent }) => {
-            // console.log("send-msg-cnt to: ", { to: data.to });
-            const sendUserSocket = onlineUsers.find(user => user.user_id === data.to);
+        socket.on("send-msg-cnt", (toId, message) => {
+            const sendUserSocket = onlineUsers.find(user => user.user_id === toId);
             if (sendUserSocket) {
-                socket.to(sendUserSocket.socket_id).emit("recieve-msg-cnt", data.message);
+                socket.to(sendUserSocket.socket_id).emit("recieve-msg-cnt", message);
                 socket.to(sendUserSocket.socket_id).emit("msg-sent");
             }
         });
 
-        socket.on("send-new-msg", (data: { to: string; message: Message }) => {
-            // console.log("send-new-msg to: ", { to: data.to });
-            const sendUserSocket = onlineUsers.find(user => user.user_id === data.to);
+        socket.on("send-new-msg", (toId, message) => {
+            const sendUserSocket = onlineUsers.find(user => user.user_id === toId);
             if (sendUserSocket) {
-                socket.to(sendUserSocket.socket_id).emit("recieve-new-msg", data.message);
+                socket.to(sendUserSocket.socket_id).emit("recieve-new-msg", message);
+            }
+        });
+
+        socket.on("msg-seen", (userWhoSawId, toId, messageId) => {
+            const sendUserSocket = onlineUsers.find(user => user.user_id === toId);
+            if (sendUserSocket) {
+                socket.to(sendUserSocket.socket_id).emit("msg-seen", userWhoSawId, messageId);
             }
         });
     });
