@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from "express";
 import UserRateController from "./userRate";
+import NotificationController from "./notification";
 import authentication from "@middlewares/authentication";
 import authorization from "@middlewares/authorization";
 import validation from "@middlewares/validation";
@@ -14,12 +15,12 @@ import type { ModifyUser, User } from "@interfaces/user";
 import type { FilterQuery, SortOrder } from "mongoose";
 
 export default class UserController implements Controller {
-    path = "/user";
     router = Router();
     private user = userModel;
 
     constructor() {
         this.router.use("/", new UserRateController().router);
+        this.router.use("/", new NotificationController().router);
         this.initializeRoutes();
     }
 

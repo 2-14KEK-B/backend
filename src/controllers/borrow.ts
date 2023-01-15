@@ -49,6 +49,11 @@ export default class BorrowController implements Controller {
     private initializeRoutes() {
         this.router.get("/user/me/borrow", authenticationMiddleware, this.getLoggedInUserBorrows);
         this.router.post("/borrow", [authenticationMiddleware, validation(CreateBorrowDto)], this.createBorrow);
+        this.router.patch(
+            "/borrow/:id([0-9a-fA-F]{24})/verify",
+            authenticationMiddleware,
+            this.modifyVerificationByBorrowId,
+        );
         this.router
             .route(`/borrow/:id([0-9a-fA-F]{24})`)
             .all(authenticationMiddleware)
@@ -118,31 +123,37 @@ export default class BorrowController implements Controller {
     };
     private createBorrow = async (req: Request<unknown, unknown, CreateBorrow>, res: Response, next: NextFunction) => {
         try {
-            const userId = req.session["userId"];
             const { from, books } = req.body;
             if (await isIdNotValid(this.user, [from], next)) return;
             if (await isIdNotValid(this.book, books, next)) return;
+            const loggedInUserId = req.session["userId"] as string;
+            if (loggedInUserId == from) return next(new HttpError("You cannot borrow book from yourself"));
 
-            const alreadyExist = await this.borrow.exists({ from: from, to: userId, books: { $in: [books] } }).exec();
+            const alreadyExist = await this.borrow
+                .exists({ from: from, to: loggedInUserId, books: { $in: [books] } })
+                .exec();
             if (alreadyExist != null) return next(new HttpError("You cannot create new borrow with this book"));
 
             const newBorrow = await this.borrow //
                 .create({
-                    to: userId,
+                    to: loggedInUserId,
                     from: from,
                     books: [...books],
                 });
             if (!newBorrow) return next(new HttpError("Failed to create borrow"));
+            console.log(newBorrow);
 
-            const { acknowledged } = await this.user //
+            const { modifiedCount } = await this.user //
                 .updateMany(
                     {
-                        _id: { $in: [from, userId] },
+                        _id: { $in: [from, loggedInUserId] },
                     },
                     { $push: { borrows: { _id: newBorrow._id } } },
                 )
                 .exec();
-            if (!acknowledged) return next(new HttpError("Failed to update users"));
+            if (!modifiedCount && modifiedCount != 2) return next(new HttpError("Failed to update users"));
+
+            await this.user.createNotification(from, loggedInUserId, newBorrow._id.toString(), "borrow", "create");
 
             res.json(
                 await newBorrow.populate([
@@ -164,16 +175,13 @@ export default class BorrowController implements Controller {
         try {
             const borrowId = req.params["id"];
             if (await isIdNotValid(this.borrow, [borrowId], next)) return;
-            const loggedInUserId = req.session["userId"];
+            const loggedInUserId = req.session["userId"] as string;
 
             const borrowToModify = await this.borrow
-                .findOne({ _id: borrowId, $or: [{ from: loggedInUserId }, { to: loggedInUserId }] })
+                .findOne({ _id: borrowId, $or: [{ from: loggedInUserId }, { to: loggedInUserId }], verified: false })
                 .lean<Borrow>()
                 .exec();
             if (borrowToModify == null) return next(new HttpError("You cannot modify this borrow"));
-
-            if (req.body.verified && loggedInUserId != borrowToModify.from.toString())
-                return next(new HttpError("You cannot modify the 'verified' field"));
 
             const modifiedBorrow = await this.borrow
                 .findByIdAndUpdate(borrowId, { ...req.body, updatedAt: new Date() }, { new: true })
@@ -183,7 +191,48 @@ export default class BorrowController implements Controller {
                 .exec();
             if (!modifiedBorrow) return next(new HttpError("Failed to update borrow"));
 
+            const otherUserId =
+                borrowToModify.from.toString() == loggedInUserId
+                    ? borrowToModify.to.toString()
+                    : borrowToModify.from.toString();
+
+            await this.user.createNotification(otherUserId, loggedInUserId, borrowId, "borrow", "update");
+
             res.json(modifiedBorrow);
+        } catch (error) {
+            /* istanbul ignore next */
+            next(new HttpError(error.message));
+        }
+    };
+    private modifyVerificationByBorrowId = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+        try {
+            const borrowId = req.params["id"];
+            if (await isIdNotValid(this.borrow, [borrowId], next)) return;
+            const loggedInUserId = req.session["userId"] as string;
+
+            const borrowToModify = await this.borrow
+                .findOne({ _id: borrowId, $or: [{ from: loggedInUserId }, { to: loggedInUserId }], verified: false })
+                .lean<Borrow>()
+                .exec();
+            if (borrowToModify == null) return next(new HttpError("You cannot modify this borrow"));
+
+            if (borrowToModify.verified || loggedInUserId != borrowToModify.from.toString())
+                return next(new HttpError("You cannot modify the 'verified' field"));
+
+            const { modifiedCount } = await this.borrow
+                .updateOne({ _id: borrowId }, { $set: { verified: true } })
+                .exec();
+            if (!modifiedCount && modifiedCount != 1) return next(new HttpError("Failed to update borrow"));
+
+            await this.user.createNotification(
+                borrowToModify.to.toString(),
+                loggedInUserId,
+                borrowId,
+                "borrow",
+                "verify",
+            );
+
+            res.sendStatus(StatusCode.NoContent);
         } catch (error) {
             /* istanbul ignore next */
             next(new HttpError(error.message));
@@ -203,15 +252,15 @@ export default class BorrowController implements Controller {
 
             const { from, to } = borrowToDelete;
 
-            const { acknowledged: successfullBorrowDelete } = await this.borrow //
+            const { deletedCount } = await this.borrow //
                 .deleteOne({ _id: borrowId })
                 .exec();
-            if (!successfullBorrowDelete) return next(new HttpError(`Failed to delete borrow`));
+            if (!deletedCount && deletedCount != 1) return next(new HttpError(`Failed to delete borrow`));
 
-            const { acknowledged: successfullDeleteFromUser } = await this.user
+            const { modifiedCount } = await this.user
                 .updateMany({ _id: { $in: [from, to] } }, { $pull: { borrows: borrowId } })
                 .exec();
-            if (!successfullDeleteFromUser) return next(new HttpError("Failed to update users"));
+            if (!modifiedCount && modifiedCount != 2) return next(new HttpError("Failed to update users"));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
@@ -292,15 +341,16 @@ export default class BorrowController implements Controller {
                 .exec();
             if (!from || !to) return next(new HttpError("Failed to get ids from borrow"));
 
-            const { acknowledged: successfullBorrowDelete } = await this.borrow //
+            const { deletedCount } = await this.borrow //
                 .deleteOne({ _id: borrowId })
                 .exec();
-            if (!successfullBorrowDelete) return next(new HttpError(`Failed to delete borrow by id ${borrowId}`));
+            if (!deletedCount && deletedCount != 1)
+                return next(new HttpError(`Failed to delete borrow by id ${borrowId}`));
 
-            const { acknowledged: successfullDeleteFromUser } = await this.user
+            const { modifiedCount } = await this.user
                 .updateMany({ _id: { $in: [from, to] } }, { $pull: { borrows: borrowId } })
                 .exec();
-            if (!successfullDeleteFromUser) return next(new HttpError("Failed to update users"));
+            if (!modifiedCount && modifiedCount != 2) return next(new HttpError("Failed to update users"));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {

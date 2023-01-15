@@ -49,7 +49,49 @@
                     "$oid": "638917990097a84550cec129"
                 }
             ]
-        }
+        },
+        "notifications": [
+            {
+                "_id": {
+                    "$oid": "63c4193e1136459138d6c78e"
+                },
+                "from": {
+                    "$oid": "6357b59c447026c9b9195100"
+                },
+                "doc_id": {
+                    "$oid": "6357f9bf7b60ee488385f955"
+                },
+                "doc_type": "borrow",
+                "noti_type": "verify",
+                "seen": true,
+                "createdAt": {
+                    "$date": "2022-10-25T15:59:11.000Z"
+                },
+                "updatedAt": {
+                    "$date": "2022-10-25T16:59:11.000Z"
+                }
+            },
+            {
+                "_id": {
+                    "$oid": "63c4194d68f79f2c01ed775b"
+                },
+                "from": {
+                    "$oid": "6357b59c447026c9b9195100"
+                },
+                "doc_id": {
+                    "$oid": "638917990097a84550cec129"
+                },
+                "doc_type": "user_rate",
+                "noti_type": "create",
+                "seen": false,
+                "createdAt": {
+                    "$date": "2022-12-01T19:59:21.000Z"
+                },
+                "updatedAt": {
+                    "$date": "2022-12-01T19:59:21.000Z"
+                }
+            }
+        ]
     },
     {
         "_id": {
@@ -93,6 +135,48 @@
                     "$oid": "638906990097a84550cec128"
                 }
             ]
-        }
+        },
+        "notifications": [
+            {
+                "_id": {
+                    "$oid": "63c41700d1fa0a406f172b3f"
+                },
+                "from": {
+                    "$oid": "6357b544447026c9b91950fd"
+                },
+                "doc_id": {
+                    "$oid": "6357f9bf7b60ee488385f955"
+                },
+                "doc_type": "borrow",
+                "noti_type": "create",
+                "seen": true,
+                "createdAt": {
+                    "$date": "2022-10-25T14:59:11.000Z"
+                },
+                "updatedAt": {
+                    "$date": "2022-10-25T15:59:11.000Z"
+                }
+            },
+            {
+                "_id": {
+                    "$oid": "63c419dc90983cc727ddc365"
+                },
+                "from": {
+                    "$oid": "6357b544447026c9b91950fd"
+                },
+                "doc_id": {
+                    "$oid": "638906990097a84550cec128"
+                },
+                "doc_type": "user_rate",
+                "noti_type": "create",
+                "seen": false,
+                "createdAt": {
+                    "$date": "2022-12-01T19:55:05.000Z"
+                },
+                "updatedAt": {
+                    "$date": "2022-12-01T19:55:05.000Z"
+                }
+            }
+        ]
     }
 ]

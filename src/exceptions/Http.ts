@@ -9,6 +9,7 @@ export default class HttpError extends Error {
         this.name = Error.name;
         Error.captureStackTrace(this);
         if (env.isDev) {
+            /* istanbul ignore next */
             console.log(this);
         }
     }

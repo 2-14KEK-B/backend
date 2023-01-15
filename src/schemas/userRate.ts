@@ -22,7 +22,7 @@ const userRateSchema = new Schema<UserRate>(
         comment: String,
         rate: { type: Boolean, required: true },
     },
-    { timestamps: { createdAt: true, updatedAt: false } },
+    { timestamps: true, versionKey: false },
 );
 
 userRateSchema.plugin(paginate);

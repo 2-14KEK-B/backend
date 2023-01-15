@@ -15,7 +15,7 @@ import type { Book } from "@interfaces/book";
 import type { User } from "@interfaces/user";
 
 describe("BORROWS", () => {
-    let server: Application;
+    let app: Application;
     const pw = global.MOCK_PASSWORD,
         hpw = global.MOCK_HASHED_PASSWORD,
         mockBookFromUser1Id = new Types.ObjectId(),
@@ -76,7 +76,7 @@ describe("BORROWS", () => {
         };
 
     beforeAll(async () => {
-        server = new App([new AuthenticationController(), new BorrowController(), new BookController()]).getServer();
+        app = new App([new AuthenticationController(), new BorrowController(), new BookController()]).getApp();
         await userModel.create([
             { ...mockUser1, password: hpw },
             { ...mockUser2, password: hpw },
@@ -91,15 +91,15 @@ describe("BORROWS", () => {
             expect.assertions(9);
             const randomId = new Types.ObjectId().toString();
             const update = { verified: true };
-            const idRes = await request(server).get(`/borrow/${randomId}`);
-            const loggedInRes = await request(server).get(`/user/me/borrow`);
-            const postRes = await request(server).post("/borrow");
-            const patchRes = await request(server).patch(`/borrow/${randomId}`).send(update);
-            const deleteRes = await request(server).delete(`/borrow/${randomId}`);
-            const adminIdRes = await request(server).get(`/admin/borrow/${randomId}`);
-            const adminBorrowsRes = await request(server).get(`/admin/borrow`);
-            const adminPatchRes = await request(server).patch(`/admin/borrow/${randomId}`).send(update);
-            const adminDeleteRes = await request(server).delete(`/admin/borrow/${randomId}`);
+            const idRes = await request(app).get(`/borrow/${randomId}`);
+            const loggedInRes = await request(app).get(`/user/me/borrow`);
+            const postRes = await request(app).post("/borrow");
+            const patchRes = await request(app).patch(`/borrow/${randomId}`).send(update);
+            const deleteRes = await request(app).delete(`/borrow/${randomId}`);
+            const adminIdRes = await request(app).get(`/admin/borrow/${randomId}`);
+            const adminBorrowsRes = await request(app).get(`/admin/borrow`);
+            const adminPatchRes = await request(app).patch(`/admin/borrow/${randomId}`).send(update);
+            const adminDeleteRes = await request(app).delete(`/admin/borrow/${randomId}`);
             expect(idRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(loggedInRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(postRes.statusCode).toBe(StatusCode.Unauthorized);
@@ -118,8 +118,8 @@ describe("BORROWS", () => {
         let mockBorrowForLoggedInUser: Partial<Borrow>;
 
         beforeAll(async () => {
-            agentForUser1 = request.agent(server);
-            agentForUser2 = request.agent(server);
+            agentForUser1 = request.agent(app);
+            agentForUser2 = request.agent(app);
             await agentForUser1.post("/auth/login").send({ email: mockUser1.email, password: pw });
             await agentForUser2.post("/auth/login").send({ email: mockUser2.email, password: pw });
         });
@@ -146,41 +146,38 @@ describe("BORROWS", () => {
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body).toBeInstanceOf(Object as unknown as Borrow);
         });
-        it("PATCH /borrow/:id, should return statuscode 400 if logged in user have nothing to do with the borrow", async () => {
-            expect.assertions(2);
-            const thirdMockUserData = { email: "thirduser@test.com", password: pw };
-            await userModel.create({ email: thirdMockUserData.email, password: hpw });
-            const agent: SuperAgentTest = request.agent(server);
-            await agent.post("/auth/login").send(thirdMockUserData);
-            const patch: ModifyBorrow = { verified: true };
-            const res: Response = await agent.patch(`/borrow/${mockBorrowId.toString()}`).send(patch);
-            expect(res.statusCode).toBe(StatusCode.BadRequest);
-            expect(res.body).toBe("You cannot modify this borrow");
-        });
-        it("PATCH /borrow/:id, should return statuscode 200 if logged in user who is lending the book and modify 'verified'", async () => {
-            expect.assertions(2);
-            const patch: ModifyBorrow = { verified: true };
-            const res: Response = await agentForUser2.patch(`/borrow/${mockBorrowId.toString()}`).send(patch);
-            expect(res.statusCode).toBe(StatusCode.OK);
-            expect(res.body).toBeInstanceOf(Object as unknown as Borrow);
-        });
-        it("PATCH /borrow/:id, should return statuscode 400 if logged in user who is borrowing the book and modify 'verified'", async () => {
-            expect.assertions(2);
-            const patch: ModifyBorrow = { verified: true };
-            const res: Response = await agentForUser1
-                .patch(`/borrow/${mockBorrowForLoggedInUser._id?.toString()}`)
-                .send(patch);
-            expect(res.statusCode).toBe(StatusCode.BadRequest);
-            expect(res.body).toBe("You cannot modify the 'verified' field");
-        });
         it("PATCH /borrow/:id, should return statuscode 200 if logged in user who is borrowing the book and modify the 'books'", async () => {
             expect.assertions(2);
             const patch: ModifyBorrow = { books: [mockBook1FromUser2Id.toString(), mockBook2FromUser2Id.toString()] };
             const res: Response = await agentForUser1
                 .patch(`/borrow/${mockBorrowForLoggedInUser._id?.toString()}`)
                 .send(patch);
+            // console.log(`/borrow/${mockBorrowForLoggedInUser._id?.toString()}`, res.body);
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body).toBeInstanceOf(Object as unknown as Borrow);
+        });
+        it("PATCH /borrow/:id/verify, should return statuscode 400 if logged in user have nothing to do with the borrow", async () => {
+            expect.assertions(2);
+            const thirdMockUserData = { email: "thirduser@test.com", password: pw };
+            await userModel.create({ email: thirdMockUserData.email, password: hpw });
+            const agent: SuperAgentTest = request.agent(app);
+            await agent.post("/auth/login").send(thirdMockUserData);
+            const res: Response = await agent.patch(`/borrow/${mockBorrowId.toString()}/verify`);
+            expect(res.statusCode).toBe(StatusCode.BadRequest);
+            expect(res.body).toBe("You cannot modify this borrow");
+        });
+        it("PATCH /borrow/:id/verify, should return statuscode 204 if logged in user who is lending the book and modify 'verified'", async () => {
+            expect.assertions(1);
+            const res: Response = await agentForUser2.patch(`/borrow/${mockBorrowId.toString()}/verify`);
+            expect(res.statusCode).toBe(StatusCode.NoContent);
+        });
+        it("PATCH /borrow/:id/verify, should return statuscode 400 if logged in user who is borrowing the book and modify 'verified'", async () => {
+            expect.assertions(2);
+            const res: Response = await agentForUser1.patch(
+                `/borrow/${mockBorrowForLoggedInUser._id?.toString()}/verify`,
+            );
+            expect(res.statusCode).toBe(StatusCode.BadRequest);
+            expect(res.body).toBe("You cannot modify the 'verified' field");
         });
         it("DELETE /borrow/:id, should return statuscode 204", async () => {
             expect.assertions(1);
@@ -193,7 +190,7 @@ describe("BORROWS", () => {
         let agent: SuperAgentTest;
 
         beforeAll(async () => {
-            agent = request.agent(server);
+            agent = request.agent(app);
             await agent.post("/auth/login").send({ email: mockAdmin.email, password: pw });
         });
         it("GET /admin/borrow, should return statuscode 200", async () => {
@@ -208,41 +205,9 @@ describe("BORROWS", () => {
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body).toBeInstanceOf(Object as unknown as Borrow);
         });
-
-        // it("GET /borrow?userId=id&sort=asc&sortBy=title, should return statuscode 200", async () => {
-        //     expect.assertions(3);
-        //     const book = await bookModel.create({
-        //         _id: new Types.ObjectId(),
-        //         title: "Admin",
-        //         author: "Zsolti",
-        //         for_borrow: true,
-        //         uploader: mockUser1Id,
-        //     });
-        //     const borrow = await borrowModel.create({
-        //         _id: new Types.ObjectId(),
-        //         to: mockUser2Id,
-        //         from: mockUser1Id,
-        //         books: [book._id],
-        //     });
-        //     await userModel.updateMany(
-        //         { $and: [{ _id: mockUser1Id }, { _id: mockUser2Id }] },
-        //         { $push: { borrows: { _id: borrow._id } } },
-        //     );
-        //     const res: Response = await agent.get(`/borrow?userId=${mockUser2Id}&sort=asc&sortBy=createdAt`);
-        //     expect(res.statusCode).toBe(StatusCode.OK);
-        //     expect(res.body).toBeInstanceOf(Array<Borrow>);
-        //     expect(res.body[res.body.length - 1].createdAt).toBe(borrow.createdAt.toISOString());
-        // });
-        // it("GET /borrow?userId=id, should return statuscode 200", async () => {
-        //     expect.assertions(2);
-        //     const res: Response = await agent.get(`/borrow?userId=${mockUser1Id}`);
-        //     expect(res.statusCode).toBe(StatusCode.OK);
-        //     expect(res.body).toBeInstanceOf(Array<Borrow>);
-        // });
-
         it("PATCH /admin/borrow/:id, should return statuscode 200", async () => {
             expect.assertions(2);
-            const patch: ModifyBorrow = { verified: true };
+            const patch = { verified: true };
             const res: Response = await agent.patch(`/admin/borrow/${mockBorrowId.toString()}`).send(patch);
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body).toBeInstanceOf(Object as unknown as Borrow);

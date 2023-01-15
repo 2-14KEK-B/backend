@@ -134,7 +134,7 @@ export default class UserRateController implements Controller {
             if (await isIdNotValid(this.user, [userId], next)) return;
             const rateId = req.params["rateId"];
             if (await isIdNotValid(this.userRate, [rateId], next)) return;
-            const loggedInUserId = req.session["userId"];
+            const loggedInUserId = req.session["userId"] as string;
 
             const rated = await this.userRate.exists({ _id: rateId, from: loggedInUserId, to: userId }).exec();
             if (rated == null) return next(new HttpError("You do not have user rate by this id"));
@@ -144,8 +144,9 @@ export default class UserRateController implements Controller {
                 .populate({ path: "from to", select: "username fullname email picture" })
                 .lean<UserRate>()
                 .exec();
-
             if (!rate) return next(new HttpError("Failed to modify user rate"));
+
+            await this.user.createNotification(userId, loggedInUserId, rateId, "user_rate", "update");
 
             res.json(rate);
         } catch (error) {
@@ -163,7 +164,7 @@ export default class UserRateController implements Controller {
             if (await isIdNotValid(this.user, [userId], next)) return;
             const borrowId = req.body["borrow"];
             if (await isIdNotValid(this.borrow, [borrowId], next)) return;
-            const loggedInUserId = req.session["userId"];
+            const loggedInUserId = req.session["userId"] as string;
 
             const verifiedId = await this.borrow //
                 .exists({ _id: borrowId, verified: true })
@@ -176,6 +177,8 @@ export default class UserRateController implements Controller {
                 to: userId,
             });
             if (!rate) return next(new HttpError("Failed to create the user rate"));
+
+            await this.user.createNotification(userId, loggedInUserId, rate._id.toString(), "user_rate", "create");
 
             const { acknowledged: successfullBorrowUpdate } = await this.borrow.updateOne(
                 { _id: borrowId },
@@ -205,13 +208,15 @@ export default class UserRateController implements Controller {
             if (await isIdNotValid(this.user, [userId], next)) return;
             const rateId = req.params["rateId"];
             if (await isIdNotValid(this.userRate, [rateId], next)) return;
-            const loggedInUserId = req.session["userId"];
+            const loggedInUserId = req.session["userId"] as string;
 
             const rate = await this.userRate //
                 .findOneAndDelete({ _id: rateId, from: loggedInUserId, to: userId })
                 .lean<UserRate>()
                 .exec();
             if (!rate) return next(new HttpError("Failed to delete user rate"));
+
+            await this.user.createNotification(userId, loggedInUserId, rateId, "user_rate", "delete");
 
             const { acknowledged: successfullBorrowUpdate } = await this.borrow
                 .updateOne({ _id: rate.borrow }, { $pull: { user_rates: rateId } })

@@ -23,6 +23,7 @@ export default class LogoutController implements Controller {
             delete req.session["role"];
             req.session.destroy(error => {
                 if (error) {
+                    /* istanbul ignore next */
                     console.log(new Error(error));
                 }
                 res.clearCookie("session-id");

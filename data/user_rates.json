@@ -15,6 +15,9 @@
         "createdAt": {
             "$date": "2022-12-01T19:55:05.000Z"
         },
+        "updatedAt": {
+            "$date": "2022-12-01T19:55:05.000Z"
+        },
         "rate": true,
         "comment": "Everything went good."
     },
@@ -32,6 +35,9 @@
             "$oid": "6357f9bf7b60ee488385f955"
         },
         "createdAt": {
+            "$date": "2022-12-01T19:59:21.000Z"
+        },
+        "updatedAt": {
             "$date": "2022-12-01T19:59:21.000Z"
         },
         "rate": true,

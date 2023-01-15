@@ -11,7 +11,7 @@ import type { Message, MessageContent } from "@interfaces/message";
 import type { User } from "@interfaces/user";
 
 describe("MESSAGES", () => {
-    let server: Application;
+    let app: Application;
     const pw = global.MOCK_PASSWORD,
         hpw = global.MOCK_HASHED_PASSWORD,
         mockUser1Id = new Types.ObjectId(),
@@ -55,7 +55,7 @@ describe("MESSAGES", () => {
         };
 
     beforeAll(async () => {
-        server = new App([new AuthenticationController(), new MessageController()]).getServer();
+        app = new App([new AuthenticationController(), new MessageController()]).getApp();
         await userModel.create([
             { ...mockUser1, password: hpw },
             { ...mockUser2, password: hpw },
@@ -70,15 +70,13 @@ describe("MESSAGES", () => {
         it("any PATH, should return statuscode 401", async () => {
             expect.assertions(7);
             const randomId = new Types.ObjectId().toString();
-            const loggedInRes = await request(server).get("/user/me/message");
-            const idRes = await request(server).get(`/user/${randomId}/message`);
-            const postRes = await request(server).post(`/user/${randomId}/message`);
-            const patchSeen = await request(server).patch(`/message/${randomId}/seen`);
-            const adminMessagesRes = await request(server).get("/admin/message");
-            const adminDeleteRes = await request(server).delete(`/admin/message/${randomId}`);
-            const adminDeleteContentRes = await request(server).delete(
-                `/admin/message/${randomId}/content/${randomId}`,
-            );
+            const loggedInRes = await request(app).get("/user/me/message");
+            const idRes = await request(app).get(`/user/${randomId}/message`);
+            const postRes = await request(app).post(`/user/${randomId}/message`);
+            const patchSeen = await request(app).patch(`/message/${randomId}/seen`);
+            const adminMessagesRes = await request(app).get("/admin/message");
+            const adminDeleteRes = await request(app).delete(`/admin/message/${randomId}`);
+            const adminDeleteContentRes = await request(app).delete(`/admin/message/${randomId}/content/${randomId}`);
             expect(loggedInRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(idRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(postRes.statusCode).toBe(StatusCode.Unauthorized);
@@ -95,9 +93,9 @@ describe("MESSAGES", () => {
         let agentForUser3: SuperAgentTest;
 
         beforeAll(async () => {
-            agentForUser1 = request.agent(server);
-            agentForUser2 = request.agent(server);
-            agentForUser3 = request.agent(server);
+            agentForUser1 = request.agent(app);
+            agentForUser2 = request.agent(app);
+            agentForUser3 = request.agent(app);
             await agentForUser1.post("/auth/login").send({ email: mockUser1.email, password: pw });
             await agentForUser2.post("/auth/login").send({ email: mockUser2.email, password: pw });
             await agentForUser3.post("/auth/login").send({ email: mockUser3.email, password: pw });
@@ -139,7 +137,7 @@ describe("MESSAGES", () => {
         let agent: SuperAgentTest;
 
         beforeAll(async () => {
-            agent = request.agent(server);
+            agent = request.agent(app);
             await agent.post("/auth/login").send({ email: mockAdmin.email, password: pw });
         });
 

@@ -718,7 +718,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n  \"from_id\": \"6357b544447026c9b91950fd\",\r\n  \"books\": [\"6357da8b3441ea1273216971\"]\r\n}",
+									"raw": "{\r\n  \"from\": \"6357b544447026c9b91950fd\",\r\n  \"books\": [\"63c41cac50f045beb60d8c06\"]\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -759,6 +759,31 @@
 									"path": [
 										"borrow",
 										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "6357f9bf7b60ee488385f955"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "verify borrow",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/borrow/:id/verify",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"borrow",
+										":id",
+										"verify"
 									],
 									"variable": [
 										{
@@ -982,7 +1007,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n  \"from_id\": \"6357b544447026c9b91950fd\",\r\n  \"to_id\": \"6357b59c447026c9b9195100\",\r\n  \"content\": \"mizu\"\r\n}",
+									"raw": "{\r\n  \"content\": \"mizu\"\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -1003,6 +1028,31 @@
 										{
 											"key": "id",
 											"value": "6357b59c447026c9b9195100"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "update seen by message id",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/message/:id/seen",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"message",
+										":id",
+										"seen"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "635803e76fe4028063397763"
 										}
 									]
 								}
@@ -1287,6 +1337,116 @@
 							]
 						},
 						{
+							"name": "notification",
+							"item": [
+								{
+									"name": "get logged in",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{URL}}/user/me/notification",
+											"host": [
+												"{{URL}}"
+											],
+											"path": [
+												"user",
+												"me",
+												"notification"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "create",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"doc_id\": \"63b86b3ef0526f984d659ecd\",\r\n    \"doc_type\": \"user_rate\",\r\n    \"noti_type\": \"rate\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{URL}}/user/:id/notification",
+											"host": [
+												"{{URL}}"
+											],
+											"path": [
+												"user",
+												":id",
+												"notification"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "6357b59c447026c9b9195100"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "New Request",
+									"request": {
+										"method": "PATCH",
+										"header": [],
+										"url": {
+											"raw": "{{URL}}/user/me/notification/:id",
+											"host": [
+												"{{URL}}"
+											],
+											"path": [
+												"user",
+												"me",
+												"notification",
+												":id"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": null
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "delete by id",
+									"request": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{URL}}/user/me/notification/:id",
+											"host": [
+												"{{URL}}"
+											],
+											"path": [
+												"user",
+												"me",
+												"notification",
+												":id"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": null
+												}
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
 							"name": "patch logged in",
 							"request": {
 								"method": "PATCH",
@@ -1403,7 +1563,7 @@
 											"variable": [
 												{
 													"key": "rateId",
-													"value": "638917990097a84550cec129"
+													"value": "63b72715519c587badbd2088"
 												}
 											]
 										}

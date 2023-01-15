@@ -223,7 +223,7 @@ export default class MessageController implements Controller {
             const loggedInUserId = req.session["userId"];
 
             const { modifiedCount, matchedCount } = await this.message.updateOne(
-                { _id: new Types.ObjectId(messageId), users: new Types.ObjectId(loggedInUserId) },
+                { _id: messageId, users: loggedInUserId },
                 {
                     $set: {
                         "message_contents.$[elem].seen": true,

@@ -20,7 +20,6 @@ interface CreateBorrow {
 
 interface ModifyBorrow {
     books?: string[];
-    verified?: boolean;
 }
 
 export { Borrow, CreateBorrow, ModifyBorrow };
