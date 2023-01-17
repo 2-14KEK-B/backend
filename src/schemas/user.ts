@@ -16,7 +16,7 @@ const notificationSchema = new Schema<Notification>(
         },
         doc_type: {
             type: String,
-            enum: ["borrow", "user_rate"],
+            enum: ["lend", "borrow", "user_rate"],
             required: true,
         },
         noti_type: {

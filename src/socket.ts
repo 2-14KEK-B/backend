@@ -4,6 +4,8 @@ import type { Message, MessageContent } from "@interfaces/message";
 import type { Server as HttpServer } from "http";
 import type { docType, notiType } from "@interfaces/notification";
 
+//TODO: borrow / user-rate értesítések
+
 interface ServerToClientEvents {
     "recieve-msg-cnt": (message: MessageContent) => void;
     "recieve-new-msg": (message: Message) => void;

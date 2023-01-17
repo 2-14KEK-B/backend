@@ -6,6 +6,7 @@ interface Borrow {
     _id: ID;
     from: ID;
     to: ID;
+    type: "borrow" | "lend";
     createdAt: Date;
     updatedAt: Date;
     verified: boolean;
@@ -14,7 +15,8 @@ interface Borrow {
 }
 
 interface CreateBorrow {
-    from: string;
+    to?: string;
+    from?: string;
     books: string[];
 }
 

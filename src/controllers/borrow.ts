@@ -12,12 +12,11 @@ import { CreateBorrowDto, ModifyBorrowDto } from "@validators/borrow";
 import HttpError from "@exceptions/Http";
 import type Controller from "@interfaces/controller";
 import type { Borrow, CreateBorrow, ModifyBorrow } from "@interfaces/borrow";
-import type { Types } from "mongoose";
+import type { FilterQuery, Types } from "mongoose";
 
 export default class BorrowController implements Controller {
     router = Router();
     private user = userModel;
-    private book = bookModel;
     private borrow = borrowModel;
 
     constructor() {
@@ -32,6 +31,7 @@ export default class BorrowController implements Controller {
      *      - /borrow/:id
      *      POST
      *      - /borrow
+     *      - /lend
      *      PATCH
      *      - /borrow/:id
      *      DELETE
@@ -123,40 +123,72 @@ export default class BorrowController implements Controller {
     };
     private createBorrow = async (req: Request<unknown, unknown, CreateBorrow>, res: Response, next: NextFunction) => {
         try {
-            const { from, books } = req.body;
-            if (await isIdNotValid(this.user, [from], next)) return;
-            if (await isIdNotValid(this.book, books, next)) return;
+            const { to, from, books } = req.body;
             const loggedInUserId = req.session["userId"] as string;
-            if (loggedInUserId == from) return next(new HttpError("You cannot borrow book from yourself"));
 
-            const alreadyExist = await this.borrow
-                .exists({ from: from, to: loggedInUserId, books: { $in: [books] } })
+            const existQuery: FilterQuery<Borrow> = { books: { $in: books } };
+            const newBorrow: Partial<Borrow> = { books: books };
+            let otherUser: string | undefined = undefined;
+
+            if (to /* lend book to someone */) {
+                if (await isBooksNotValidForBorrow(books, "lend")) {
+                    return next(new HttpError("Books are not valid to lend"));
+                }
+                if (loggedInUserId == to) {
+                    return next(new HttpError("You cannot lend book to yourself"));
+                }
+                if (await isIdNotValid(this.user, [to], next)) return;
+                existQuery["from"] = newBorrow["from"] = loggedInUserId;
+                existQuery["to"] = newBorrow["to"] = to;
+
+                newBorrow["type"] = "lend";
+                otherUser = to;
+            } else if (from) {
+                if (await isBooksNotValidForBorrow(books, "borrow")) {
+                    return next(new HttpError("Books are not valid to borrow"));
+                }
+                if (loggedInUserId == from) {
+                    return next(new HttpError("You cannot borrow book from yourself"));
+                }
+                if (await isIdNotValid(this.user, [from], next)) return;
+                existQuery["from"] = newBorrow["from"] = from;
+                existQuery["to"] = newBorrow["to"] = loggedInUserId;
+
+                newBorrow["type"] = "borrow";
+                otherUser = from;
+            } else {
+                return next(new HttpError("Either 'from' or 'to' field is required"));
+            }
+
+            const alreadyExist = await this.borrow //
+                .exists(existQuery)
                 .exec();
             if (alreadyExist != null) return next(new HttpError("You cannot create new borrow with this book"));
 
-            const newBorrow = await this.borrow //
-                .create({
-                    to: loggedInUserId,
-                    from: from,
-                    books: [...books],
-                });
+            const createdNewBorrow = await this.borrow //
+                .create(newBorrow);
             if (!newBorrow) return next(new HttpError("Failed to create borrow"));
-            console.log(newBorrow);
 
             const { modifiedCount } = await this.user //
                 .updateMany(
                     {
-                        _id: { $in: [from, loggedInUserId] },
+                        _id: { $in: [otherUser, loggedInUserId] },
                     },
-                    { $push: { borrows: { _id: newBorrow._id } } },
+                    { $push: { borrows: { _id: createdNewBorrow._id } } },
                 )
                 .exec();
             if (!modifiedCount && modifiedCount != 2) return next(new HttpError("Failed to update users"));
 
-            await this.user.createNotification(from, loggedInUserId, newBorrow._id.toString(), "borrow", "create");
+            await this.user.createNotification(
+                otherUser,
+                loggedInUserId,
+                createdNewBorrow._id.toString(),
+                newBorrow["type"],
+                "create",
+            );
 
             res.json(
-                await newBorrow.populate([
+                await createdNewBorrow.populate([
                     { path: "from to", select: "username fullname email picture" },
                     { path: "books", select: "author title picture" },
                     { path: "user_rates", populate: { path: "from to", select: "username fullname email picture" } },
@@ -173,6 +205,11 @@ export default class BorrowController implements Controller {
         next: NextFunction,
     ) => {
         try {
+            const { books } = req.body;
+            if (!books) {
+                return next(new HttpError("You cannot modify borrow without new data"));
+            }
+
             const borrowId = req.params["id"];
             if (await isIdNotValid(this.borrow, [borrowId], next)) return;
             const loggedInUserId = req.session["userId"] as string;
@@ -183,6 +220,10 @@ export default class BorrowController implements Controller {
                 .exec();
             if (borrowToModify == null) return next(new HttpError("You cannot modify this borrow"));
 
+            if (await isBooksNotValidForBorrow(books, borrowToModify["type"])) {
+                return next(new HttpError(`Books are not valid for ${borrowToModify["type"]}`));
+            }
+
             const modifiedBorrow = await this.borrow
                 .findByIdAndUpdate(borrowId, { ...req.body, updatedAt: new Date() }, { new: true })
                 .populate({ path: "from to", select: "username fullname email picture" })
@@ -192,11 +233,9 @@ export default class BorrowController implements Controller {
             if (!modifiedBorrow) return next(new HttpError("Failed to update borrow"));
 
             const otherUserId =
-                borrowToModify.from.toString() == loggedInUserId
-                    ? borrowToModify.to.toString()
-                    : borrowToModify.from.toString();
+                modifiedBorrow["type"] == "borrow" ? borrowToModify.from.toString() : borrowToModify.to.toString();
 
-            await this.user.createNotification(otherUserId, loggedInUserId, borrowId, "borrow", "update");
+            await this.user.createNotification(otherUserId, loggedInUserId, borrowId, modifiedBorrow["type"], "update");
 
             res.json(modifiedBorrow);
         } catch (error) {
@@ -216,21 +255,26 @@ export default class BorrowController implements Controller {
                 .exec();
             if (borrowToModify == null) return next(new HttpError("You cannot modify this borrow"));
 
-            if (borrowToModify.verified || loggedInUserId != borrowToModify.from.toString())
-                return next(new HttpError("You cannot modify the 'verified' field"));
+            let otherUser: string | undefined = undefined;
+
+            if (borrowToModify.type == "borrow") {
+                if (loggedInUserId != borrowToModify.from.toString()) {
+                    return next(new HttpError("You cannot modify the 'verified' field"));
+                }
+                otherUser = borrowToModify.to.toString();
+            } else {
+                if (loggedInUserId != borrowToModify.to.toString()) {
+                    return next(new HttpError("You cannot modify the 'verified' field"));
+                }
+                otherUser = borrowToModify.from.toString();
+            }
 
             const { modifiedCount } = await this.borrow
                 .updateOne({ _id: borrowId }, { $set: { verified: true } })
                 .exec();
             if (!modifiedCount && modifiedCount != 1) return next(new HttpError("Failed to update borrow"));
 
-            await this.user.createNotification(
-                borrowToModify.to.toString(),
-                loggedInUserId,
-                borrowId,
-                "borrow",
-                "verify",
-            );
+            await this.user.createNotification(otherUser, loggedInUserId, borrowId, borrowToModify["type"], "verify");
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
@@ -242,10 +286,10 @@ export default class BorrowController implements Controller {
         try {
             const borrowId = req.params["id"];
             if (await isIdNotValid(this.borrow, [borrowId], next)) return;
-            const loggedInUserId = req.session["userId"];
+            const loggedInUserId = req.session["userId"] as string;
 
             const borrowToDelete = await this.borrow //
-                .findOne({ _id: borrowId, $or: [{ from: loggedInUserId }, { to: loggedInUserId }] })
+                .findOne({ _id: borrowId, $or: [{ from: loggedInUserId }, { to: loggedInUserId }], verified: false })
                 .lean<Borrow>()
                 .exec();
             if (borrowToDelete == null) return next(new HttpError("You cannot delete this borrow"));
@@ -256,6 +300,10 @@ export default class BorrowController implements Controller {
                 .deleteOne({ _id: borrowId })
                 .exec();
             if (!deletedCount && deletedCount != 1) return next(new HttpError(`Failed to delete borrow`));
+
+            const otherUserId = borrowToDelete["type"] == "borrow" ? from.toString() : to.toString();
+
+            await this.user.createNotification(otherUserId, loggedInUserId, borrowId, borrowToDelete["type"], "delete");
 
             const { modifiedCount } = await this.user
                 .updateMany({ _id: { $in: [from, to] } }, { $pull: { borrows: borrowId } })
@@ -358,4 +406,18 @@ export default class BorrowController implements Controller {
             next(new HttpError(error.message));
         }
     };
+}
+
+async function isBooksNotValidForBorrow(books: string[], type: "borrow" | "lend") {
+    try {
+        const forBorrow = type == "borrow";
+        const validBooks = await bookModel
+            .find({ _id: { $in: books }, for_borrow: forBorrow }, { _id: 1 })
+            .lean()
+            .exec();
+        return validBooks.length != books.length;
+    } catch {
+        /* istanbul ignore next */
+        return true;
+    }
 }

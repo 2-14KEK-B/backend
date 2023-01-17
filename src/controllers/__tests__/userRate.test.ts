@@ -70,6 +70,7 @@ describe("USER rate", () => {
             books: [mockBookId],
             from: mockUser1Id,
             to: mockUser2Id,
+            type: "borrow",
             verified: true,
             user_rates: [mockUserRateFromUser2Id, mockUserRateFromUser1Id],
         };

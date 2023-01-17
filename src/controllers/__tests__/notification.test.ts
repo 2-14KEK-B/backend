@@ -58,6 +58,7 @@ describe("NOTIFICATIONS", () => {
             books: [mockBookId],
             from: mockUser1Id,
             to: mockUser2Id,
+            type: "borrow",
             verified: false,
             user_rates: [],
         };
