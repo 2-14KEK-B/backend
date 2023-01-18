@@ -12,9 +12,10 @@
         "updatedAt": {
             "$date": "2022-10-25T12:43:16.000Z"
         },
-        "author": "Turbó Titán",
-        "title": "A lét elviselhetetlen könnyűsége.",
-        "picture": "https://smartmobilestudio.com/wp-content/uploads/2012/06/leather-book-preview.png",
+        "author": "Agatha Christie",
+        "isbn": "9789634795735",
+        "title": "12 új Miss Marple-sztori",
+        "picture": "https://s06.static.libri.hu/cover/75/c/9078888_5.jpg",
         "category": [],
         "price": 0,
         "available": false,
@@ -62,11 +63,132 @@
         "updatedAt": {
             "$date": "2022-10-25T12:46:03.000Z"
         },
-        "author": "Turbó Titán",
-        "title": "A lét elviselhetetlen könnyűsége. 2",
-        "picture": "https://smartmobilestudio.com/wp-content/uploads/2012/06/leather-book-preview.png",
+        "author": "Palotás Petra",
+        "isbn": "9789635704644",
+        "title": "A kastélykert álma",
+        "picture": "https://s03.static.libri.hu/cover/62/6/8750784_5.jpg",
         "category": [],
         "price": 0,
+        "available": true,
+        "for_borrow": true,
+        "rates": [],
+        "__v": 0
+    },
+    {
+        "_id": {
+            "$oid": "63c7d424d1bc6fac460264a7"
+        },
+        "uploader": {
+            "$oid": "63c7cf5ad1bc6fac460264a1"
+        },
+        "createdAt": {
+            "$date": "2022-11-25T12:46:03.000Z"
+        },
+        "updatedAt": {
+            "$date": "2022-11-25T12:46:03.000Z"
+        },
+        "author": "Kocsis Noémi",
+        "isbn": "9789635096251",
+        "title": "Bakancslista - Kastélyok, várak, kúriák - Titkok, tárgyak, történetek",
+        "picture": "https://s06.static.libri.hu/cover/f0/a/9163291_5.jpg",
+        "category": [],
+        "price": 1000,
+        "available": true,
+        "for_borrow": true,
+        "rates": [],
+        "__v": 0
+    },
+    {
+        "_id": {
+            "$oid": "63c7d424d1bc6fac460264a8"
+        },
+        "uploader": {
+            "$oid": "63c7cf5ad1bc6fac460264a3"
+        },
+        "createdAt": {
+            "$date": "2022-11-26T12:46:03.000Z"
+        },
+        "updatedAt": {
+            "$date": "2022-11-26T12:46:03.000Z"
+        },
+        "author": "Ali Hazelwood",
+        "isbn": "9789632618432",
+        "title": "A szerelem képlete",
+        "picture": "https://s03.static.libri.hu/cover/62/6/8750784_5.jpg",
+        "category": [],
+        "price": 500,
+        "available": true,
+        "for_borrow": false,
+        "rates": [],
+        "__v": 0
+    },
+    {
+        "_id": {
+            "$oid": "63c7d424d1bc6fac460264a9"
+        },
+        "uploader": {
+            "$oid": "63c7cf5ad1bc6fac460264a4"
+        },
+        "createdAt": {
+            "$date": "2022-11-27T12:46:03.000Z"
+        },
+        "updatedAt": {
+            "$date": "2022-11-27T12:46:03.000Z"
+        },
+        "author": "Patricia Treece",
+        "isbn": "9789632675879",
+        "title": "Egy év Pio atyával - Olvasmányok az év 365 napjára",
+        "picture": "https://s03.static.libri.hu/cover/5b/3/9237710_5.jpg",
+        "category": [],
+        "price": 300,
+        "available": true,
+        "for_borrow": false,
+        "rates": [],
+        "__v": 0
+    },
+    {
+        "_id": {
+            "$oid": "63c7d424d1bc6fac460264aa"
+        },
+        "uploader": {
+            "$oid": "63c7cf5ad1bc6fac460264a5"
+        },
+        "createdAt": {
+            "$date": "2022-11-28T12:46:03.000Z"
+        },
+        "updatedAt": {
+            "$date": "2022-11-28T12:46:03.000Z"
+        },
+        "author": "Alice Feeney",
+        "isbn": "9789635801497",
+        "title": "Kő, papír, olló - Egy házasság is lehet gyilkos",
+        "picture": "https://s03.static.libri.hu/cover/b3/6/8925557_5.jpg",
+        "category": [],
+        "price": 300,
+        "available": true,
+        "for_borrow": true,
+        "rates": [],
+        "__v": 0
+    },
+    {
+        "_id": {
+            "$oid": "63c7d424d1bc6fac460264ab"
+        },
+        "uploader": {
+            "$oid": "63c7cf5ad1bc6fac460264a5"
+        },
+        "createdAt": {
+            "$date": "2022-11-28T12:56:03.000Z"
+        },
+        "updatedAt": {
+            "$date": "2022-11-28T12:56:03.000Z"
+        },
+        "author": "Dr. Csernus Imre",
+        "isbn": "9789634756651",
+        "title": "Én és te",
+        "picture": "https://s05.static.libri.hu/cover/89/6/9082540_5.jpg",
+        "category": [],
+        "price": 2000,
         "available": true,
         "for_borrow": true,
         "rates": [],

@@ -36,7 +36,7 @@ const userSchema = new Schema<User>(
         password: { type: String, required: true, select: 0 },
         email: { type: String, required: true },
         email_is_verified: { type: Boolean, default: false },
-        locale: { type: String, default: "hu-HU" },
+        locale: { type: String, default: "hu" },
         picture: { type: String },
         role: { type: String },
         books: [{ type: Schema.Types.ObjectId, ref: "Book" }],

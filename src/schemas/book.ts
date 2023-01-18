@@ -3,27 +3,6 @@ import paginate from "mongoose-paginate-v2";
 import type { Book } from "@interfaces/book";
 import type { BookRate } from "@interfaces/bookRate";
 
-/**
- * new Schema<Book>(
-    {
-        uploader: {
-            type: Schema.Types.ObjectId,
-            ref: "User",
-        },
-        author: { type: String, required: true },
-        title: { type: String, required: true },
-        picture: { type: String },
-        rates: [{
-            from: {
-                type: Schema.Types.ObjectId,
-                ref: "User",
-            },
-            comment: String,
-            rate: { type: Number, required: true },
-        }],
-    })
- */
-
 const bookrateSchema = new Schema<BookRate>(
     {
         from: {
@@ -42,6 +21,7 @@ const bookSchema = new Schema<Book>(
             type: Schema.Types.ObjectId,
             ref: "User",
         },
+        isbn: String,
         author: { type: String, required: true },
         title: { type: String, required: true },
         picture: { type: String },

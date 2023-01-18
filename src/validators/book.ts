@@ -9,6 +9,10 @@ class CreateBookDto implements CreateBook {
     @IsString()
     public title: string;
 
+    @IsString()
+    @IsOptional()
+    public isbn: string;
+
     @IsUrl()
     @IsOptional()
     public picture: string;
@@ -31,6 +35,9 @@ class ModifyBookDto implements ModifyBook {
 
     @IsString()
     public title: string;
+
+    @IsString()
+    public isbn: string;
 
     @IsUrl()
     public picture: string;
