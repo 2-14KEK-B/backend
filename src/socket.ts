@@ -15,6 +15,8 @@ interface ServerToClientEvents {
         notiType: notiType,
         from: { _id: string; email: string; username?: string; fullname?: string; picture?: string },
     ) => void;
+    "borrow-updated": () => void;
+    "user-rate-updated": () => void;
     "msg-sent": () => void;
     "msg-seen": (userWhoSawId: string, messageId: string) => void;
 }
@@ -94,6 +96,11 @@ export function initSocket(server: HttpServer) {
             const sendUserSocket = onlineUsers.find(user => user.user_id === toId);
             if (sendUserSocket) {
                 socket.to(sendUserSocket.socket_id).emit("recieve-notification", docId, docType, notiType, from);
+                if (docType == "borrow") {
+                    socket.to(sendUserSocket.socket_id).emit("borrow-updated");
+                } else if (docType == "user_rate") {
+                    socket.to(sendUserSocket.socket_id).emit("user-rate-updated");
+                }
             }
         });
     });
