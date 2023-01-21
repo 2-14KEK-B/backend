@@ -71,6 +71,8 @@ export default class MessageController implements Controller {
                     path: "messages",
                     options: {
                         projection: {
+                            createdAt: 1,
+                            updatedAt: 1,
                             message_contents: { $slice: -25 },
                             totalCount: { $size: "$message_contents" },
                         },
@@ -83,6 +85,7 @@ export default class MessageController implements Controller {
                 .lean<{ messages: Message[] }>()
                 .exec();
             if (!messages) return next(new HttpError("Failed to get messages"));
+            console.log(messages);
 
             res.json(messages);
         } catch (error) {
