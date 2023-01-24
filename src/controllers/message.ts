@@ -85,7 +85,6 @@ export default class MessageController implements Controller {
                 .lean<{ messages: Message[] }>()
                 .exec();
             if (!messages) return next(new HttpError("Failed to get messages"));
-            console.log(messages);
 
             res.json(messages);
         } catch (error) {

@@ -110,7 +110,21 @@ export default class BorrowController implements Controller {
 
             const borrow = await this.borrow //
                 .findOne({ _id: borrowId, $or: [{ from: loggedInUserId }, { to: loggedInUserId }] })
-                .populate("books")
+                .populate({ path: "from to", select: "username fullname email picture" })
+                .populate({
+                    path: "user_rates",
+                    populate: { path: "from to", select: "username fullname email picture" },
+                })
+                .populate({
+                    path: "books",
+                    populate: [
+                        { path: "uploader", select: "username fullname email picture" },
+                        {
+                            path: "rates",
+                            populate: { path: "from", select: "username fullname email picture" },
+                        },
+                    ],
+                })
                 .lean<Borrow>()
                 .exec();
             if (!borrow) return next(new HttpError(`Failed to get borrow`));
