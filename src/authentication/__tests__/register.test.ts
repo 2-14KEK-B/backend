@@ -10,8 +10,8 @@ describe("POST /auth/register", () => {
     let app: Application;
     const pw = global.MOCK_PASSWORD,
         hpw = global.MOCK_HASHED_PASSWORD,
-        mockUser1: Partial<User> = { email: "test1@test.com", password: pw },
-        mockUser2: Partial<User> = { email: "test2@test.com", password: pw };
+        mockUser1: Partial<User> = { email: "test1@test.com", email_is_verified: true, password: pw },
+        mockUser2: Partial<User> = { email: "test2@test.com", email_is_verified: true, password: pw };
 
     beforeAll(async () => {
         app = new App([new AuthenticationController()]).getApp();
@@ -40,6 +40,6 @@ describe("POST /auth/register", () => {
         expect.assertions(2);
         const res: Response = await request(app).post("/auth/register").send({ email: mockUser2.email, password: pw });
         expect(res.statusCode).toEqual(StatusCode.OK);
-        expect(res.body).toEqual(`user created with ${mockUser2.email}`);
+        expect(res.body).toEqual(`user created: ${mockUser2.email}`);
     });
 });

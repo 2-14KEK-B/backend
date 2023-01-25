@@ -30,6 +30,7 @@ describe("USER rate", () => {
         mockUser1: Partial<User> = {
             _id: mockUser1Id,
             email: "testuser1@test.com",
+            email_is_verified: true,
             password: pw,
             books: [mockBookId],
             borrows: [mockBorrowId],
@@ -38,11 +39,18 @@ describe("USER rate", () => {
         mockUser2: Partial<User> = {
             _id: mockUser2Id,
             email: "testuser2@test.com",
+            email_is_verified: true,
             password: pw,
             borrows: [mockBorrowId],
             user_rates: { from: [mockUserRateFromUser2Id], to: [mockUserRateFromUser1Id] },
         },
-        mockAdmin: Partial<User> = { _id: mockAdminId, email: "testadmin@test.com", password: pw, role: "admin" },
+        mockAdmin: Partial<User> = {
+            _id: mockAdminId,
+            email: "testadmin@test.com",
+            email_is_verified: true,
+            password: pw,
+            role: "admin",
+        },
         mockBook: Partial<Book> = {
             _id: mockBookId,
             uploader: mockUser1Id,

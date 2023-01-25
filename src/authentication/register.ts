@@ -44,7 +44,7 @@ export default class RegisterController implements Controller {
                 `,
             };
 
-            await sendEmail(email, emailBody.subject, emailBody.html, next);
+            if (!env.isTest) await sendEmail(email, emailBody.subject, emailBody.html, next);
 
             const newUser = await this.user.create({
                 ...req.body,

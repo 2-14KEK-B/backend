@@ -10,7 +10,7 @@ describe("POST /auth/login", () => {
     let app: Application;
     const pw = global.MOCK_PASSWORD,
         hpw = global.MOCK_HASHED_PASSWORD,
-        mockUser: Partial<User> = { email: "test@test.com", username: "test", password: pw };
+        mockUser: Partial<User> = { email: "test@test.com", email_is_verified: true, username: "test", password: pw };
 
     beforeAll(async () => {
         app = new App([new AuthenticationController()]).getApp();

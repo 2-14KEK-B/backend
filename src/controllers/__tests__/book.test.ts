@@ -39,13 +39,21 @@ describe("BOOKS", () => {
         mockUser1: Partial<User> = {
             _id: mockUser1Id,
             email: "testuser1@test.com",
+            email_is_verified: true,
             password: pw,
             books: [mockBook1Id, mockBook2Id],
         },
-        mockUser2: Partial<User> = { _id: mockUser2Id, email: "testuser2@test.com", password: pw, books: [] },
+        mockUser2: Partial<User> = {
+            _id: mockUser2Id,
+            email: "testuser2@test.com",
+            password: pw,
+            books: [],
+            email_is_verified: true,
+        },
         mockAdmin: Partial<User> = {
             _id: mockAdminId,
             email: "testadmin@test.com",
+            email_is_verified: true,
             password: pw,
             books: [],
             role: "admin",

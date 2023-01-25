@@ -28,7 +28,7 @@ describe("POST /auth", () => {
     it("returns statuscode 200 and user if user already logged in", async () => {
         expect.assertions(2);
 
-        await userModel.create({ email: mockUser.email, password: hpw });
+        await userModel.create({ email: mockUser.email, email_is_verified: true, password: hpw });
         await agent.post("/auth/login").send({ email: mockUser.email, password: pw });
         const res: Response = await agent.get("/auth");
 

@@ -64,7 +64,7 @@ export default class AuthenticationController implements Controller {
                 `,
             };
 
-            await sendEmail(email, emailBody.subject, emailBody.html, next);
+            if (!env.isTest) await sendEmail(email, emailBody.subject, emailBody.html, next);
 
             user.password_reset_token = token;
             await user.save();
