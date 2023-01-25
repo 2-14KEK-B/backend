@@ -36,6 +36,7 @@ const userSchema = new Schema<User>(
         password: { type: String, required: true, select: 0 },
         email: { type: String, required: true },
         verification_token: { type: String, select: 0 },
+        password_reset_token: { type: String, select: 0 },
         email_is_verified: { type: Boolean, default: false },
         locale: { type: String, default: "hu" },
         picture: { type: String },

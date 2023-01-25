@@ -15,6 +15,7 @@ interface User {
     email: string;
     email_is_verified?: boolean;
     verification_token?: string;
+    password_reset_token?: string;
     password?: string;
     locale?: string;
     picture?: string;

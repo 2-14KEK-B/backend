@@ -7,8 +7,8 @@ async function sendEmail(email: string, subject: string, body: string, next: Nex
     const transporter = createTransport({
         service: "gmail",
         auth: {
-            user: env.EMAIL_ADDRESS,
-            pass: env.EMAIL_PASSWORD,
+            user: "book.swap.email@gmail.com",
+            pass: "ycicdwmipkpcgxwt",
         },
     });
 

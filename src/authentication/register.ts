@@ -40,7 +40,7 @@ export default class RegisterController implements Controller {
 
             const emailBody = {
                 subject: "Email Verification",
-                html: `<div>Hi,</div><br /><div>We just need to verify your email address before you can access ${env.FRONT_URL}.</div><br /><div>Verify your email address ${env.FRONT_URL}/verify/${token}.</div><br /><div>Thanks! The BookSwap team</div>
+                html: `<div>Hi,</div><br /><div>We just need to verify your email address before you can access ${env.FRONT_URL}.</div><br /><div>Verify your email address ${env.FRONT_URL}/verify?token=${token}.</div><br /><div>Thanks! The BookSwap team</div>
                 `,
             };
 
@@ -73,14 +73,23 @@ export default class RegisterController implements Controller {
                 return next(new HttpError("Token is not valid or expired"));
             }
 
-            const { modifiedCount } = await this.user.updateOne({ email }, { emailVerified: true }).exec();
-            if (modifiedCount != 1) {
+            const user = await this.user.findOne({ email }).exec();
+            if (user == null) {
                 return next(new HttpError("Failed to verify the email"));
             }
+            if (user.email_is_verified) {
+                return next(new HttpError("Email already verified. Just log in."));
+            }
 
-            res.send("Email verified successfully");
+            user.email_is_verified = true;
+            user.verification_token = undefined;
+
+            await user.save();
+
+            res.json("Email verified successfully");
         } catch (error) {
-            res.status(401).send("Invalid token");
+            /* istanbul ignore next */
+            next(new HttpError(error.message));
         }
     };
 }
