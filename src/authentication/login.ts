@@ -37,10 +37,14 @@ export default class LoginController implements Controller {
             }
 
             const existingUser = await this.user
-                .findOne(query, { password: 1 })
-                .lean<{ _id: Types.ObjectId; password: string }>()
+                .findOne(query, { password: 1, email_is_verified: 1 })
+                .lean<{ _id: Types.ObjectId; password: string; email_is_verified: boolean }>()
                 .exec();
             if (!existingUser) return next(new WrongCredentialsException());
+
+            if (!existingUser.email_is_verified) {
+                return next(new HttpError("E-mail has been sent to your given email address. Please verify it."));
+            }
 
             const isPasswordMatching = await compare(password, existingUser.password);
             if (!isPasswordMatching) return next(new WrongCredentialsException());
