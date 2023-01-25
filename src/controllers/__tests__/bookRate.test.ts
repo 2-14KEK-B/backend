@@ -12,7 +12,7 @@ import type { Book } from "@interfaces/book";
 import type { User } from "@interfaces/user";
 
 describe("BOOK rate", () => {
-    let server: Application;
+    let app: Application;
     const pw = global.MOCK_PASSWORD,
         hpw = global.MOCK_HASHED_PASSWORD,
         mockBookId = new Types.ObjectId(),
@@ -85,7 +85,7 @@ describe("BOOK rate", () => {
         };
 
     beforeAll(async () => {
-        server = new App([new AuthenticationController(), new BookController()]).getServer();
+        app = new App([new AuthenticationController(), new BookController()]).getApp();
         await userModel.create([
             { ...mockUser, password: hpw },
             { ...mockAdmin, password: hpw },
@@ -96,7 +96,7 @@ describe("BOOK rate", () => {
     describe("BOOK RATE, not logged in", () => {
         it("GET /book/:id/rate, should return statuscode 200", async () => {
             expect.assertions(2);
-            const res: Response = await request(server).get(`/book/${mockBookId.toString()}/rate`);
+            const res: Response = await request(app).get(`/book/${mockBookId.toString()}/rate`);
             expect(res.statusCode).toBe(200);
             expect(res.body).toBeInstanceOf(Array<BookRate>);
         });
@@ -104,13 +104,13 @@ describe("BOOK rate", () => {
             expect.assertions(5);
             const anyRandomId = new Types.ObjectId().toString();
             const update = { rate: 1 };
-            const postRes = await request(server).post(`/book/${anyRandomId}/rate`);
-            const patchRes = await request(server).patch(`/book/${anyRandomId}/rate/${anyRandomId}`).send(update);
-            const deleteRes = await request(server).delete(`/book/${anyRandomId}/rate/${anyRandomId}`);
-            const adminPatchRes = await request(server)
+            const postRes = await request(app).post(`/book/${anyRandomId}/rate`);
+            const patchRes = await request(app).patch(`/book/${anyRandomId}/rate/${anyRandomId}`).send(update);
+            const deleteRes = await request(app).delete(`/book/${anyRandomId}/rate/${anyRandomId}`);
+            const adminPatchRes = await request(app)
                 .patch(`/admin/book/${anyRandomId}/rate/${anyRandomId}`)
                 .send(update);
-            const adminDeleteRes = await request(server).delete(`/admin/book/${anyRandomId}/rate/${anyRandomId}`);
+            const adminDeleteRes = await request(app).delete(`/admin/book/${anyRandomId}/rate/${anyRandomId}`);
             expect(postRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(patchRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(deleteRes.statusCode).toBe(StatusCode.Unauthorized);
@@ -122,7 +122,7 @@ describe("BOOK rate", () => {
         let agent: SuperAgentTest;
 
         beforeAll(async () => {
-            agent = request.agent(server);
+            agent = request.agent(app);
             await agent.post("/auth/login").send({ email: mockUser.email, password: pw });
         });
         it("PATCH /book/:id/rate/:id, should return 200 if the logged in user created rate for the book", async () => {
@@ -183,7 +183,7 @@ describe("BOOK rate", () => {
         const mockRateId = new Types.ObjectId();
 
         beforeAll(async () => {
-            agent = request.agent(server);
+            agent = request.agent(app);
             await agent.post("/auth/login").send({ email: mockAdmin.email, password: pw });
             await bookModel.findByIdAndUpdate(mockBookFromAdminId.toString(), {
                 $push: { rates: { _id: mockRateId, rate: 2, from: mockUserId.toString() } },

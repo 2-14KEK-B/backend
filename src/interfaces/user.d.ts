@@ -2,6 +2,7 @@ import type ID from "./id";
 import type { Book } from "./book";
 import type { Borrow } from "./borrow";
 import type { Message } from "./message";
+import type { Notification } from "./notification";
 
 type ID = Types.ObjectId | string;
 
@@ -22,6 +23,7 @@ interface User {
     rated_books: (Book | ID)[];
     user_rates: { from: ID[]; to: ID[] };
     borrows: (Borrow | ID)[];
+    notifications: Notification[];
 }
 
 interface CreateUser {

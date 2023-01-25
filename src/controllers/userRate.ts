@@ -47,6 +47,7 @@ export default class UserRateController implements Controller {
 
     private initRoutes() {
         this.router.get(`/user/me/rate`, authenticationMiddleware, this.getUserRatesByLoggedInUser);
+        this.router.get("/user/rate/:id", authenticationMiddleware, this.getUserRateById);
         this.router
             .route(`/user/:id([0-9a-fA-F]{24})/rate`)
             .all(authenticationMiddleware)
@@ -70,6 +71,42 @@ export default class UserRateController implements Controller {
             .patch(this.adminModifyUserRateByRateId)
             .delete(this.adminDeleteUserRateByRateId);
     }
+
+    private getUserRateById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+        try {
+            const rateId = req.params["id"];
+            if (await isIdNotValid(this.userRate, [rateId], next)) return;
+            const userId = req.session["userId"];
+
+            const userRate = await this.userRate
+                .findOne({ _id: rateId, $or: [{ from: userId }, { to: userId }] })
+                .populate({
+                    path: "borrow",
+                    populate: [
+                        { path: "from to", select: "username fullname email picture" },
+                        {
+                            path: "books",
+                            populate: [
+                                { path: "uploader", select: "username fullname email picture" },
+                                {
+                                    path: "rates",
+                                    populate: { path: "from", select: "username fullname email picture" },
+                                },
+                            ],
+                        },
+                    ],
+                })
+                .populate({ path: "from to", select: "username fullname email picture" })
+                .lean<UserRate>()
+                .exec();
+            if (!userRate) return next(new HttpError("Failed to get the user rate"));
+
+            res.json(userRate);
+        } catch (error) {
+            /* istanbul ignore next */
+            next(new HttpError(error.message));
+        }
+    };
 
     private getUserRatesByLoggedInUser = async (req: Request, res: Response, next: NextFunction) => {
         try {
@@ -134,7 +171,7 @@ export default class UserRateController implements Controller {
             if (await isIdNotValid(this.user, [userId], next)) return;
             const rateId = req.params["rateId"];
             if (await isIdNotValid(this.userRate, [rateId], next)) return;
-            const loggedInUserId = req.session["userId"];
+            const loggedInUserId = req.session["userId"] as string;
 
             const rated = await this.userRate.exists({ _id: rateId, from: loggedInUserId, to: userId }).exec();
             if (rated == null) return next(new HttpError("You do not have user rate by this id"));
@@ -144,8 +181,9 @@ export default class UserRateController implements Controller {
                 .populate({ path: "from to", select: "username fullname email picture" })
                 .lean<UserRate>()
                 .exec();
-
             if (!rate) return next(new HttpError("Failed to modify user rate"));
+
+            await this.user.createNotification(userId, loggedInUserId, rateId, "user_rate", "update");
 
             res.json(rate);
         } catch (error) {
@@ -163,7 +201,7 @@ export default class UserRateController implements Controller {
             if (await isIdNotValid(this.user, [userId], next)) return;
             const borrowId = req.body["borrow"];
             if (await isIdNotValid(this.borrow, [borrowId], next)) return;
-            const loggedInUserId = req.session["userId"];
+            const loggedInUserId = req.session["userId"] as string;
 
             const verifiedId = await this.borrow //
                 .exists({ _id: borrowId, verified: true })
@@ -176,6 +214,8 @@ export default class UserRateController implements Controller {
                 to: userId,
             });
             if (!rate) return next(new HttpError("Failed to create the user rate"));
+
+            await this.user.createNotification(userId, loggedInUserId, rate._id.toString(), "user_rate", "create");
 
             const { acknowledged: successfullBorrowUpdate } = await this.borrow.updateOne(
                 { _id: borrowId },
@@ -205,13 +245,15 @@ export default class UserRateController implements Controller {
             if (await isIdNotValid(this.user, [userId], next)) return;
             const rateId = req.params["rateId"];
             if (await isIdNotValid(this.userRate, [rateId], next)) return;
-            const loggedInUserId = req.session["userId"];
+            const loggedInUserId = req.session["userId"] as string;
 
             const rate = await this.userRate //
                 .findOneAndDelete({ _id: rateId, from: loggedInUserId, to: userId })
                 .lean<UserRate>()
                 .exec();
             if (!rate) return next(new HttpError("Failed to delete user rate"));
+
+            await this.user.createNotification(userId, loggedInUserId, rateId, "user_rate", "delete");
 
             const { acknowledged: successfullBorrowUpdate } = await this.borrow
                 .updateOne({ _id: rate.borrow }, { $pull: { user_rates: rateId } })

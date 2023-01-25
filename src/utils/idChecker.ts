@@ -11,10 +11,7 @@ export default async function isIdNotValid<T>(
     next: NextFunction,
 ): Promise<boolean> {
     for (const id of ids) {
-        if (!isValidObjectId(id)) {
-            next(new IdNotValidException(id));
-            return true;
-        } else if (!(await model.exists({ _id: id }))) {
+        if (!isValidObjectId(id) || !(await model.exists({ _id: id }))) {
             next(new IdNotValidException(id));
             return true;
         }

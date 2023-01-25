@@ -28,6 +28,7 @@
                 "createdAt": {
                     "$date": "2022-10-25T15:42:31.000Z"
                 },
+                "seen": false,
                 "content": "szia uram"
             }
         ]

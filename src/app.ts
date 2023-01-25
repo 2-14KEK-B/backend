@@ -24,7 +24,7 @@ export default class App {
         this.initializeErrorHandling();
     }
 
-    public getServer(): Application {
+    public getApp(): Application {
         return this.app;
     }
 

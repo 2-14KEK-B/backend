@@ -14,6 +14,11 @@ const borrowSchema = new Schema<Borrow>(
             ref: "User",
             required: true,
         },
+        type: {
+            type: String,
+            required: true,
+            enum: ["borrow", "lend"],
+        },
         books: [
             {
                 type: Schema.Types.ObjectId,

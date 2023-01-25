@@ -5,6 +5,7 @@ import type { BookRate } from "./bookRate";
 interface Book {
     _id: ID;
     uploader: User | ID;
+    isbn: string;
     createdAt: Date;
     updatedAt?: Date;
     author: string;
@@ -21,6 +22,7 @@ interface Book {
 interface CreateBook {
     author: string;
     title: string;
+    isbn: string;
     picture?: string;
     category?: string[];
     price?: number;
@@ -30,6 +32,7 @@ interface CreateBook {
 interface ModifyBook {
     author?: string;
     title?: string;
+    isbn: string;
     for_borrow?: boolean;
     available?: boolean;
     picture?: string;

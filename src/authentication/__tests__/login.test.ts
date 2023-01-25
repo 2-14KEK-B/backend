@@ -7,19 +7,19 @@ import type { Application } from "express";
 import type { User } from "@interfaces/user";
 
 describe("POST /auth/login", () => {
-    let server: Application;
+    let app: Application;
     const pw = global.MOCK_PASSWORD,
         hpw = global.MOCK_HASHED_PASSWORD,
         mockUser: Partial<User> = { email: "test@test.com", username: "test", password: pw };
 
     beforeAll(async () => {
-        server = new App([new AuthenticationController()]).getServer();
+        app = new App([new AuthenticationController()]).getApp();
         await userModel.create({ ...mockUser, password: hpw });
     });
 
     it("returns statuscode 401 if user not exists", async () => {
         expect.assertions(2);
-        const res: Response = await request(server).post("/auth/login").send({
+        const res: Response = await request(app).post("/auth/login").send({
             email: "any@any.any",
             password: "anything",
         });
@@ -29,7 +29,7 @@ describe("POST /auth/login", () => {
 
     it("returns statuscode 406 if email is not a valid email", async () => {
         expect.assertions(2);
-        const res: Response = await request(server).post("/auth/login").send({
+        const res: Response = await request(app).post("/auth/login").send({
             email: "any",
             password: "anything",
         });
@@ -39,7 +39,7 @@ describe("POST /auth/login", () => {
 
     it("returns statuscode 401 if user exists, but password not match", async () => {
         expect.assertions(2);
-        const res: Response = await request(server).post("/auth/login").send({
+        const res: Response = await request(app).post("/auth/login").send({
             email: mockUser.email,
             password: "wrongpassword",
         });
@@ -49,14 +49,14 @@ describe("POST /auth/login", () => {
 
     it("returns statuscode 200 if user exists with email", async () => {
         expect.assertions(2);
-        const res: Response = await request(server).post("/auth/login").send({ email: mockUser.email, password: pw });
+        const res: Response = await request(app).post("/auth/login").send({ email: mockUser.email, password: pw });
         expect(res.statusCode).toEqual(StatusCode.OK);
         expect(res.body.email).toEqual(mockUser.email);
     });
 
     it("returns statuscode 200 if user exists with username", async () => {
         expect.assertions(2);
-        const res: Response = await request(server)
+        const res: Response = await request(app)
             .post("/auth/login")
             .send({ username: mockUser.username, password: pw });
         expect(res.statusCode).toEqual(StatusCode.OK);

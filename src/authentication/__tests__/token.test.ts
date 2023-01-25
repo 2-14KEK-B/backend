@@ -7,20 +7,20 @@ import type { Application } from "express";
 import type { User } from "@interfaces/user";
 
 describe("POST /auth", () => {
-    let server: Application;
+    let app: Application;
     let agent: SuperAgentTest;
     const pw = global.MOCK_PASSWORD,
         hpw = global.MOCK_HASHED_PASSWORD,
         mockUser: Partial<User> = { email: "testforlogin@test.com", password: "test1234" };
 
     beforeAll(async () => {
-        server = new App([new AuthenticationController()]).getServer();
-        agent = request.agent(server);
+        app = new App([new AuthenticationController()]).getApp();
+        agent = request.agent(app);
     });
 
     it("returns statuscode 401 and user if user not logged in", async () => {
         expect.assertions(2);
-        const res: Response = await request(server).get("/auth");
+        const res: Response = await request(app).get("/auth");
         expect(res.statusCode).toEqual(StatusCode.Unauthorized);
         expect(res.body).toBe("Unauthorized");
     });

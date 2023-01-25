@@ -9,8 +9,9 @@ export default async function errorMiddleware(
     next: NextFunction,
 ): Promise<void> {
     const status = error.status || 500;
-    const message = error.message || "Something went wrong";
+    const message = error.message;
     if (env.isDev) {
+        /* istanbul ignore next */
         console.log("error: ", { status, message });
     }
     res.status(status).json(message);

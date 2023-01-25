@@ -14,11 +14,10 @@ import type { Application } from "express";
 import type { User } from "@interfaces/user";
 import type { Book } from "@interfaces/book";
 import type { Borrow } from "@interfaces/borrow";
-import type { BookRate } from "@interfaces/bookRate";
 import type { UserRate } from "@interfaces/userRate";
 
 describe("USER rate", () => {
-    let server: Application;
+    let app: Application;
     const pw = global.MOCK_PASSWORD,
         hpw = global.MOCK_HASHED_PASSWORD,
         mockUser1Id = new Types.ObjectId(),
@@ -70,17 +69,18 @@ describe("USER rate", () => {
             books: [mockBookId],
             from: mockUser1Id,
             to: mockUser2Id,
+            type: "borrow",
             verified: true,
             user_rates: [mockUserRateFromUser2Id, mockUserRateFromUser1Id],
         };
 
     beforeAll(async () => {
-        server = new App([
+        app = new App([
             new AuthenticationController(),
             new UserController(),
             new BorrowController(),
             new UserRateController(),
-        ]).getServer();
+        ]).getApp();
         await userModel.create([
             { ...mockUser1, password: hpw },
             { ...mockUser2, password: hpw },
@@ -93,23 +93,23 @@ describe("USER rate", () => {
 
     describe("USER RATES, not logged in", () => {
         it("any PATH, should return statuscode 401", async () => {
-            expect.assertions(9);
+            expect.assertions(10);
             const randomId = new Types.ObjectId().toString();
-            const myRes = await request(server).get("/user/me/rate");
-            const idRes = await request(server).get(`/user/${randomId}/rate`);
-            const borrowIdRes = await request(server).get(`/borrow/${randomId}/rate`);
-            const postRes = await request(server).post(`/user/${randomId}/rate`).send(mockUserRateFromUser2);
-            const patchRes = await request(server)
-                .patch(`/user/${randomId}/rate/${randomId}`)
-                .send(mockUserRateFromUser2);
-            const deleteRes = await request(server).delete(`/user/${randomId}/rate/${randomId}`);
-            const adminUserRatesRes = await request(server).get("/admin/user/rate");
-            const adminPatchRes = await request(server)
+            const myRes = await request(app).get("/user/me/rate");
+            const idRes = await request(app).get(`/user/rate/${randomId}`);
+            const userIdRes = await request(app).get(`/user/${randomId}/rate`);
+            const borrowIdRes = await request(app).get(`/borrow/${randomId}/rate`);
+            const postRes = await request(app).post(`/user/${randomId}/rate`).send(mockUserRateFromUser2);
+            const patchRes = await request(app).patch(`/user/${randomId}/rate/${randomId}`).send(mockUserRateFromUser2);
+            const deleteRes = await request(app).delete(`/user/${randomId}/rate/${randomId}`);
+            const adminUserRatesRes = await request(app).get("/admin/user/rate");
+            const adminPatchRes = await request(app)
                 .patch(`/admin/user/rate/${randomId}`)
                 .send(mockUserRateFromUser2Id);
-            const adminDeleteRes = await request(server).delete(`/admin/user/rate/${randomId}`);
+            const adminDeleteRes = await request(app).delete(`/admin/user/rate/${randomId}`);
             expect(myRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(idRes.statusCode).toBe(StatusCode.Unauthorized);
+            expect(userIdRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(borrowIdRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(postRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(patchRes.statusCode).toBe(StatusCode.Unauthorized);
@@ -125,28 +125,35 @@ describe("USER rate", () => {
         let agentForUser2: SuperAgentTest;
 
         beforeAll(async () => {
-            agentForUser1 = request.agent(server);
-            agentForUser2 = request.agent(server);
+            agentForUser1 = request.agent(app);
+            agentForUser2 = request.agent(app);
             await agentForUser1.post("/auth/login").send({ email: mockUser1.email, password: pw });
             await agentForUser2.post("/auth/login").send({ email: mockUser2.email, password: pw });
+        });
+
+        it("GET /user/rate/:id, should return statuscode 200", async () => {
+            expect.assertions(2);
+            const res: Response = await agentForUser1.get(`/user/rate/${mockUserRateFromUser1Id.toString()}`);
+            expect(res.statusCode).toBe(StatusCode.OK);
+            expect(res.body).toBeInstanceOf(Object as unknown as UserRate);
         });
         it("GET /user/me/rate, should return statuscode 200", async () => {
             expect.assertions(2);
             const res: Response = await agentForUser1.get("/user/me/rate");
             expect(res.statusCode).toBe(StatusCode.OK);
-            expect(res.body).toBeInstanceOf(Array<BookRate>);
+            expect(res.body).toBeInstanceOf(Array<UserRate>);
         });
         it("GET /user/:id/rate, should return statuscode 200", async () => {
             expect.assertions(2);
             const res: Response = await agentForUser1.get(`/user/${mockUser2Id.toString()}/rate`);
             expect(res.statusCode).toBe(StatusCode.OK);
-            expect(res.body).toBeInstanceOf(Array<BookRate>);
+            expect(res.body).toBeInstanceOf(Array<UserRate>);
         });
         it("GET /borrow/:id/rate, should return statuscode 200", async () => {
             expect.assertions(2);
             const res: Response = await agentForUser1.get(`/borrow/${mockBorrowId.toString()}/rate`);
             expect(res.statusCode).toBe(StatusCode.OK);
-            expect(res.body).toBeInstanceOf(Array<BookRate>);
+            expect(res.body).toBeInstanceOf(Array<UserRate>);
         });
         it("POST /user/:id/rate, should return statuscode 400 if borrow is not verified", async () => {
             expect.assertions(2);
@@ -208,6 +215,12 @@ describe("USER rate", () => {
             );
             expect(res.statusCode).toBe(StatusCode.NoContent);
         });
+        it("GET /user/rate/:id, should return statuscode 404 if id is not valid", async () => {
+            expect.assertions(2);
+            const res: Response = await agentForUser1.get(`/user/rate/${mockUserRateFromUser2Id.toString()}`);
+            expect(res.statusCode).toBe(StatusCode.NotFound);
+            expect(res.body).toBe(`This ${mockUserRateFromUser2Id.toString()} id is not valid.`);
+        });
     });
 
     describe("USER RATES, logged in as admin", () => {
@@ -215,7 +228,7 @@ describe("USER rate", () => {
         const rateId = new Types.ObjectId();
 
         beforeAll(async () => {
-            agent = request.agent(server);
+            agent = request.agent(app);
             await userRateModel.create({
                 _id: rateId,
                 borrow: mockBorrowId,

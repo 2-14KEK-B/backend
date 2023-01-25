@@ -89,7 +89,7 @@ export default class BookController implements Controller {
                 const regex = new RegExp(keyword, "i");
 
                 query.$and?.push({
-                    $or: [{ author: { $regex: regex } }, { title: { $regex: regex } }],
+                    $or: [{ author: { $regex: regex } }, { title: { $regex: regex } }, { isbn: { $regex: regex } }],
                 });
             }
 
@@ -120,7 +120,7 @@ export default class BookController implements Controller {
                 const regex = new RegExp(keyword, "i");
 
                 query.$and?.push({
-                    $or: [{ author: { $regex: regex } }, { title: { $regex: regex } }],
+                    $or: [{ author: { $regex: regex } }, { title: { $regex: regex } }, { isbn: { $regex: regex } }],
                 });
             }
 
@@ -263,7 +263,7 @@ export default class BookController implements Controller {
                 const regex = new RegExp(keyword, "i");
 
                 query = {
-                    $or: [{ author: { $regex: regex } }, { title: { $regex: regex } }],
+                    $or: [{ author: { $regex: regex } }, { title: { $regex: regex } }, { isbn: { $regex: regex } }],
                 };
             }
 
