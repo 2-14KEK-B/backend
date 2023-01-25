@@ -76,13 +76,13 @@ export default class BookController implements Controller {
             unknown,
             unknown,
             unknown,
-            { skip: string; limit: string; sort: "asc" | "desc"; keyword?: string }
+            { skip: string; limit: string; sort: "asc" | "desc"; keyword?: string; genre?: string }
         >,
         res: Response,
         next: NextFunction,
     ) => {
         try {
-            const { skip, limit, sort, keyword } = req.query;
+            const { skip, limit, sort, keyword, genre } = req.query;
 
             const query: FilterQuery<Book> = { $and: [{ available: true }, { for_borrow: true }] };
             if (keyword) {
@@ -90,6 +90,13 @@ export default class BookController implements Controller {
 
                 query.$and?.push({
                     $or: [{ author: { $regex: regex } }, { title: { $regex: regex } }, { isbn: { $regex: regex } }],
+                });
+            }
+            if (genre) {
+                const genreQuery = genre.split(",");
+
+                query.$and?.push({
+                    category: { $all: genreQuery },
                 });
             }
 
@@ -107,13 +114,13 @@ export default class BookController implements Controller {
             unknown,
             unknown,
             unknown,
-            { skip: string; limit: string; sort: "asc" | "desc"; keyword?: string }
+            { skip: string; limit: string; sort: "asc" | "desc"; keyword?: string; genre?: string }
         >,
         res: Response,
         next: NextFunction,
     ) => {
         try {
-            const { skip, limit, sort, keyword } = req.query;
+            const { skip, limit, sort, keyword, genre } = req.query;
 
             const query: FilterQuery<Book> = { $and: [{ available: true }, { for_borrow: false }] };
             if (keyword) {
@@ -121,6 +128,13 @@ export default class BookController implements Controller {
 
                 query.$and?.push({
                     $or: [{ author: { $regex: regex } }, { title: { $regex: regex } }, { isbn: { $regex: regex } }],
+                });
+            }
+            if (genre) {
+                const genreQuery = genre.split(",");
+
+                query.$and?.push({
+                    category: { $all: genreQuery },
                 });
             }
 
