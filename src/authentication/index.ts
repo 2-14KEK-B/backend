@@ -95,7 +95,6 @@ export default class AuthenticationController implements Controller {
             }
 
             if (!user.password_reset_token) {
-                console.log(user);
                 return next(new HttpError("Token already has been used"));
             }
 
