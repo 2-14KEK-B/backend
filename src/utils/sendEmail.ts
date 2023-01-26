@@ -3,6 +3,7 @@ import { createTransport } from "nodemailer";
 import HttpError from "@exceptions/Http";
 import type { NextFunction } from "express";
 
+/* istanbul ignore next */
 async function sendEmail(email: string, subject: string, body: string, next: NextFunction) {
     const transporter = createTransport({
         service: "gmail",

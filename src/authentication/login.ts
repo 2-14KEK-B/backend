@@ -49,11 +49,13 @@ export default class LoginController implements Controller {
             const isPasswordMatching = await compare(password, existingUser.password);
             if (!isPasswordMatching) return next(new WrongCredentialsException());
 
-            const user = await this.user.getInitialData(existingUser._id.toString());
+            const user = await this.user //
+                .getInitialData(existingUser._id.toString());
 
             delete user["password"];
 
             req.session["userId"] = user._id.toString();
+            req.session["locale"] = user.locale;
             req.session["role"] = user.role;
 
             res.json(user);
@@ -85,24 +87,32 @@ export default class LoginController implements Controller {
 
             if (!data) return next(new HttpError("Failed to receive data from google"));
 
-            const userId = await this.user.exists({ email: data.email }).exec();
+            const userId = await this.user //
+                .exists({ email: data.email })
+                .exec();
 
             if (userId) {
-                const user = await this.user.getInitialData(userId as unknown as string);
+                const user = await this.user //
+                    .getInitialData(userId as unknown as string);
+
                 req.session["userId"] = user._id;
+                req.session["locale"] = user.locale;
                 req.session["role"] = user.role;
+
                 return res.send(user);
             } else {
-                const newUser = await this.user.create({
-                    ...data,
-                    email_is_verified: data.email_verified,
-                    fullname: data.name,
-                    password: "stored at Google",
-                });
+                const newUser = await this.user //
+                    .create({
+                        ...data,
+                        email_is_verified: data.email_verified,
+                        fullname: data.name,
+                        password: "stored at Google",
+                    });
 
                 if (!newUser) return next(new HttpError("Failed to create user"));
 
                 req.session["userId"] = newUser._id;
+                req.session["locale"] = newUser.locale;
                 req.session["role"] = newUser.role;
                 return res.send(newUser);
             }

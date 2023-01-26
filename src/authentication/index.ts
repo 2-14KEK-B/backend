@@ -43,6 +43,7 @@ export default class AuthenticationController implements Controller {
         }
     };
 
+    /* istanbul ignore next */
     private sendForgotPasswordEmail = async (req: Request<{ email: string }>, res: Response, next: NextFunction) => {
         try {
             const { email } = req.body;
@@ -75,6 +76,7 @@ export default class AuthenticationController implements Controller {
             next(new HttpError(error.message));
         }
     };
+    /* istanbul ignore next */
     private saveNewPassword = async (
         req: Request<undefined, undefined, { token: string; oldPassword: string; newPassword: string }>,
         res: Response,

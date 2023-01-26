@@ -32,6 +32,27 @@ export default class App {
         if (env.isDev) this.app.use(morgan("| :date[iso] | :method | :url | :status | :response-time ms |"));
         if (env.isProd) this.app.use(morgan("tiny"));
 
+        this.app.disable("x-powered-by");
+        this.app.use((_req, res, next) => {
+            res.setHeader(
+                "Content-Security-Policy",
+                "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests",
+            );
+            res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+            res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+            res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
+            res.setHeader("Origin-Agent-Cluster", "?1");
+            res.setHeader("Referrer-Policy", "no-referrer");
+            res.setHeader("Strict-Transport-Security", "max-age=15552000; includeSubDomains");
+            res.setHeader("X-Content-Type-Options", "nosniff");
+            res.setHeader("X-DNS-Prefetch-Control", "off");
+            res.setHeader("X-Download-Options", "noopen");
+            res.setHeader("X-Frame-Options", "SAMEORIGIN");
+            res.setHeader("X-Permitted-Cross-Domain-Policies", "none");
+            res.setHeader("X-XSS-Protection", "0");
+            next();
+        });
+
         this.app.use(json());
         this.app.use(urlencoded({ extended: false }));
         this.app.use(cors(corsOptions));
@@ -60,7 +81,7 @@ export default class App {
                 maxAge: MAX_AGE,
                 httpOnly: true,
                 signed: true,
-                sameSite: true,
+                sameSite: "strict",
                 secure: "auto",
             },
             saveUninitialized: false,

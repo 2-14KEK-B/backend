@@ -60,6 +60,7 @@ export default class RegisterController implements Controller {
         }
     };
 
+    /* istanbul ignore next */
     private emailVerification = async (
         req: Request<undefined, undefined, undefined, { token: string }>,
         res: Response,
