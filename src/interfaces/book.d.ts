@@ -22,7 +22,7 @@ interface Book {
 interface CreateBook {
     author: string;
     title: string;
-    isbn: string;
+    isbn?: string;
     picture?: string;
     category?: string[];
     price?: number;

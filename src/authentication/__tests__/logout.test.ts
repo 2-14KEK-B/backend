@@ -16,7 +16,7 @@ describe("POST /auth/logout", () => {
     beforeAll(async () => {
         app = new App([new AuthenticationController()]).getApp();
         agent = request.agent(app);
-        await userModel.create({ email: mockUser.email, password: hpw });
+        await userModel.create({ email: mockUser.email, email_is_verified: true, password: hpw });
     });
 
     it("returns statuscode 401 if not already logged in", async () => {

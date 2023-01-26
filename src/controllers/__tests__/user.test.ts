@@ -18,16 +18,24 @@ describe("USERS", () => {
         mockUser1: Partial<User> = {
             _id: mockUser1Id,
             email: "testuser1@test.com",
+            email_is_verified: true,
             password: pw,
             createdAt: new Date("2020-10-10"),
         },
         mockUser2: Partial<User> = {
             _id: mockUser2Id,
             email: "testuser2@test.com",
+            email_is_verified: true,
             password: pw,
             createdAt: new Date("2021-10-10"),
         },
-        mockAdmin: Partial<User> = { _id: mockAdminId, email: "testadmin@test.com", password: pw, role: "admin" };
+        mockAdmin: Partial<User> = {
+            _id: mockAdminId,
+            email: "testadmin@test.com",
+            password: pw,
+            role: "admin",
+            email_is_verified: true,
+        };
 
     beforeAll(async () => {
         app = new App([new AuthenticationController(), new UserController()]).getApp();

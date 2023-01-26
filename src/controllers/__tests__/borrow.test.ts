@@ -32,6 +32,7 @@ describe("BORROWS", () => {
         mockUser1: Partial<User> = {
             _id: mockUser1Id,
             email: "testuser1@test.com",
+            email_is_verified: true,
             password: pw,
             books: [],
             borrows: [mockBorrowId],
@@ -39,6 +40,7 @@ describe("BORROWS", () => {
         mockUser2: Partial<User> = {
             _id: mockUser2Id,
             email: "testuser2@test.com",
+            email_is_verified: true,
             password: pw,
             books: [mockBook1FromUser2Id],
             borrows: [mockBorrowId],
@@ -164,7 +166,7 @@ describe("BORROWS", () => {
         it("PATCH /borrow/:id/verify, should return statuscode 400 if logged in user have nothing to do with the borrow", async () => {
             expect.assertions(2);
             const thirdMockUserData = { email: "thirduser@test.com", password: pw };
-            await userModel.create({ email: thirdMockUserData.email, password: hpw });
+            await userModel.create({ email: thirdMockUserData.email, email_is_verified: true, password: hpw });
             const agent: SuperAgentTest = request.agent(app);
             await agent.post("/auth/login").send(thirdMockUserData);
             const res: Response = await agent.patch(`/borrow/${mockBorrowId.toString()}/verify`);
@@ -208,6 +210,7 @@ describe("BORROWS", () => {
             mockUser3: Partial<User> = {
                 _id: mockUser3Id,
                 email: "testuser1@test.com",
+                email_is_verified: true,
                 password: pw,
                 books: [mockBookFromUser3Id],
                 borrows: [],
@@ -289,6 +292,7 @@ describe("BORROWS", () => {
             mockAdmin: Partial<User> = {
                 _id: mockAdminId,
                 email: "testadmin@test.com",
+                email_is_verified: true,
                 password: pw,
                 role: "admin",
                 books: [],

@@ -33,7 +33,7 @@
         "**/node_modules": false,
         "**/*.js.map": true,
         "**/*.npmrc": true,
-        "**/.env.example": true
+        "**/.env.example": false
     },
     "jest.autoRun": "off",
     "[jsonc]": {

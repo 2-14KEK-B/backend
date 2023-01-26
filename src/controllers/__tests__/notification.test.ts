@@ -27,6 +27,7 @@ describe("NOTIFICATIONS", () => {
         mockUser1: Partial<User> = {
             _id: mockUser1Id,
             email: "testuser1@test.com",
+            email_is_verified: true,
             password: pw,
             createdAt: new Date("2020-10-10"),
             notifications: [
@@ -43,6 +44,7 @@ describe("NOTIFICATIONS", () => {
         mockUser2: Partial<User> = {
             _id: mockUser2Id,
             email: "testuser2@test.com",
+            email_is_verified: true,
             password: pw,
             createdAt: new Date("2021-10-10"),
         },

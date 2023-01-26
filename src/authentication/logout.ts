@@ -24,7 +24,7 @@ export default class LogoutController implements Controller {
             req.session.destroy(error => {
                 if (error) {
                     /* istanbul ignore next */
-                    console.log(new Error(error));
+                    next(new HttpError(error.message));
                 }
                 res.clearCookie("session-id");
                 res.json("Logged out successfully.");
