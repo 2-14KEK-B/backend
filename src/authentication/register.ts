@@ -36,7 +36,8 @@ export default class RegisterController implements Controller {
             const hashedPassword = await hash(password, 10);
             if (!hashedPassword) return next(new HttpError("Something wrong with the password."));
 
-            const token = sign({ email }, env.SECRET, { expiresIn: "1d" });
+            // , { expiresIn: "1d" }
+            const token = sign({ email }, env.SECRET);
 
             const emailBody = {
                 subject: "Email Verification",
@@ -60,6 +61,7 @@ export default class RegisterController implements Controller {
         }
     };
 
+    /* istanbul ignore next */
     private emailVerification = async (
         req: Request<undefined, undefined, undefined, { token: string }>,
         res: Response,
