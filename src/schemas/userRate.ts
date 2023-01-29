@@ -19,7 +19,7 @@ const userRateSchema = new Schema<UserRate>(
             ref: "Borrow",
             required: true,
         },
-        comment: String,
+        comment: { type: String, maxlength: 256 },
         rate: { type: Boolean, required: true },
     },
     { timestamps: true, versionKey: false },

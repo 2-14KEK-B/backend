@@ -24,25 +24,6 @@ export default class UserController implements Controller {
         this.initializeRoutes();
     }
 
-    /**
-     * Routok:
-     *  - mindenkinek
-     *      GET
-     *      - /user/:id
-     *  - usernek
-     *      PATCH
-     *      - /user/me
-     *      DELETE
-     *      - /user/me
-     *  - adminnak
-     *      GET
-     *      - /user
-     *      PATCH
-     *      - /user/:id
-     *      DELETE
-     *      - /user/:id
-     */
-
     private initializeRoutes() {
         this.router.get("/user/:id([0-9a-fA-F]{24})", this.getUserById);
         this.router
@@ -107,12 +88,14 @@ export default class UserController implements Controller {
         try {
             const userId = req.session["userId"];
 
+            const userData: Partial<User> = { ...req.body, updatedAt: new Date() };
+
             const user = await this.user //
-                .findByIdAndUpdate(userId, { ...req.body, createdAt: new Date() }, { new: true })
+                .findByIdAndUpdate(userId, userData, { new: true, runValidators: true })
                 .lean<User>()
                 .exec();
             if (user == null) {
-                return next(new HttpError("Failed to modify your profile"));
+                return next(new HttpError("failedUpdateYourUser"));
             }
 
             res.json(user);
@@ -125,16 +108,16 @@ export default class UserController implements Controller {
         try {
             const userId = req.session["userId"] as string;
 
-            const { acknowledged } = await this.user //
+            const { deletedCount } = await this.user //
                 .deleteOne({ _id: userId })
                 .exec();
-            if (!acknowledged) {
-                return next(new HttpError("Failed to delete your own profile"));
+            if (deletedCount != 1) {
+                return next(new HttpError("failedDeleteYourUser"));
             }
 
             req.session.destroy(error => {
                 if (error) {
-                    return next(new HttpError(error));
+                    return next(new HttpError(error.message));
                 }
                 res.clearCookie("session-id");
                 res.sendStatus(StatusCode.NoContent);
@@ -196,7 +179,7 @@ export default class UserController implements Controller {
                 .findByIdAndUpdate(userId, userData, { new: true })
                 .lean<User>()
                 .exec();
-            if (!user) return next(new HttpError("Failed to update user"));
+            if (!user) return next(new HttpError("failedUpdateUser"));
 
             res.json(user);
         } catch (error) {
@@ -209,10 +192,10 @@ export default class UserController implements Controller {
             const userId = req.params["id"];
             if (await isIdNotValid(this.user, [userId], next)) return;
 
-            const { acknowledged } = await this.user //
+            const { deletedCount } = await this.user //
                 .deleteOne({ _id: userId })
                 .exec();
-            if (!acknowledged) return next(new HttpError("Failed to delete user"));
+            if (deletedCount != 1) return next(new HttpError("failedDeleteUser"));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {

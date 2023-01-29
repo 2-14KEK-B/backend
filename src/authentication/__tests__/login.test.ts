@@ -3,14 +3,21 @@ import App from "../../app";
 import AuthenticationController from "@authentication/index";
 import userModel from "@models/user";
 import StatusCode from "@utils/statusCodes";
+import { dictionaries } from "@utils/dictionaries";
 import type { Application } from "express";
 import type { User } from "@interfaces/user";
 
 describe("POST /auth/login", () => {
     let app: Application;
+    const dictionary = dictionaries[global.language];
     const pw = global.MOCK_PASSWORD,
         hpw = global.MOCK_HASHED_PASSWORD,
-        mockUser: Partial<User> = { email: "test@test.com", email_is_verified: true, username: "test", password: pw };
+        mockUser: Partial<User> = {
+            email: "test@test.com",
+            email_is_verified: true,
+            username: "testForLogin",
+            password: pw,
+        };
 
     beforeAll(async () => {
         app = new App([new AuthenticationController()]).getApp();
@@ -24,7 +31,7 @@ describe("POST /auth/login", () => {
             password: "anything",
         });
         expect(res.statusCode).toEqual(StatusCode.Unauthorized);
-        expect(res.body).toEqual("Wrong credentials provided");
+        expect(res.body).toEqual(dictionary.error.wrongCredentials);
     });
 
     it("returns statuscode 406 if email is not a valid email", async () => {
@@ -44,7 +51,7 @@ describe("POST /auth/login", () => {
             password: "wrongpassword",
         });
         expect(res.statusCode).toEqual(StatusCode.Unauthorized);
-        expect(res.body).toEqual("Wrong credentials provided");
+        expect(res.body).toEqual(dictionary.error.wrongCredentials);
     });
 
     it("returns statuscode 200 if user exists with email", async () => {

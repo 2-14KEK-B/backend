@@ -42,7 +42,7 @@ export default class NotificationController implements Controller {
                 .populate({ path: "notifications.from", select: "username fullname email picture" })
                 .lean<{ notifications: Notification[] }>()
                 .exec();
-            if (notifications == null) return next(new HttpError("Failed to get notifications"));
+            if (notifications == null) return next(new HttpError("failedGetNotifications"));
 
             res.json(notifications);
         } catch (error) {
@@ -70,7 +70,7 @@ export default class NotificationController implements Controller {
 
             const { modifiedCount } = await this.user //
                 .createNotification(userId, loggedInId, doc_id, doc_type, not_type);
-            if (!modifiedCount && modifiedCount != 1) return next();
+            if (modifiedCount != 1) return next(new HttpError("failedCreateNotification"));
 
             res.sendStatus(StatusCode.OK);
         } catch (error) {
@@ -87,6 +87,11 @@ export default class NotificationController implements Controller {
         try {
             const loggedInId = req.session["userId"];
             const notificationId = req.params["id"];
+
+            const isExists = this.user //
+                .exists({ _id: loggedInId, notifications: { _id: notificationId } })
+                .exec();
+            if (isExists == null) return next(new HttpError("failedGetNotificationById"));
 
             const { modifiedCount } = await this.user
                 .updateOne(
@@ -106,7 +111,7 @@ export default class NotificationController implements Controller {
                     },
                 )
                 .exec();
-            if (!modifiedCount && modifiedCount != 1) return next();
+            if (modifiedCount != 1) return next(new HttpError("failedUpdateNotificationSeen"));
 
             res.sendStatus(StatusCode.OK);
         } catch (error) {
@@ -124,10 +129,15 @@ export default class NotificationController implements Controller {
             const loggedInId = req.session["userId"];
             const notificationId = req.params["id"];
 
+            const isExists = this.user //
+                .exists({ _id: loggedInId, notifications: { _id: notificationId } })
+                .exec();
+            if (isExists == null) return next(new HttpError("failedGetNotificationById"));
+
             const { modifiedCount } = await this.user
                 .updateOne({ _id: loggedInId }, { $pull: { notifications: { _id: notificationId } } })
                 .exec();
-            if (!modifiedCount && modifiedCount != 1) return next();
+            if (modifiedCount != 1) return next(new HttpError("failedDeleteNotificationById"));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {

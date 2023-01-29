@@ -19,6 +19,7 @@ export default class App {
         this.app = express();
         this.server = createServer(this.app);
         this.initSession();
+        this.initLanguage();
         this.initializeMiddlewares();
         this.initializeControllers(controllers);
         this.initializeErrorHandling();
@@ -26,6 +27,17 @@ export default class App {
 
     public getApp(): Application {
         return this.app;
+    }
+
+    private initLanguage() {
+        this.app.use((req, _res, next) => {
+            if (env.isTest) {
+                global.language = "en";
+            } else {
+                global.language = (req.headers["accept-language"] as "hu" | "en") || "hu";
+            }
+            next();
+        });
     }
 
     private initializeMiddlewares() {

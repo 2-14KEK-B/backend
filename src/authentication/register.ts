@@ -3,6 +3,7 @@ import { JwtPayload, sign, verify } from "jsonwebtoken";
 import userModel from "@models/user";
 import env from "@config/validateEnv";
 import { sendEmail } from "@utils/sendEmail";
+import { dictionaries } from "@utils/dictionaries";
 import validationMiddleware from "@middlewares/validation";
 import RegisterDto from "@validators/register";
 import HttpError from "@exceptions/Http";
@@ -10,6 +11,7 @@ import UserAlreadyExistsException from "@exceptions/UserAlreadyExists";
 import type { NextFunction, Request, Response, Router } from "express";
 import type Controller from "@interfaces/controller";
 import type { RegisterCred } from "@interfaces/authentication";
+import StatusCode from "@utils/statusCodes";
 
 export default class RegisterController implements Controller {
     path: string;
@@ -29,20 +31,24 @@ export default class RegisterController implements Controller {
 
     private register = async (req: Request<unknown, unknown, RegisterCred>, res: Response, next: NextFunction) => {
         try {
-            const { email, password } = req.body;
+            const { email, username, password } = req.body;
 
-            if (await this.user.exists({ email: email })) return next(new UserAlreadyExistsException(req.body.email));
+            if (await this.user.exists({ $or: [{ email }, { username }] }))
+                return next(new UserAlreadyExistsException());
 
             const hashedPassword = await hash(password, 10);
-            if (!hashedPassword) return next(new HttpError("Something wrong with the password."));
+            if (!hashedPassword) return next(new HttpError("defaultPassword"));
 
             // , { expiresIn: "1d" }
             const token = sign({ email }, env.SECRET);
 
+            // const dictionary = dictionaries[req.headers["accept-language"]];
+            const dictionary = dictionaries[global.language];
+            const body = dictionary.email.passwordBody;
+
             const emailBody = {
-                subject: "Email Verification",
-                html: `<div>Hi,</div><br /><div>We just need to verify your email address before you can access ${env.FRONT_URL}.</div><br /><div>Verify your email address ${env.FRONT_URL}/verify?token=${token}.</div><br /><div>Thanks! The BookSwap team</div>
-                `,
+                subject: dictionary.email.verifySubject,
+                html: body.replace("#link#", `${env.FRONT_URL}/verify?token=${token}`),
             };
 
             if (!env.isTest) await sendEmail(email, emailBody.subject, emailBody.html, next);
@@ -52,9 +58,9 @@ export default class RegisterController implements Controller {
                 password: hashedPassword,
                 verification_token: token,
             });
-            if (!newUser) return next(new HttpError("Something wrong with the user creation."));
+            if (!newUser) return next(new HttpError("failedUserCreation"));
 
-            res.json(`user created: ${newUser.email}`);
+            res.sendStatus(StatusCode.NoContent);
         } catch (error) {
             /* istanbul ignore next */
             next(new HttpError(error.message));
@@ -72,23 +78,26 @@ export default class RegisterController implements Controller {
 
             const { email } = verify(token, env.SECRET) as JwtPayload;
             if (!email) {
-                return next(new HttpError("Token is not valid or expired"));
+                return next(new HttpError("tokenNotValidOrExpired"));
             }
 
             const user = await this.user.findOne({ email }).exec();
             if (user == null) {
-                return next(new HttpError("Failed to verify the email"));
+                return next(new HttpError("emailFailedVerify"));
             }
             if (user.email_is_verified) {
-                return next(new HttpError("Email already verified. Just log in."));
+                return next(new HttpError("emailAlreadyVerified"));
             }
+
+            // const dictionary = dictionaries[req.headers["accept-language"]];
+            const dictionary = dictionaries[global.language];
 
             user.email_is_verified = true;
             user.verification_token = undefined;
 
             await user.save();
 
-            res.json("Email verified successfully");
+            res.json(dictionary.success.emailVerification);
         } catch (error) {
             /* istanbul ignore next */
             next(new HttpError(error.message));

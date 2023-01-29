@@ -4,12 +4,14 @@ import userModel from "@models/user";
 import UserController from "@controllers/user";
 import AuthenticationController from "@authentication/index";
 import StatusCode from "@utils/statusCodes";
+import { dictionaries } from "@utils/dictionaries";
 import { PaginateResult, Types } from "mongoose";
 import type { Application } from "express";
 import type { ModifyUser, User } from "@interfaces/user";
 
 describe("USERS", () => {
     let app: Application;
+    const dictionary = dictionaries[global.language];
     const pw = global.MOCK_PASSWORD,
         hpw = global.MOCK_HASHED_PASSWORD,
         mockUser1Id = new Types.ObjectId(),
@@ -19,6 +21,7 @@ describe("USERS", () => {
             _id: mockUser1Id,
             email: "testuser1@test.com",
             email_is_verified: true,
+            username: "test1ForUser",
             password: pw,
             createdAt: new Date("2020-10-10"),
         },
@@ -26,15 +29,17 @@ describe("USERS", () => {
             _id: mockUser2Id,
             email: "testuser2@test.com",
             email_is_verified: true,
+            username: "test2ForUser",
             password: pw,
             createdAt: new Date("2021-10-10"),
         },
         mockAdmin: Partial<User> = {
             _id: mockAdminId,
             email: "testadmin@test.com",
+            email_is_verified: true,
+            username: "testAdminForUser",
             password: pw,
             role: "admin",
-            email_is_verified: true,
         };
 
     beforeAll(async () => {
@@ -97,6 +102,13 @@ describe("USERS", () => {
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body.username).toBe(newData.username);
         });
+        it("PATCH /user/me, should return statuscode 400 if picture is not valid url", async () => {
+            expect.assertions(2);
+            const newData: ModifyUser = { picture: "http://www.justatestforerror.com" };
+            const res: Response = await agent.patch(`/user/me`).send(newData);
+            expect(res.statusCode).toBe(StatusCode.BadRequest);
+            expect(res.body).toBe(dictionary.error.invalidUrl);
+        });
         it("DELETE /user/me, should return statuscode 200 if it's not logged in user", async () => {
             expect.assertions(1);
             const res: Response = await agent.delete(`/user/me`);
@@ -121,6 +133,8 @@ describe("USERS", () => {
             expect.assertions(3);
             const mockUser = await userModel.create({
                 email: "testemail@email.com",
+                email_is_verified: true,
+                username: "testForUser",
                 password: hpw,
                 createdAt: new Date("2010-10-10"),
             });

@@ -5,6 +5,7 @@ import BookController from "@controllers/book";
 import AuthenticationController from "@authentication/index";
 import App from "../../app";
 import StatusCode from "@utils/statusCodes";
+import { dictionaries } from "@utils/dictionaries";
 import { Types } from "mongoose";
 import type { Application } from "express";
 import type { BookRate } from "@interfaces/bookRate";
@@ -13,6 +14,7 @@ import type { User } from "@interfaces/user";
 
 describe("BOOK rate", () => {
     let app: Application;
+    const dictionary = dictionaries[global.language];
     const pw = global.MOCK_PASSWORD,
         hpw = global.MOCK_HASHED_PASSWORD,
         mockBookId = new Types.ObjectId(),
@@ -20,14 +22,24 @@ describe("BOOK rate", () => {
         mockRateFromAdminToMockBookId = new Types.ObjectId(),
         mockRateFromAdminToMockBookFromUserId = new Types.ObjectId(),
         mockRateFromUserToMockBookFromAdminId = new Types.ObjectId(),
+        mockUploaderId = new Types.ObjectId(),
         mockUserId = new Types.ObjectId(),
         mockAdminId = new Types.ObjectId(),
         mockBookFromUserId = new Types.ObjectId(),
         mockBookFromAdminId = new Types.ObjectId(),
+        mockUploader: Partial<User> = {
+            _id: mockUploaderId,
+            email: "testuserforuploader@test.com",
+            email_is_verified: true,
+            username: "testUploaderForBookRate",
+            password: pw,
+            books: [mockBookId],
+        },
         mockUser: Partial<User> = {
             _id: mockUserId,
             email: "testuser@test.com",
             email_is_verified: true,
+            username: "testForBookRate",
             password: pw,
             rated_books: [mockBookId],
         },
@@ -35,12 +47,14 @@ describe("BOOK rate", () => {
             _id: mockAdminId,
             email: "testadmin@test.com",
             email_is_verified: true,
+            username: "testAdminForBookRate",
             password: pw,
             role: "admin",
             rated_books: [mockBookId],
         },
         mockBook: Partial<Book> = {
             _id: mockBookId,
+            uploader: mockUploaderId,
             author: "testAuthor",
             title: "testTitle",
             for_borrow: true,
@@ -89,6 +103,7 @@ describe("BOOK rate", () => {
     beforeAll(async () => {
         app = new App([new AuthenticationController(), new BookController()]).getApp();
         await userModel.create([
+            { ...mockUploader, password: hpw },
             { ...mockUser, password: hpw },
             { ...mockAdmin, password: hpw },
         ]);
@@ -149,7 +164,7 @@ describe("BOOK rate", () => {
                 )
                 .send({ rate: 2 });
             expect(res.statusCode).toBe(StatusCode.BadRequest);
-            expect(res.body).toBe("You do not have book rate to update");
+            expect(res.body).toBe(dictionary.error.notHaveBookRate);
         });
         it("POST /book/:id/rate, should return statuscode 200 if successfully rated", async () => {
             expect.assertions(2);
@@ -161,7 +176,7 @@ describe("BOOK rate", () => {
             expect.assertions(2);
             const res: Response = await agent.post(`/book/${mockBookFromAdminId.toString()}/rate`).send({ rate: 2 });
             expect(res.statusCode).toBe(StatusCode.BadRequest);
-            expect(res.body).toBe("Already rated this book");
+            expect(res.body).toBe(dictionary.error.alreadyRatedBook);
         });
 
         it("DELETE /book/:id/rate, should return statuscode 204 if logged in user created rate for the book", async () => {
@@ -177,7 +192,7 @@ describe("BOOK rate", () => {
                 `/book/${mockBookFromAdminId.toString()}/rate/${mockRateFromUserToMockBookFromAdminId.toString()}`,
             );
             expect(res.statusCode).toBe(StatusCode.BadRequest);
-            expect(res.body).toBe("You do not have rate for this book");
+            expect(res.body).toBe(dictionary.error.notHaveBookRate);
         });
     });
     describe("BOOK RATE, logged in as admin", () => {
@@ -210,7 +225,7 @@ describe("BOOK rate", () => {
                 )
                 .send({ rate: 1 });
             expect(res.statusCode).toBe(StatusCode.BadRequest);
-            expect(res.body).toBe("This book does not contain rate with this id");
+            expect(res.body).toBe(dictionary.error.notContainBookRate);
         });
         it("DELETE /admin/book/rate/:bookId/:rateId, should be return 400 if rate id not valid", async () => {
             expect.assertions(2);
@@ -218,7 +233,7 @@ describe("BOOK rate", () => {
                 `/admin/book/${mockBookFromAdminId.toString()}/rate/${mockRateFromAdminToMockBookFromUserId.toString()}`,
             );
             expect(res.statusCode).toBe(StatusCode.BadRequest);
-            expect(res.body).toBe("This book does not contain rate with this id");
+            expect(res.body).toBe(dictionary.error.notContainBookRate);
         });
         it("DELETE /admin/book/rate/:bookId/:rateId, should be return 204", async () => {
             expect.assertions(1);

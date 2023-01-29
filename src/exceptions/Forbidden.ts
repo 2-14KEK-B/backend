@@ -3,6 +3,6 @@ import StatusCode from "@utils/statusCodes";
 
 export default class ForbiddenException extends HttpError {
     constructor() {
-        super("Forbidden", StatusCode.Forbidden);
+        super("forbidden", StatusCode.Forbidden);
     }
 }

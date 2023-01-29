@@ -6,4 +6,5 @@ declare global {
 
     var MOCK_PASSWORD: string;
     var MOCK_HASHED_PASSWORD: string;
+    var language: "hu" | "en";
 }

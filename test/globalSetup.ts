@@ -9,6 +9,7 @@ export = async function globalSetup() {
     const instance = await MongoMemoryServer.create();
     const uri = instance.getUri();
 
+    global.language = "en";
     global.mongoInstance = instance;
     global.MOCK_PASSWORD = password;
     global.MOCK_HASHED_PASSWORD = await hash(password, 10);

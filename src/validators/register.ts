@@ -3,7 +3,6 @@ import type { RegisterCred } from "@interfaces/authentication";
 
 export default class RegisterDto implements RegisterCred {
     @IsString()
-    @IsOptional()
     public username: string;
 
     @IsString()
