@@ -1,6 +1,7 @@
 import env from "@config/validateEnv";
-import HttpError from "@exceptions/Http";
-import { dictionaries } from "@utils/dictionaries";
+import { I18n } from "i18n";
+import { join, normalize } from "node:path";
+import type HttpError from "@exceptions/Http";
 import type { NextFunction, Request, Response } from "express";
 
 export default async function errorMiddleware(
@@ -11,22 +12,14 @@ export default async function errorMiddleware(
 ): Promise<void> {
     const status = error.status || 500;
 
-    // const dictionary = dictionaries[req.headers["accept-language"]];
-    const dictionary = dictionaries[global.language];
-    const message = dictionary.error[error.message as keyof typeof dictionary.error] ?? error.message;
+    const i18n = new I18n({
+        locales: ["en", "hu"],
+        defaultLocale: "hu",
+        directory: normalize(join(__dirname, "..", "locales")),
+        objectNotation: true,
+    });
 
-    if (error instanceof HttpError) {
-        if (error.slots !== null) {
-            const slots = Object.keys(error.slots);
-
-            for (const slot in slots) {
-                const toReplace = error.slots[slot];
-                if (toReplace) {
-                    message.replace(`#${slot}#`, toReplace.toString());
-                }
-            }
-        }
-    }
+    const message = i18n.__(error.message);
 
     if (env.isDev) {
         /* istanbul ignore next */

@@ -7,23 +7,26 @@ const borrowSchema = new Schema<Borrow>(
         from: {
             type: Schema.Types.ObjectId,
             ref: "User",
-            required: true,
+            required: [true, "borrow.fromRequired"],
         },
         to: {
             type: Schema.Types.ObjectId,
             ref: "User",
-            required: true,
+            required: [true, "borrow.toRequired"],
         },
         type: {
             type: String,
-            required: true,
-            enum: ["borrow", "lend"],
+            required: [true, "borrow.typeRequired"],
+            enum: {
+                values: ["borrow", "lend"],
+                message: "borrow.onlyFromTypes",
+            },
         },
         books: [
             {
                 type: Schema.Types.ObjectId,
                 ref: "Book",
-                required: true,
+                required: [true, "borrow.booksRequired"],
             },
         ],
         verified: { type: Boolean, default: false },

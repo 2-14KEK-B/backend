@@ -7,7 +7,6 @@ import userModel from "@models/user";
 import bookModel from "@models/book";
 import borrowModel from "@models/borrow";
 import StatusCode from "@utils/statusCodes";
-import { dictionaries } from "@utils/dictionaries";
 import { PaginateResult, Types } from "mongoose";
 import type { Application } from "express";
 import type { CreateBorrow, ModifyBorrow } from "@interfaces/borrow";
@@ -17,7 +16,7 @@ import type { User } from "@interfaces/user";
 
 describe("BORROWS", () => {
     let app: Application;
-    const dictionary = dictionaries[global.language];
+    const i18n = global.I18n;
     const pw = global.MOCK_PASSWORD,
         hpw = global.MOCK_HASHED_PASSWORD,
         mockBook1FromUser2Id = new Types.ObjectId(),
@@ -180,7 +179,7 @@ describe("BORROWS", () => {
             await agent.post("/auth/login").send(thirdMockUserData);
             const res: Response = await agent.patch(`/borrow/${mockBorrowId.toString()}/verify`);
             expect(res.statusCode).toBe(StatusCode.BadRequest);
-            expect(res.body).toBe(dictionary.error.cannotModifyBorrow);
+            expect(res.body).toBe(i18n?.__("error.borrow.cannotModifyBorrow"));
         });
         it("PATCH /borrow/:id/verify, should return statuscode 204 if logged in user who is the 'from' and modify 'verified'", async () => {
             expect.assertions(1);
@@ -193,7 +192,7 @@ describe("BORROWS", () => {
                 `/borrow/${mockBorrowForLoggedInUser._id?.toString()}/verify`,
             );
             expect(res.statusCode).toBe(StatusCode.BadRequest);
-            expect(res.body).toBe(dictionary.error.cannotModifyVerified);
+            expect(res.body).toBe(i18n?.__("error.borrow.cannotModifyVerified"));
         });
         it("DELETE /borrow/:id, should return statuscode 204", async () => {
             expect.assertions(1);
@@ -279,15 +278,15 @@ describe("BORROWS", () => {
             const resNone = await agentForUser1.patch(`/borrow/${mockLendId.toString()}`);
             const resNotValid: Response = await agentForUser1.patch(`/borrow/${mockLendId.toString()}`).send(patch);
             expect(resNone.statusCode).toBe(StatusCode.NotFound);
-            expect(resNone.body).toBe(dictionary.error.idNotValid);
+            expect(resNone.body).toBe(i18n?.__("error.idNotValid"));
             expect(resNotValid.statusCode).toBe(StatusCode.NotFound);
-            expect(resNotValid.body).toBe(dictionary.error.idNotValid);
+            expect(resNotValid.body).toBe(i18n?.__("error.idNotValid"));
         });
         it("PATCH /borrow/:id/verify, should return statuscode 400 if logged in user who is the 'from' and modify 'verified'", async () => {
             expect.assertions(2);
             const res = await agentForUser2.patch(`/borrow/${mockLendId.toString()}/verify`);
             expect(res.statusCode).toBe(StatusCode.BadRequest);
-            expect(res.body).toBe(dictionary.error.cannotModifyVerified);
+            expect(res.body).toBe(i18n?.__("error.borrow.cannotModifyVerified"));
         });
         it("PATCH /borrow/:id/verify, should return statuscode 204 if logged in user who is the 'from' and modify 'verified'", async () => {
             expect.assertions(1);

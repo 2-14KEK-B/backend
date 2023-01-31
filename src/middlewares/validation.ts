@@ -7,8 +7,11 @@ import type { Request, Response, NextFunction, RequestHandler } from "express";
 /**
 Checks input from req.data by Dto-s
  */
-export default function validationMiddleware<T>(type: ClassConstructor<T>, skipMissingProperties = false): RequestHandler {
-    return async (req: Request<Record<string, unknown>, Record<string, unknown>, T>, _res: Response, next: NextFunction) => {
+export default function validationMiddleware<T>(
+    type: ClassConstructor<T>,
+    skipMissingProperties = false,
+): RequestHandler {
+    return async (req: Request, _res: Response, next: NextFunction) => {
         const object: Partial<T> = plainToInstance(type, req.body);
 
         const errors: ValidationError[] = await validate(object, {

@@ -2,12 +2,23 @@ import connectToDatabase from "@db/connectToDatabase";
 import { hash } from "bcrypt";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import { connection, disconnect } from "mongoose";
+import { I18n } from "i18n";
+import { resolve } from "node:path";
 
 const password = "test1234";
 
 export = async function globalSetup() {
     const instance = await MongoMemoryServer.create();
     const uri = instance.getUri();
+
+    const i18n = new I18n({
+        locales: ["en", "hu"],
+        defaultLocale: "hu",
+        directory: resolve("src", "locales"),
+        objectNotation: true,
+    });
+
+    global.I18n = i18n;
 
     global.language = "en";
     global.mongoInstance = instance;

@@ -13,6 +13,7 @@ import type { User } from "@interfaces/user";
 
 describe("BOOKS", () => {
     let app: Application;
+    const i18n = global.I18n;
     const pw = global.MOCK_PASSWORD,
         hpw = global.MOCK_HASHED_PASSWORD,
         mockBook1Id = new Types.ObjectId(),
@@ -169,6 +170,50 @@ describe("BOOKS", () => {
             const res: Response = await agentForUser1.post("/book").send(newBook);
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body).toBeInstanceOf(Object as unknown as Book);
+        });
+        it("POST /book, should return 406 if validation fails", async () => {
+            expect.assertions(2);
+            const newBook: CreateBook = {
+                title: "",
+                author: "tes",
+                picture: "http://test.com",
+                isbn: "0112112425",
+                for_borrow: true,
+            };
+            const res: Response = await agentForUser1.post("/book").send(newBook);
+            expect(res.statusCode).toBe(StatusCode.NotAcceptable);
+            expect(res.body).toStrictEqual({
+                validation: [
+                    i18n?.__("validation.book.invalidIsbn"),
+                    i18n?.__("validation.book.authorShort"),
+                    i18n?.__("validation.book.titleRequired"),
+                    i18n?.__("validation.picture.invalidUrl"),
+                ],
+            });
+        });
+        it("POST /book, should return 406 if isbn validation fails", async () => {
+            expect.assertions(4);
+            const invalidRes = {
+                validation: [i18n?.__("validation.book.invalidIsbn")],
+            };
+            const newBook1: CreateBook = {
+                title: "fuafhlna",
+                author: "tesfkaw",
+                isbn: "ISBN 979-1235-16-16-11",
+                for_borrow: true,
+            };
+            const newBook2: CreateBook = {
+                title: "fuafhlna",
+                author: "tesfkaw",
+                isbn: "ISBN 9-87654321-X",
+                for_borrow: true,
+            };
+            const res1: Response = await agentForUser1.post("/book").send(newBook1);
+            const res2: Response = await agentForUser1.post("/book").send(newBook2);
+            expect(res1.statusCode).toBe(StatusCode.NotAcceptable);
+            expect(res2.statusCode).toBe(StatusCode.NotAcceptable);
+            expect(res1.body).toStrictEqual(invalidRes);
+            expect(res2.body).toStrictEqual(invalidRes);
         });
         it("PATCH /book/:id, should return statuscode 204 if logged in user uploaded the book", async () => {
             expect.assertions(2);

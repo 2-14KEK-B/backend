@@ -4,14 +4,13 @@ import userModel from "@models/user";
 import UserController from "@controllers/user";
 import AuthenticationController from "@authentication/index";
 import StatusCode from "@utils/statusCodes";
-// import { dictionaries } from "@utils/dictionaries";
 import { PaginateResult, Types } from "mongoose";
 import type { Application } from "express";
 import type { ModifyUser, User } from "@interfaces/user";
 
 describe("USERS", () => {
     let app: Application;
-    // const dictionary = dictionaries[global.language];
+    const i18n = global.I18n;
     const pw = global.MOCK_PASSWORD,
         hpw = global.MOCK_HASHED_PASSWORD,
         mockUser1Id = new Types.ObjectId(),
@@ -102,13 +101,13 @@ describe("USERS", () => {
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body.username).toBe(newData.username);
         });
-        // it("PATCH /user/me, should return statuscode 400 if picture is not valid url", async () => {
-        //     expect.assertions(2);
-        //     const newData: ModifyUser = { picture: "http://www.justatestforerror.com" };
-        //     const res: Response = await agent.patch(`/user/me`).send(newData);
-        //     expect(res.statusCode).toBe(StatusCode.BadRequest);
-        //     expect(res.body).toBe(dictionary.error.invalidUrl);
-        // });
+        it("PATCH /user/me, should return statuscode 406 if picture is not valid url", async () => {
+            expect.assertions(2);
+            const newData: ModifyUser = { picture: "http://www.justatestforerror.com" };
+            const res: Response = await agent.patch(`/user/me`).send(newData);
+            expect(res.statusCode).toBe(StatusCode.NotAcceptable);
+            expect(res.body).toStrictEqual({ validation: [i18n?.__("validation.picture.invalidUrl")] });
+        });
         it("DELETE /user/me, should return statuscode 200 if it's not logged in user", async () => {
             expect.assertions(1);
             const res: Response = await agent.delete(`/user/me`);

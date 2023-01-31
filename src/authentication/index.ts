@@ -8,7 +8,6 @@ import HttpError from "@exceptions/Http";
 import UnauthorizedException from "@exceptions/Unauthorized";
 import { JwtPayload, sign, verify } from "jsonwebtoken";
 import { sendEmail } from "@utils/sendEmail";
-import { dictionaries } from "@utils/dictionaries";
 import { compare, hash } from "bcrypt";
 import WrongCredentialsException from "@exceptions/WrongCredentials";
 import type Controller from "@interfaces/controller";
@@ -40,7 +39,7 @@ export default class AuthenticationController implements Controller {
             res.json(user);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 
@@ -51,34 +50,30 @@ export default class AuthenticationController implements Controller {
 
             const user = await this.user.findOne({ email: email, email_is_verified: true }).exec();
             if (user == null) {
-                return next(new HttpError("emailNotFoundOrVerified"));
+                return next(new HttpError("error.emailNotFoundOrVerified"));
             }
 
             if (user.password_reset_token) {
-                return next(new HttpError("emailAlreadySent"));
+                return next(new HttpError("error.emailAlreadySent"));
             }
 
             //, { expiresIn: "6h" }
             const token = sign({ email }, env.SECRET);
 
-            // const dictionary = dictionaries[req.headers["accept-language"]];
-            const dictionary = dictionaries[global.language];
-            const body = dictionary.email.passwordBody;
-
             const emailBody = {
-                subject: dictionary.email.passwordSubject,
-                html: body.replace("#link#", `${env.FRONT_URL}/reset-password?token=${token}`),
+                subject: res.__("email.passwordSubject"),
+                html: res.__("email.passwordBody", { link: `${env.FRONT_URL}/reset-password?token=${token}` }),
             };
 
-            if (!env.isTest) await sendEmail(email, emailBody.subject, emailBody.html, next);
+            if (env.isProd) await sendEmail(email, emailBody.subject, emailBody.html, next);
 
             user.password_reset_token = token;
             await user.save();
 
-            res.json(dictionary.success.passwordResetEmail);
+            res.json(res.__("success.passwordResetEmail"));
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
     /* istanbul ignore next */
@@ -91,18 +86,18 @@ export default class AuthenticationController implements Controller {
             const { token, oldPassword, newPassword } = req.body;
             const { email } = verify(token, env.SECRET) as JwtPayload;
             if (!email) {
-                return next(new HttpError("tokenNotValidOrExpired"));
+                return next(new HttpError("error.tokenNotValidOrExpired"));
             }
 
             const user = await this.user
                 .findOne({ email: email, email_is_verified: true }, { password: 1, password_reset_token: 1 })
                 .exec();
             if (user == null) {
-                return next(new HttpError("emailNotFoundOrVerified"));
+                return next(new HttpError("error.emailNotFoundOrVerified"));
             }
 
             if (!user.password_reset_token) {
-                return next(new HttpError("tokenAlreadyUsed"));
+                return next(new HttpError("error.tokenAlreadyUsed"));
             }
 
             if (user.password != "stored at Google") {
@@ -110,20 +105,23 @@ export default class AuthenticationController implements Controller {
                 if (!isPasswordMatching) return next(new WrongCredentialsException());
             }
 
-            const hashedPassword = await hash(newPassword, 10);
-            if (!hashedPassword) return next(new HttpError("defaultPassword"));
+            if (newPassword.length < 8) {
+                return next(new HttpError("validation.user.passwordMinLength"));
+            } else if (newPassword.length > 64) {
+                return next(new HttpError("validation.user.passwordMaxLength"));
+            }
 
-            // const dictionary = dictionaries[req.headers["accept-language"]];
-            const dictionary = dictionaries[global.language];
+            const hashedPassword = await hash(newPassword, 10);
+            if (!hashedPassword) return next(new HttpError("error.defaultPassword"));
 
             user.password = hashedPassword;
             user.password_reset_token = undefined;
             await user.save();
 
-            res.json(dictionary.success.passwordReset);
+            res.json(res.__("success.passwordReset"));
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 }

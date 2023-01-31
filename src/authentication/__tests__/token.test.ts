@@ -3,14 +3,13 @@ import App from "../../app";
 import AuthenticationController from "@authentication/index";
 import userModel from "@models/user";
 import StatusCode from "@utils/statusCodes";
-import { dictionaries } from "@utils/dictionaries";
 import type { Application } from "express";
 import type { User } from "@interfaces/user";
 
 describe("POST /auth", () => {
     let app: Application;
     let agent: SuperAgentTest;
-    const dictionary = dictionaries[global.language];
+    const i18n = global.I18n;
     const pw = global.MOCK_PASSWORD,
         hpw = global.MOCK_HASHED_PASSWORD,
         mockUser: Partial<User> = {
@@ -30,7 +29,7 @@ describe("POST /auth", () => {
         expect.assertions(2);
         const res: Response = await request(app).get("/auth");
         expect(res.statusCode).toEqual(StatusCode.Unauthorized);
-        expect(res.body).toBe(dictionary.error.unauthorized);
+        expect(res.body).toBe(i18n?.__("error.unauthorized"));
     });
 
     it("returns statuscode 200 and user if user already logged in", async () => {

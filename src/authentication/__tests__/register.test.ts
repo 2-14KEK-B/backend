@@ -3,14 +3,13 @@ import App from "../../app";
 import AuthenticationController from "@authentication/index";
 import userModel from "@models/user";
 import StatusCode from "@utils/statusCodes";
-import { dictionaries } from "@utils/dictionaries";
 import type { Application } from "express";
 import type { User } from "@interfaces/user";
 import type { RegisterCred } from "@interfaces/authentication";
 
 describe("POST /auth/register", () => {
     let app: Application;
-    const dictionary = dictionaries[global.language];
+    const i18n = global.I18n;
     const pw = global.MOCK_PASSWORD,
         hpw = global.MOCK_HASHED_PASSWORD,
         mockUser1: Partial<User> = {
@@ -36,24 +35,24 @@ describe("POST /auth/register", () => {
         const userData: RegisterCred = {
             email: mockUser1.email as string,
             username: "testRegisterWithSameEmail",
-            password: pw,
+            password: pw as string,
         };
 
         const res: Response = await request(app).post("/auth/register").send(userData);
         expect(res.statusCode).toEqual(StatusCode.Conflict);
-        expect(res.body).toEqual(dictionary.error.userAlreadyExists);
+        expect(res.body).toEqual(i18n?.__("error.userAlreadyExists"));
     });
     it("returns statuscode 409 if user already exists with this username", async () => {
         expect.assertions(2);
         const userData: RegisterCred = {
             email: "validemailforregister@test.com",
             username: mockUser1.username as string,
-            password: pw,
+            password: pw as string,
         };
 
         const res: Response = await request(app).post("/auth/register").send(userData);
         expect(res.statusCode).toEqual(StatusCode.Conflict);
-        expect(res.body).toEqual(dictionary.error.userAlreadyExists);
+        expect(res.body).toEqual(i18n?.__("error.userAlreadyExists"));
     });
 
     it("returns statuscode 406 if key-value of body is not valid", async () => {
@@ -72,7 +71,7 @@ describe("POST /auth/register", () => {
         const userData: RegisterCred = {
             email: mockUser2.email as string,
             username: mockUser2.username as string,
-            password: pw,
+            password: pw as string,
         };
 
         const res: Response = await request(app).post("/auth/register").send(userData);

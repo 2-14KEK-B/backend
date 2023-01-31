@@ -3,13 +3,12 @@ import App from "../../app";
 import AuthenticationController from "@authentication/index";
 import userModel from "@models/user";
 import StatusCode from "@utils/statusCodes";
-import { dictionaries } from "@utils/dictionaries";
 import type { Application } from "express";
 import type { User } from "@interfaces/user";
 
 describe("POST /auth/login", () => {
     let app: Application;
-    const dictionary = dictionaries[global.language];
+    const i18n = global.I18n;
     const pw = global.MOCK_PASSWORD,
         hpw = global.MOCK_HASHED_PASSWORD,
         mockUser: Partial<User> = {
@@ -31,7 +30,7 @@ describe("POST /auth/login", () => {
             password: "anything",
         });
         expect(res.statusCode).toEqual(StatusCode.Unauthorized);
-        expect(res.body).toEqual(dictionary.error.wrongCredentials);
+        expect(res.body).toEqual(i18n?.__("error.wrongCredentials"));
     });
 
     it("returns statuscode 406 if email is not a valid email", async () => {
@@ -51,7 +50,7 @@ describe("POST /auth/login", () => {
             password: "wrongpassword",
         });
         expect(res.statusCode).toEqual(StatusCode.Unauthorized);
-        expect(res.body).toEqual(dictionary.error.wrongCredentials);
+        expect(res.body).toEqual(i18n?.__("error.wrongCredentials"));
     });
 
     it("returns statuscode 200 if user exists with email", async () => {

@@ -66,12 +66,12 @@ export default class MessageController implements Controller {
                 })
                 .lean<{ messages: Message[] }>()
                 .exec();
-            if (!messages) return next(new HttpError("failedGetMessages"));
+            if (!messages) return next(new HttpError("error.message.failedGetMessages"));
 
             res.json(messages);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 
@@ -136,11 +136,11 @@ export default class MessageController implements Controller {
             if (messages) {
                 res.json(messages[0]);
             } else {
-                return next(new HttpError("failedGetMessagesByUserId"));
+                return next(new HttpError("error.message.failedGetMessagesByUserId"));
             }
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 
@@ -167,22 +167,32 @@ export default class MessageController implements Controller {
                     .updateOne(
                         { users: { $all: [from, to] } },
                         { $push: { message_contents: { ...newMessageContent } } },
+                        { runValidators: true },
                     )
                     .exec();
                 if (modifiedCount != 1) return next(new HttpError("failedCreateMessage"));
                 res.json({ message: { ...newMessageContent, createdAt: new Date() }, isNew: false });
             } else {
-                const messages = await this.message.create({
+                const messages = new this.message({
                     users: [new Types.ObjectId(from), new Types.ObjectId(to)],
                     message_contents: [newMessageContent],
                 });
+                await messages.save({ validateBeforeSave: true });
+                // const messages = await this.message.create({
+                //     users: [new Types.ObjectId(from), new Types.ObjectId(to)],
+                //     message_contents: [newMessageContent],
+                // });
 
-                if (!messages) return next(new HttpError("failedCreateMessage"));
+                if (!messages) return next(new HttpError("error.message.failedCreateMessage"));
 
                 const { modifiedCount } = await this.user
-                    .updateMany({ _id: { $in: [from, to] } }, { $push: { messages: { _id: messages._id } } })
+                    .updateMany(
+                        { _id: { $in: [from, to] } },
+                        { $push: { messages: { _id: messages._id } } },
+                        { runValidators: true },
+                    )
                     .exec();
-                if (modifiedCount != 2) return next(new HttpError("failedUpdateUsers"));
+                if (modifiedCount != 2) return next(new HttpError("error.user.failedUpdateUsers"));
 
                 return res.json({
                     message: {
@@ -196,7 +206,7 @@ export default class MessageController implements Controller {
             }
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 
@@ -220,14 +230,15 @@ export default class MessageController implements Controller {
                             "elem.seen": false,
                         },
                     ],
+                    runValidators: true,
                 },
             );
-            if (modifiedCount != 1) return next(new HttpError("failedUpdateMessageSeen"));
+            if (modifiedCount != 1) return next(new HttpError("error.message.failedUpdateMessageSeen"));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 
@@ -250,7 +261,7 @@ export default class MessageController implements Controller {
             res.json(messages);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
     private adminDeleteMessageById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
@@ -266,17 +277,17 @@ export default class MessageController implements Controller {
             const { deletedCount } = await this.message //
                 .deleteOne({ _id: messageId })
                 .exec();
-            if (deletedCount != 1) return next(new HttpError("failedDeleteMessage"));
+            if (deletedCount != 1) return next(new HttpError("error.message.failedDeleteMessage"));
 
             const { modifiedCount } = await this.user
-                .updateMany({ _id: { $in: users } }, { $pull: { messages: messageId } })
+                .updateMany({ _id: { $in: users } }, { $pull: { messages: messageId } }, { runValidators: true })
                 .exec();
-            if (modifiedCount != 2) return next(new HttpError("failedUpdateUsers"));
+            if (modifiedCount != 2) return next(new HttpError("error.user.failedUpdateUsers"));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
     private adminDeleteMessageContentByMessageAndContentId = async (
@@ -292,17 +303,21 @@ export default class MessageController implements Controller {
             const isContentExists = await this.message //
                 .exists({ _id: messageId, "message_contents._id": contentId })
                 .exec();
-            if (isContentExists == null) return next(new HttpError("failedGetMessageContent"));
+            if (isContentExists == null) return next(new HttpError("error.message.failedGetMessageContent"));
 
             const { modifiedCount } = await this.message //
-                .updateOne({ _id: messageId }, { $pull: { message_contents: { _id: contentId } } })
+                .updateOne(
+                    { _id: messageId },
+                    { $pull: { message_contents: { _id: contentId } } },
+                    { runValidators: true },
+                )
                 .exec();
-            if (modifiedCount != 1) return next(new HttpError("failedDeleteMessageContent"));
+            if (modifiedCount != 1) return next(new HttpError("error.message.failedDeleteMessageContent"));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 }

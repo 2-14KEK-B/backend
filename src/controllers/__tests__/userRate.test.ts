@@ -9,7 +9,6 @@ import borrowModel from "@models/borrow";
 import bookModel from "@models/book";
 import userRateModel from "@models/userRate";
 import StatusCode from "@utils/statusCodes";
-import { dictionaries } from "@utils/dictionaries";
 import { PaginateResult, Types } from "mongoose";
 import type { Application } from "express";
 import type { User } from "@interfaces/user";
@@ -19,7 +18,7 @@ import type { UserRate } from "@interfaces/userRate";
 
 describe("USER rate", () => {
     let app: Application;
-    const dictionary = dictionaries[global.language];
+    const i18n = global.I18n;
     const pw = global.MOCK_PASSWORD,
         hpw = global.MOCK_HASHED_PASSWORD,
         mockUser1Id = new Types.ObjectId(),
@@ -175,7 +174,7 @@ describe("USER rate", () => {
                 .post(`/user/${mockUser2Id.toString()}/rate`)
                 .send({ rate: true, borrow: mockBorrowId.toString() });
             expect(res.statusCode).toBe(StatusCode.BadRequest);
-            expect(res.body).toBe(dictionary.error.cannotIfBorrowNotVerified);
+            expect(res.body).toBe(i18n?.__("error.userRate.cannotIfBorrowNotVerified"));
         });
         it("POST /user/:id/rate, should return statuscode 200", async () => {
             expect.assertions(1);
@@ -232,7 +231,7 @@ describe("USER rate", () => {
             expect.assertions(2);
             const res: Response = await agentForUser1.get(`/user/rate/${mockUserRateFromUser2Id.toString()}`);
             expect(res.statusCode).toBe(StatusCode.NotFound);
-            expect(res.body).toBe(dictionary.error.idNotValid);
+            expect(res.body).toBe(i18n?.__("error.idNotValid"));
         });
     });
 

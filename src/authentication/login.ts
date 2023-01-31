@@ -48,7 +48,7 @@ export default class LoginController implements Controller {
             if (!existingUser) return next(new WrongCredentialsException());
 
             if (!existingUser.email_is_verified && existingUser.verification_token) {
-                return next(new HttpError("emailSentNotVerified"));
+                return next(new HttpError("error.emailSentNotVerified"));
             }
 
             const isPasswordMatching = await compare(password, existingUser.password);
@@ -60,13 +60,12 @@ export default class LoginController implements Controller {
             delete user["password"];
 
             req.session["userId"] = user._id.toString();
-            req.session["locale"] = user.locale;
             req.session["role"] = user.role;
 
             res.json(user);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 
@@ -90,7 +89,7 @@ export default class LoginController implements Controller {
                 url: "https://www.googleapis.com/oauth2/v3/userinfo",
             });
 
-            if (!data) return next(new HttpError("failedGoogle"));
+            if (!data) return next(new HttpError("error.failedGoogle"));
 
             const userId = await this.user //
                 .exists({ email: data.email })
@@ -101,7 +100,6 @@ export default class LoginController implements Controller {
                     .getInitialData(userId as unknown as string);
 
                 req.session["userId"] = user._id;
-                req.session["locale"] = user.locale;
                 req.session["role"] = user.role;
                 return res.json(user);
             } else {
@@ -121,16 +119,15 @@ export default class LoginController implements Controller {
                         password: "stored at Google",
                     });
 
-                if (!newUser) return next(new HttpError("failedCreateUser"));
+                if (!newUser) return next(new HttpError("error.user.failedCreateUser"));
 
                 req.session["userId"] = newUser._id;
-                req.session["locale"] = newUser.locale;
                 req.session["role"] = newUser.role;
                 return res.json(newUser);
             }
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 }

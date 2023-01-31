@@ -1,6 +1,4 @@
 import authMiddleware from "@middlewares/authentication";
-import HttpError from "@exceptions/Http";
-import { dictionaries } from "@utils/dictionaries";
 import type { NextFunction, Request, Response, Router } from "express";
 import type Controller from "@interfaces/controller";
 
@@ -22,21 +20,18 @@ export default class LogoutController implements Controller {
         try {
             delete req.session["userId"];
             delete req.session["role"];
-            delete req.session["locale"];
             req.session.destroy(error => {
                 if (error) {
                     /* istanbul ignore next */
-                    return next(new HttpError(error.message));
+                    return next(error);
                 }
-                // const dictionary = dictionaries[req.headers["accept-language"]];
-                const dictionary = dictionaries[global.language];
 
                 res.clearCookie("session-id");
-                res.json(dictionary.success.logout);
+                res.json(res.__("success.logout"));
             });
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 }

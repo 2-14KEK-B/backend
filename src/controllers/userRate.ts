@@ -77,12 +77,12 @@ export default class UserRateController implements Controller {
                 .populate({ path: "from to", select: "username fullname email picture" })
                 .lean<UserRate>()
                 .exec();
-            if (!userRate) return next(new HttpError("failedGetUserRateById"));
+            if (!userRate) return next(new HttpError("error.userRate.failedGetUserRateById"));
 
             res.json(userRate);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 
@@ -94,12 +94,12 @@ export default class UserRateController implements Controller {
                 .find({ $or: [{ from: userId }, { to: userId }] })
                 .lean<UserRate[]>()
                 .exec();
-            if (!userRates) return next(new HttpError("failedGetUserRates"));
+            if (!userRates) return next(new HttpError("error.userRate.failedGetUserRates"));
 
             res.json(userRates);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
     private getUserRatesByUserId = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
@@ -111,12 +111,12 @@ export default class UserRateController implements Controller {
                 .find({ to: userId })
                 .lean<UserRate[]>()
                 .exec();
-            if (!userRates) return next(new HttpError("failedGetUserRateByUserId"));
+            if (!userRates) return next(new HttpError("error.userRate.failedGetUserRateByUserId"));
 
             res.json(userRates);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
     private getUserRatesByBorrowId = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
@@ -129,12 +129,12 @@ export default class UserRateController implements Controller {
                 .find({ borrow: borrowId, $or: [{ from: userId }, { to: userId }] })
                 .lean<UserRate[]>()
                 .exec();
-            if (!userRates) return next(new HttpError("failedGetUserRateByBorrowId"));
+            if (!userRates) return next(new HttpError("error.userRate.failedGetUserRateByBorrowId"));
 
             res.json(userRates);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
     private modifyUserRateByUserAndRateId = async (
@@ -150,21 +150,24 @@ export default class UserRateController implements Controller {
             const loggedInUserId = req.session["userId"] as string;
 
             const rated = await this.userRate.exists({ _id: rateId, from: loggedInUserId, to: userId }).exec();
-            if (rated == null) return next(new HttpError("notHaveUserRateById"));
+            if (rated == null) return next(new HttpError("error.userRate.notHaveUserRateById"));
 
             const rate = await this.userRate //
-                .findOneAndUpdate({ _id: rateId, from: loggedInUserId, to: userId }, req.body, { new: true })
+                .findOneAndUpdate({ _id: rateId, from: loggedInUserId, to: userId }, req.body, {
+                    new: true,
+                    runValidators: true,
+                })
                 .populate({ path: "from to", select: "username fullname email picture" })
                 .lean<UserRate>()
                 .exec();
-            if (!rate) return next(new HttpError("failedUpdateUserRate"));
+            if (!rate) return next(new HttpError("error.userRate.failedUpdateUserRate"));
 
             await this.user.createNotification(userId, loggedInUserId, rateId, "user_rate", "update");
 
             res.json(rate);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
     private createUserRate = async (
@@ -182,33 +185,40 @@ export default class UserRateController implements Controller {
             const verifiedId = await this.borrow //
                 .exists({ _id: borrowId, verified: true })
                 .exec();
-            if (verifiedId == null) return next(new HttpError("cannotIfBorrowNotVerified"));
+            if (verifiedId == null) return next(new HttpError("error.userRate.cannotIfBorrowNotVerified"));
 
-            const rate = await this.userRate.create({
+            // const rate = await this.userRate.create({
+            //     ...req.body,
+            //     from: loggedInUserId,
+            //     to: userId,
+            // });
+            const rate = new this.userRate({
                 ...req.body,
                 from: loggedInUserId,
                 to: userId,
             });
-            if (!rate) return next(new HttpError("failedCreateUserRate"));
+            await rate.save({ validateBeforeSave: true });
+            if (!rate) return next(new HttpError("error.userRate.failedCreateUserRate"));
 
             await this.user.createNotification(userId, loggedInUserId, rate._id.toString(), "user_rate", "create");
 
             const { modifiedCount } = await this.borrow.updateOne(
                 { _id: borrowId },
                 { $push: { user_rates: rate._id } },
+                { runValidators: true },
             );
-            if (modifiedCount != 1) return next(new HttpError("failedUpdateUserRate"));
+            if (modifiedCount != 1) return next(new HttpError("error.borrow.failedUpdateBorrow"));
 
             const { nModified } = await this.user.bulkWrite([
                 { updateOne: { filter: { _id: loggedInUserId }, update: { $push: { "user_rates.from": rate._id } } } },
                 { updateOne: { filter: { _id: userId }, update: { $push: { "user_rates.to": rate._id } } } },
             ]);
-            if (nModified != 2) return next(new HttpError("failedGetUserRates"));
+            if (nModified != 2) return next(new HttpError("error.user.failedUpdateUsers"));
 
             res.json(await rate.populate({ path: "from to", select: "username fullname email picture" }));
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
     private deleteUserRateByUserAndRateId = async (
@@ -227,26 +237,26 @@ export default class UserRateController implements Controller {
                 .findOneAndDelete({ _id: rateId, from: loggedInUserId, to: userId })
                 .lean<UserRate>()
                 .exec();
-            if (!rate) return next(new HttpError("failedDeleteUserRate"));
+            if (!rate) return next(new HttpError("error.userRate.failedDeleteUserRate"));
 
             await this.user.createNotification(userId, loggedInUserId, rateId, "user_rate", "delete");
 
             const { modifiedCount } = await this.borrow
                 .updateOne({ _id: rate.borrow }, { $pull: { user_rates: rateId } })
                 .exec();
-            if (modifiedCount != 1) return next(new HttpError("failedUpdateBorrow"));
+            if (modifiedCount != 1) return next(new HttpError("error.borrow.failedUpdateBorrow"));
 
             const { nModified } = await this.user.bulkWrite([
                 { updateOne: { filter: { _id: loggedInUserId }, update: { $pull: { "user_rates.from": rate._id } } } },
                 { updateOne: { filter: { _id: userId }, update: { $pull: { "user_rates.to": rate._id } } } },
             ]);
 
-            if (nModified != 2) return next(new HttpError("failedUpdateUsers"));
+            if (nModified != 2) return next(new HttpError("error.user.failedUpdateUsers"));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 
@@ -269,7 +279,7 @@ export default class UserRateController implements Controller {
             res.json(userRates);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
     private adminModifyUserRateByRateId = async (
@@ -282,16 +292,16 @@ export default class UserRateController implements Controller {
             if (await isIdNotValid(this.userRate, [rateId], next)) return;
 
             const rate = await this.userRate //
-                .findOneAndUpdate({ _id: rateId }, req.body, { new: true })
+                .findOneAndUpdate({ _id: rateId }, req.body, { new: true, runValidators: true })
                 .lean<UserRate>()
                 .exec();
 
-            if (!rate) return next(new HttpError("failedUpdateUserRate"));
+            if (!rate) return next(new HttpError("error.userRate.failedUpdateUserRate"));
 
             res.json(rate);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
     private adminDeleteUserRateByRateId = async (
@@ -308,24 +318,24 @@ export default class UserRateController implements Controller {
             const { acknowledged } = await this.userRate //
                 .deleteOne({ _id: rateId })
                 .exec();
-            if (!acknowledged) return next(new HttpError("failedDeleteUserRate"));
+            if (!acknowledged) return next(new HttpError("error.userRate.failedDeleteUserRate"));
 
             const { modifiedCount } = await this.borrow
                 .updateOne({ _id: rate.borrow }, { $pull: { user_rates: rateId } })
                 .exec();
-            if (modifiedCount != 1) return next(new HttpError("failedUpdateBorrow"));
+            if (modifiedCount != 1) return next(new HttpError("error.borrow.failedUpdateBorrow"));
 
             const { nModified: userUpdateCount } = await this.user.bulkWrite([
                 { updateOne: { filter: { _id: rate.from }, update: { $pull: { "user_rates.from": rate._id } } } },
                 { updateOne: { filter: { _id: rate.to }, update: { $pull: { "user_rates.to": rate._id } } } },
             ]);
 
-            if (userUpdateCount != 2) return next(new HttpError("failedUpdateUsers"));
+            if (userUpdateCount != 2) return next(new HttpError("error.user.failedUpdateUsers"));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 }

@@ -29,7 +29,7 @@ async function sendEmail(email: string, subject: string, body: string, next: Nex
     try {
         await transporter.sendMail(mailConfigurations);
     } catch (error) {
-        return next(new HttpError(error.message));
+        return next(error);
     }
 }
 

@@ -2,16 +2,15 @@ import { hash } from "bcrypt";
 import { JwtPayload, sign, verify } from "jsonwebtoken";
 import userModel from "@models/user";
 import env from "@config/validateEnv";
-import { sendEmail } from "@utils/sendEmail";
-import { dictionaries } from "@utils/dictionaries";
 import validationMiddleware from "@middlewares/validation";
+import { sendEmail } from "@utils/sendEmail";
+import StatusCode from "@utils/statusCodes";
 import RegisterDto from "@validators/register";
 import HttpError from "@exceptions/Http";
 import UserAlreadyExistsException from "@exceptions/UserAlreadyExists";
 import type { NextFunction, Request, Response, Router } from "express";
 import type Controller from "@interfaces/controller";
 import type { RegisterCred } from "@interfaces/authentication";
-import StatusCode from "@utils/statusCodes";
 
 export default class RegisterController implements Controller {
     path: string;
@@ -36,34 +35,36 @@ export default class RegisterController implements Controller {
             if (await this.user.exists({ $or: [{ email }, { username }] }))
                 return next(new UserAlreadyExistsException());
 
-            const hashedPassword = await hash(password, 10);
-            if (!hashedPassword) return next(new HttpError("defaultPassword"));
+            if (password.length < 8) {
+                return next(new HttpError("validation.user.passwordMinLength"));
+            } else if (password.length > 64) {
+                return next(new HttpError("validation.user.passwordMaxLength"));
+            }
 
-            // , { expiresIn: "1d" }
+            const hashedPassword = await hash(password, 10);
+            if (!hashedPassword) return next(new HttpError("error.defaultPassword"));
+
+            // { expiresIn: "1d" }
             const token = sign({ email }, env.SECRET);
 
-            // const dictionary = dictionaries[req.headers["accept-language"]];
-            const dictionary = dictionaries[global.language];
-            const body = dictionary.email.passwordBody;
-
             const emailBody = {
-                subject: dictionary.email.verifySubject,
-                html: body.replace("#link#", `${env.FRONT_URL}/verify?token=${token}`),
+                subject: res.__("email.verifySubject"),
+                html: res.__("email.passwordBody", { link: `${env.FRONT_URL}/verify?token=${token}` }),
             };
 
-            if (!env.isTest) await sendEmail(email, emailBody.subject, emailBody.html, next);
+            if (env.isProd) await sendEmail(email, emailBody.subject, emailBody.html, next);
 
             const newUser = await this.user.create({
                 ...req.body,
                 password: hashedPassword,
                 verification_token: token,
             });
-            if (!newUser) return next(new HttpError("failedUserCreation"));
+            if (!newUser) return next(new HttpError("error.failedUserCreation"));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 
@@ -78,29 +79,26 @@ export default class RegisterController implements Controller {
 
             const { email } = verify(token, env.SECRET) as JwtPayload;
             if (!email) {
-                return next(new HttpError("tokenNotValidOrExpired"));
+                return next(new HttpError("error.tokenNotValidOrExpired"));
             }
 
             const user = await this.user.findOne({ email }).exec();
             if (user == null) {
-                return next(new HttpError("emailFailedVerify"));
+                return next(new HttpError("error.emailFailedVerify"));
             }
             if (user.email_is_verified) {
-                return next(new HttpError("emailAlreadyVerified"));
+                return next(new HttpError("error.emailAlreadyVerified"));
             }
-
-            // const dictionary = dictionaries[req.headers["accept-language"]];
-            const dictionary = dictionaries[global.language];
 
             user.email_is_verified = true;
             user.verification_token = undefined;
 
             await user.save();
 
-            res.json(dictionary.success.emailVerification);
+            res.json(res.__("success.emailVerification"));
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 }

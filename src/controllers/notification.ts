@@ -42,12 +42,12 @@ export default class NotificationController implements Controller {
                 .populate({ path: "notifications.from", select: "username fullname email picture" })
                 .lean<{ notifications: Notification[] }>()
                 .exec();
-            if (notifications == null) return next(new HttpError("failedGetNotifications"));
+            if (notifications == null) return next(new HttpError("error.notification.failedGetNotifications"));
 
             res.json(notifications);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 
@@ -75,7 +75,7 @@ export default class NotificationController implements Controller {
             res.sendStatus(StatusCode.OK);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 
@@ -91,7 +91,7 @@ export default class NotificationController implements Controller {
             const isExists = this.user //
                 .exists({ _id: loggedInId, notifications: { _id: notificationId } })
                 .exec();
-            if (isExists == null) return next(new HttpError("failedGetNotificationById"));
+            if (isExists == null) return next(new HttpError("error.notification.failedGetNotificationById"));
 
             const { modifiedCount } = await this.user
                 .updateOne(
@@ -108,15 +108,16 @@ export default class NotificationController implements Controller {
                                 "elem.seen": false,
                             },
                         ],
+                        runValidators: true,
                     },
                 )
                 .exec();
-            if (modifiedCount != 1) return next(new HttpError("failedUpdateNotificationSeen"));
+            if (modifiedCount != 1) return next(new HttpError("error.notification.failedUpdateNotificationSeen"));
 
             res.sendStatus(StatusCode.OK);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 
@@ -132,17 +133,21 @@ export default class NotificationController implements Controller {
             const isExists = this.user //
                 .exists({ _id: loggedInId, notifications: { _id: notificationId } })
                 .exec();
-            if (isExists == null) return next(new HttpError("failedGetNotificationById"));
+            if (isExists == null) return next(new HttpError("error.notification.failedGetNotificationById"));
 
             const { modifiedCount } = await this.user
-                .updateOne({ _id: loggedInId }, { $pull: { notifications: { _id: notificationId } } })
+                .updateOne(
+                    { _id: loggedInId },
+                    { $pull: { notifications: { _id: notificationId } } },
+                    { runValidators: true },
+                )
                 .exec();
-            if (modifiedCount != 1) return next(new HttpError("failedDeleteNotificationById"));
+            if (modifiedCount != 1) return next(new HttpError("error.notification.failedDeleteNotificationById"));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 }

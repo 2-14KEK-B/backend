@@ -3,6 +3,6 @@ import StatusCode from "@utils/statusCodes";
 
 export default class UnauthorizedException extends HttpError {
     constructor() {
-        super("unauthorized", StatusCode.Unauthorized);
+        super("error.unauthorized", StatusCode.Unauthorized);
     }
 }

@@ -1,5 +1,7 @@
 import type { Server } from "socket.io";
 
+export {};
+
 declare module "express" {
     interface Request {
         headers: {

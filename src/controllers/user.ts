@@ -60,11 +60,12 @@ export default class UserController implements Controller {
                 })
                 .lean<User>()
                 .exec();
+            if (!user) return next(new HttpError("error.user.failedToGetUserById"));
 
             res.json(user);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 
@@ -77,7 +78,7 @@ export default class UserController implements Controller {
             res.json(user);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
     private modifyLoggedInUser = async (
@@ -95,13 +96,13 @@ export default class UserController implements Controller {
                 .lean<User>()
                 .exec();
             if (user == null) {
-                return next(new HttpError("failedUpdateYourUser"));
+                return next(new HttpError("error.user.failedUpdateYourUser"));
             }
 
             res.json(user);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
     private deleteLoggedInUser = async (req: Request, res: Response, next: NextFunction) => {
@@ -112,19 +113,19 @@ export default class UserController implements Controller {
                 .deleteOne({ _id: userId })
                 .exec();
             if (deletedCount != 1) {
-                return next(new HttpError("failedDeleteYourUser"));
+                return next(new HttpError("error.user.failedDeleteYourUser"));
             }
 
             req.session.destroy(error => {
                 if (error) {
-                    return next(new HttpError(error.message));
+                    return next(error);
                 }
                 res.clearCookie("session-id");
                 res.sendStatus(StatusCode.NoContent);
             });
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 
@@ -161,7 +162,7 @@ export default class UserController implements Controller {
             res.json(users);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
     private adminModifyUserById = async (
@@ -176,15 +177,15 @@ export default class UserController implements Controller {
             const userData: Partial<User> = { ...req.body, updatedAt: new Date() };
 
             const user = await this.user //
-                .findByIdAndUpdate(userId, userData, { new: true })
+                .findByIdAndUpdate(userId, userData, { new: true, runValidators: true })
                 .lean<User>()
                 .exec();
-            if (!user) return next(new HttpError("failedUpdateUser"));
+            if (!user) return next(new HttpError("error.user.failedUpdateUser"));
 
             res.json(user);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
     private adminDeleteUserById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
@@ -195,12 +196,12 @@ export default class UserController implements Controller {
             const { deletedCount } = await this.user //
                 .deleteOne({ _id: userId })
                 .exec();
-            if (deletedCount != 1) return next(new HttpError("failedDeleteUser"));
+            if (deletedCount != 1) return next(new HttpError("error.user.failedDeleteUser"));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 }

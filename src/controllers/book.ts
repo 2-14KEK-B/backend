@@ -77,12 +77,12 @@ export default class BookController implements Controller {
             }
 
             const books = await getPaginated(this.book, query, skip, limit, sort);
-            if (!books) return next(new HttpError("failedGetBooks"));
+            if (!books) return next(new HttpError("error.book.failedGetBooks"));
 
             res.json(books);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
     private getBooksForLend = async (
@@ -115,12 +115,12 @@ export default class BookController implements Controller {
             }
 
             const books = await getPaginated(this.book, query, skip, limit, sort);
-            if (!books) return next(new HttpError("failedGetBooks"));
+            if (!books) return next(new HttpError("error.book.failedGetBooks"));
 
             res.json(books);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
     private getBookById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
@@ -134,12 +134,12 @@ export default class BookController implements Controller {
                 .populate({ path: "rates.from", select: "username fullname email picture" })
                 .lean<Book>()
                 .exec();
-            if (!book) return next(new HttpError("failedGetBookById"));
+            if (!book) return next(new HttpError("error.book.failedGetBookById"));
 
             res.json(book);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 
@@ -151,20 +151,23 @@ export default class BookController implements Controller {
                 .find({ uploader: userId })
                 .lean<Book[]>()
                 .exec();
-            if (!books) return next(new HttpError("failedGetBooks"));
+            if (!books) return next(new HttpError("error.book.failedGetBooks"));
 
             res.json(books);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
     private createBook = async (req: Request<unknown, CreateBook>, res: Response, next: NextFunction) => {
         try {
             const userId = req.session["userId"];
-            const newBook = await this.book //
-                .create({ ...req.body, uploader: userId });
-            if (!newBook) return next(new HttpError("failedCreateBook"));
+            // const newBook = await this.book //
+            //     .create([{ ...req.body, uploader: userId }], { validateBeforeSave: true });
+
+            const newBook = new this.book({ ...req.body, uploader: userId });
+            await newBook.save({ validateBeforeSave: true });
+            if (!newBook) return next(new HttpError("error.book.failedCreateBook"));
 
             const { modifiedCount } = await this.user //
                 .updateOne(
@@ -174,12 +177,12 @@ export default class BookController implements Controller {
                     },
                 )
                 .exec();
-            if (modifiedCount != 1) return next(new HttpError("failedUpdateUser"));
+            if (modifiedCount != 1) return next(new HttpError("error.user.failedUpdateUser"));
 
             res.json(newBook);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
     private modifyBookById = async (
@@ -194,15 +197,19 @@ export default class BookController implements Controller {
 
             const now = new Date();
             const modifiedBook = await this.book //
-                .findOneAndUpdate({ _id: bookId, uploader: userId }, { ...req.body, updated_on: now }, { new: true })
+                .findOneAndUpdate(
+                    { _id: bookId, uploader: userId },
+                    { ...req.body, updated_on: now },
+                    { new: true, runValidators: true },
+                )
                 .lean<Book>()
                 .exec();
-            if (!modifiedBook) return next(new HttpError("failedUpdateBook"));
+            if (!modifiedBook) return next(new HttpError("error.book.failedUpdateBook"));
 
             res.json(modifiedBook);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
     private deleteBookById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
@@ -212,17 +219,17 @@ export default class BookController implements Controller {
             const loggedInUserId = req.session["userId"];
 
             const { deletedCount } = await this.book.deleteOne({ _id: bookId, uploader: loggedInUserId }).exec();
-            if (deletedCount != 1) return next(new HttpError("failedDeleteBook"));
+            if (deletedCount != 1) return next(new HttpError("error.book.failedDeleteBook"));
 
             const { modifiedCount } = await this.user //
                 .updateOne({ _id: loggedInUserId }, { $pull: { books: bookId } })
                 .exec();
-            if (modifiedCount != 1) return next(new HttpError("failedUpdateUser"));
+            if (modifiedCount != 1) return next(new HttpError("error.user.failedUpdateUser"));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 
@@ -256,12 +263,12 @@ export default class BookController implements Controller {
             }
 
             const books = await getPaginated(this.book, query, skip, limit, sort, sortBy);
-            if (!books) return next(new HttpError("failedGetBooks"));
+            if (!books) return next(new HttpError("error.book.failedGetBooks"));
 
             res.json(books);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
     private adminModifyBookById = async (
@@ -275,15 +282,15 @@ export default class BookController implements Controller {
 
             const now = new Date();
             const modifiedBook = await this.book //
-                .findByIdAndUpdate(bookId, { ...req.body, updatedAt: now }, { new: true })
+                .findByIdAndUpdate(bookId, { ...req.body, updatedAt: now }, { new: true, runValidators: true })
                 .lean<Book>()
                 .exec();
-            if (!modifiedBook) return next(new HttpError("failedUpdateBook"));
+            if (!modifiedBook) return next(new HttpError("error.book.failedUpdateBook"));
 
             res.json(modifiedBook);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
     private adminDeleteBookById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
@@ -299,17 +306,17 @@ export default class BookController implements Controller {
             const { deletedCount } = await this.book //
                 .deleteOne({ _id: bookId })
                 .exec();
-            if (deletedCount != 1) return next(new HttpError("failedDeleteBook"));
+            if (deletedCount != 1) return next(new HttpError("error.book.failedDeleteBook"));
 
             const { modifiedCount } = await this.user //
                 .updateOne({ _id: uploader }, { $pull: { books: bookId } })
                 .exec();
-            if (modifiedCount != 1) return next(new HttpError("failedUpdateUser"));
+            if (modifiedCount != 1) return next(new HttpError("error.user.failedUpdateUser"));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 }

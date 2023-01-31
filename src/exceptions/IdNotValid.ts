@@ -3,6 +3,6 @@ import StatusCode from "@utils/statusCodes";
 
 export default class IdNotValidException extends HttpError {
     constructor() {
-        super("idNotValid", StatusCode.NotFound);
+        super("error.idNotValid", StatusCode.NotFound);
     }
 }

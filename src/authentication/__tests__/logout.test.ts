@@ -3,14 +3,13 @@ import App from "../../app";
 import AuthenticationController from "@authentication/index";
 import userModel from "@models/user";
 import StatusCode from "@utils/statusCodes";
-import { dictionaries } from "@utils/dictionaries";
 import type { Application } from "express";
 import type { User } from "@interfaces/user";
 
 describe("POST /auth/logout", () => {
     let app: Application;
     let agent: SuperAgentTest;
-    const dictionary = dictionaries[global.language];
+    const i18n = global.I18n;
     const pw = global.MOCK_PASSWORD,
         hpw = global.MOCK_HASHED_PASSWORD,
         mockUser: Partial<User> = {
@@ -33,7 +32,7 @@ describe("POST /auth/logout", () => {
         expect.assertions(3);
         const res: Response = await request(app).get("/auth/logout");
         expect(res.statusCode).toEqual(StatusCode.Unauthorized);
-        expect(res.body).toEqual(dictionary.error.unauthorized);
+        expect(res.body).toEqual(i18n?.__("error.unauthorized"));
         expect(res.headers["set-cookie"]).toBeFalsy();
     });
 
@@ -42,6 +41,6 @@ describe("POST /auth/logout", () => {
         await agent.post("/auth/login").send({ email: mockUser.email, password: pw });
         const res: Response = await agent.get("/auth/logout");
         expect(res.statusCode).toEqual(StatusCode.OK);
-        expect(res.body).toEqual(dictionary.success.logout);
+        expect(res.body).toEqual(i18n?.__("success.logout"));
     });
 });

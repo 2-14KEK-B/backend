@@ -5,7 +5,6 @@ import BookController from "@controllers/book";
 import AuthenticationController from "@authentication/index";
 import App from "../../app";
 import StatusCode from "@utils/statusCodes";
-import { dictionaries } from "@utils/dictionaries";
 import { Types } from "mongoose";
 import type { Application } from "express";
 import type { BookRate } from "@interfaces/bookRate";
@@ -14,7 +13,7 @@ import type { User } from "@interfaces/user";
 
 describe("BOOK rate", () => {
     let app: Application;
-    const dictionary = dictionaries[global.language];
+    const i18n = global.I18n;
     const pw = global.MOCK_PASSWORD,
         hpw = global.MOCK_HASHED_PASSWORD,
         mockBookId = new Types.ObjectId(),
@@ -164,7 +163,7 @@ describe("BOOK rate", () => {
                 )
                 .send({ rate: 2 });
             expect(res.statusCode).toBe(StatusCode.BadRequest);
-            expect(res.body).toBe(dictionary.error.notHaveBookRate);
+            expect(res.body).toBe(i18n?.__("error.bookRate.notHaveBookRate"));
         });
         it("POST /book/:id/rate, should return statuscode 200 if successfully rated", async () => {
             expect.assertions(2);
@@ -176,7 +175,7 @@ describe("BOOK rate", () => {
             expect.assertions(2);
             const res: Response = await agent.post(`/book/${mockBookFromAdminId.toString()}/rate`).send({ rate: 2 });
             expect(res.statusCode).toBe(StatusCode.BadRequest);
-            expect(res.body).toBe(dictionary.error.alreadyRatedBook);
+            expect(res.body).toBe(i18n?.__("error.bookRate.alreadyRatedBook"));
         });
 
         it("DELETE /book/:id/rate, should return statuscode 204 if logged in user created rate for the book", async () => {
@@ -192,7 +191,7 @@ describe("BOOK rate", () => {
                 `/book/${mockBookFromAdminId.toString()}/rate/${mockRateFromUserToMockBookFromAdminId.toString()}`,
             );
             expect(res.statusCode).toBe(StatusCode.BadRequest);
-            expect(res.body).toBe(dictionary.error.notHaveBookRate);
+            expect(res.body).toBe(i18n?.__("error.bookRate.notHaveBookRate"));
         });
     });
     describe("BOOK RATE, logged in as admin", () => {
@@ -225,7 +224,7 @@ describe("BOOK rate", () => {
                 )
                 .send({ rate: 1 });
             expect(res.statusCode).toBe(StatusCode.BadRequest);
-            expect(res.body).toBe(dictionary.error.notContainBookRate);
+            expect(res.body).toBe(i18n?.__("error.bookRate.notContainBookRate"));
         });
         it("DELETE /admin/book/rate/:bookId/:rateId, should be return 400 if rate id not valid", async () => {
             expect.assertions(2);
@@ -233,7 +232,7 @@ describe("BOOK rate", () => {
                 `/admin/book/${mockBookFromAdminId.toString()}/rate/${mockRateFromAdminToMockBookFromUserId.toString()}`,
             );
             expect(res.statusCode).toBe(StatusCode.BadRequest);
-            expect(res.body).toBe(dictionary.error.notContainBookRate);
+            expect(res.body).toBe(i18n?.__("error.bookRate.notContainBookRate"));
         });
         it("DELETE /admin/book/rate/:bookId/:rateId, should be return 204", async () => {
             expect.assertions(1);

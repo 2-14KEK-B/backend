@@ -42,8 +42,16 @@ const bookrateSchema = new Schema<BookRate>(
             type: Schema.Types.ObjectId,
             ref: "User",
         },
-        comment: { type: String, maxlength: 256 },
-        rate: { type: Number, required: true, min: 1, max: 5 },
+        comment: {
+            type: String,
+            maxlength: [256, "bookRate.commentMaxLength"],
+        },
+        rate: {
+            type: Number,
+            required: true,
+            min: [1, "bookRate.rateMin"],
+            max: [5, "bookrate.rateMax"],
+        },
     },
     { timestamps: true, versionKey: false },
 );
@@ -53,22 +61,49 @@ const bookSchema = new Schema<Book>(
         uploader: {
             type: Schema.Types.ObjectId,
             ref: "User",
-            required: true,
+            required: [true, "book.uploaderRequired"],
         },
         isbn: { type: String },
-        author: { type: String, required: true, minlength: 4, maxlength: 64 },
-        title: { type: String, required: true, minlength: 1, maxlength: 128 },
+        author: {
+            type: String,
+            required: [true, "book.authorRequired"],
+            minlength: [4, "book.authorShort"],
+            maxlength: [64, "book.authorLong"],
+        },
+        title: {
+            type: String,
+            required: [true, "book.titleRequired"],
+            minlength: [1, "book.titleShort"],
+            maxlength: [128, "book.titleLong"],
+        },
         picture: { type: String, trim: true },
-        category: [{ type: String, enum: genres, required: true }],
-        price: { type: Number, default: 0, min: 0, max: 1000000 },
-        available: { type: Boolean, default: true },
-        for_borrow: { type: Boolean, required: true },
+        category: [
+            {
+                type: String,
+                enum: [genres, "book.onlyFromGenres"],
+                required: [true, "book.genreRequired"],
+            },
+        ],
+        price: {
+            type: Number,
+            default: 0,
+            min: [0, "book.minPrice"],
+            max: [1000000, "book.maxPrice"],
+        },
+        available: {
+            type: Boolean,
+            default: true,
+        },
+        for_borrow: {
+            type: Boolean,
+            required: [true, "book.forBorrowRequired"],
+        },
         rates: [bookrateSchema],
     },
     { timestamps: true },
 );
 
-bookSchema.path("isbn").validate(val => {
+bookSchema.path("isbn").validate((val: string) => {
     // Checks for ISBN-10 or ISBN-13 format
     const regex = new RegExp(
         /^(?:ISBN(?:-1[03])?:? )?(?=[0-9X]{10}$|(?=(?:[0-9]+[- ]){3})[- 0-9X]{13}$|97[89][0-9]{10}$|(?=(?:[0-9]+[- ]){4})[- 0-9]{17}$)(?:97[89][- ]?)?[0-9]{1,5}[- ]?[0-9]+[- ]?[0-9]+[- ]?[0-9X]$/,
@@ -86,7 +121,9 @@ bookSchema.path("isbn").validate(val => {
             // Compute the ISBN-10 check digit
             chars.reverse();
             for (i = 0; i < chars.length; i++) {
-                sum += (i + 2) * parseInt(chars[i], 10);
+                if (typeof chars[i] == "string") {
+                    sum += (i + 2) * parseInt(chars[i] as string, 10);
+                }
             }
             check = 11 - (sum % 11);
             if (check == 10) {
@@ -97,7 +134,9 @@ bookSchema.path("isbn").validate(val => {
         } else {
             // Compute the ISBN-13 check digit
             for (i = 0; i < chars.length; i++) {
-                sum += ((i % 2) * 2 + 1) * parseInt(chars[i], 10);
+                if (typeof chars[i] == "string") {
+                    sum += ((i % 2) * 2 + 1) * parseInt(chars[i] as string, 10);
+                }
             }
             check = 10 - (sum % 10);
             if (check == 10) {
@@ -105,13 +144,15 @@ bookSchema.path("isbn").validate(val => {
             }
         }
         return check == last;
+    } else {
+        return false;
     }
-}, "Invalid ISBN");
+}, "book.invalidIsbn");
 
-bookSchema.path("picture").validate(val => {
-    const urlRegex = /(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-/]))?/;
-    return urlRegex.test(val);
-}, "Invalid URL.");
+bookSchema.path("picture").validate((val: string) => {
+    const imgUrlRegex = /(http(s?):)([/|.|\w|\s|-])*\.(?:jpg|gif|png)/;
+    return imgUrlRegex.test(val);
+}, "picture.invalidUrl");
 
 bookSchema.plugin(paginate);
 

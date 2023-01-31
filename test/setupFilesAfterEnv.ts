@@ -10,4 +10,8 @@ afterAll(async () => {
     await connection.db.dropDatabase();
     await closeSessionStore();
     await disconnect();
+    delete global.MOCK_HASHED_PASSWORD;
+    delete global.MOCK_PASSWORD;
+    delete global.mongoInstance;
+    delete global.I18n;
 });
