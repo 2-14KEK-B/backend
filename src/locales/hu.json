@@ -173,7 +173,5 @@
 			"commentMaxLength": "A hozzászólás maximális karakterszáma 256.",
 			"rareRequired": "Értékelés megadása kötelező."
 		}
-	},
-	"property something should not exist, property something2 should not exist, username must be a string, email must be an email, password must be a string": "property something should not exist, property something2 should not exist, username must be a string, email must be an email, password must be a string",
-	"email must be an email": "email must be an email"
+	}
 }

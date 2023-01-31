@@ -130,17 +130,13 @@ export default class NotificationController implements Controller {
             const loggedInId = req.session["userId"];
             const notificationId = req.params["id"];
 
-            const isExists = this.user //
-                .exists({ _id: loggedInId, notifications: { _id: notificationId } })
+            const isExists = await this.user //
+                .exists({ _id: loggedInId, "notifications._id": notificationId })
                 .exec();
             if (isExists == null) return next(new HttpError("error.notification.failedGetNotificationById"));
 
             const { modifiedCount } = await this.user
-                .updateOne(
-                    { _id: loggedInId },
-                    { $pull: { notifications: { _id: notificationId } } },
-                    { runValidators: true },
-                )
+                .updateOne({ _id: loggedInId }, { $pull: { notifications: { _id: notificationId } } })
                 .exec();
             if (modifiedCount != 1) return next(new HttpError("error.notification.failedDeleteNotificationById"));
 
