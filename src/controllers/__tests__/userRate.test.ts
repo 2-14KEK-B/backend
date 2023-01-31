@@ -1,14 +1,14 @@
+import request, { SuperAgentTest, Response } from "supertest";
+import App from "../../app";
 import AuthenticationController from "@authentication/index";
 import BorrowController from "@controllers/borrow";
 import UserController from "@controllers/user";
 import UserRateController from "@controllers/userRate";
-import App from "../../app";
 import userModel from "@models/user";
 import borrowModel from "@models/borrow";
 import bookModel from "@models/book";
-import request, { SuperAgentTest, Response } from "supertest";
-import StatusCode from "@utils/statusCodes";
 import userRateModel from "@models/userRate";
+import StatusCode from "@utils/statusCodes";
 import { PaginateResult, Types } from "mongoose";
 import type { Application } from "express";
 import type { User } from "@interfaces/user";
@@ -18,6 +18,7 @@ import type { UserRate } from "@interfaces/userRate";
 
 describe("USER rate", () => {
     let app: Application;
+    const i18n = global.I18n;
     const pw = global.MOCK_PASSWORD,
         hpw = global.MOCK_HASHED_PASSWORD,
         mockUser1Id = new Types.ObjectId(),
@@ -31,6 +32,7 @@ describe("USER rate", () => {
             _id: mockUser1Id,
             email: "testuser1@test.com",
             email_is_verified: true,
+            username: "test1ForUserRate",
             password: pw,
             books: [mockBookId],
             borrows: [mockBorrowId],
@@ -40,6 +42,7 @@ describe("USER rate", () => {
             _id: mockUser2Id,
             email: "testuser2@test.com",
             email_is_verified: true,
+            username: "test2ForUserRate",
             password: pw,
             borrows: [mockBorrowId],
             user_rates: { from: [mockUserRateFromUser2Id], to: [mockUserRateFromUser1Id] },
@@ -48,6 +51,7 @@ describe("USER rate", () => {
             _id: mockAdminId,
             email: "testadmin@test.com",
             email_is_verified: true,
+            username: "testAdminForUserRate",
             password: pw,
             role: "admin",
         },
@@ -170,7 +174,7 @@ describe("USER rate", () => {
                 .post(`/user/${mockUser2Id.toString()}/rate`)
                 .send({ rate: true, borrow: mockBorrowId.toString() });
             expect(res.statusCode).toBe(StatusCode.BadRequest);
-            expect(res.body).toBe("You can not rate user if borrow is not verified");
+            expect(res.body).toBe(i18n?.__("error.userRate.cannotIfBorrowNotVerified"));
         });
         it("POST /user/:id/rate, should return statuscode 200", async () => {
             expect.assertions(1);
@@ -227,7 +231,7 @@ describe("USER rate", () => {
             expect.assertions(2);
             const res: Response = await agentForUser1.get(`/user/rate/${mockUserRateFromUser2Id.toString()}`);
             expect(res.statusCode).toBe(StatusCode.NotFound);
-            expect(res.body).toBe(`This ${mockUserRateFromUser2Id.toString()} id is not valid.`);
+            expect(res.body).toBe(i18n?.__("error.idNotValid"));
         });
     });
 

@@ -2,10 +2,13 @@ import express, { Application, json, Request, Response, urlencoded } from "expre
 import { createServer, Server } from "http";
 import session, { SessionOptions } from "express-session";
 import cors from "cors";
+import { I18n } from "i18n";
+import { join } from "node:path";
 import morgan from "morgan";
 import { initSocket } from "./socket";
 import { createSessionStore } from "@db/sessionStore";
 import errorMiddleware from "@middlewares/error";
+import { mongooseErrorMiddleware } from "@middlewares/mongooseError";
 import env from "@config/validateEnv";
 import corsOptions from "@config/corsOptions";
 import StatusCode from "@utils/statusCodes";
@@ -26,6 +29,19 @@ export default class App {
 
     public getApp(): Application {
         return this.app;
+    }
+
+    private initLanguage() {
+        const i18n = new I18n();
+
+        i18n.configure({
+            locales: ["en", "hu"],
+            defaultLocale: "hu",
+            directory: join(__dirname, "/locales"),
+            objectNotation: true,
+        });
+
+        this.app.use(i18n.init);
     }
 
     private initializeMiddlewares() {
@@ -56,13 +72,20 @@ export default class App {
         this.app.use(json());
         this.app.use(urlencoded({ extended: false }));
         this.app.use(cors(corsOptions));
+        this.initLanguage();
     }
 
     private initializeErrorHandling() {
+        this.app.use(mongooseErrorMiddleware);
         this.app.use(errorMiddleware);
     }
 
     private initializeControllers(controllers: Controller[]) {
+        this.app.get("/test", (_req, res) => {
+            console.log(res.getLocale());
+            res.json(res.__("hello"));
+        });
+
         this.app.get("/healthcheck", (_req: Request, res: Response) => res.sendStatus(StatusCode.OK));
         controllers.forEach(controller => {
             this.app.use("/", controller.router);

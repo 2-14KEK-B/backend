@@ -40,6 +40,7 @@ interface CreateUser {
 interface ModifyUser {
     username?: string;
     fullname?: string;
+    picture?: string;
     updated_on?: Date;
     email?: string;
     email_is_verified?: boolean;

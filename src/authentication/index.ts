@@ -3,11 +3,11 @@ import LoginController from "./login";
 import LogoutController from "./logout";
 import RegisterController from "./register";
 import userModel from "@models/user";
+import env from "@config/validateEnv";
 import HttpError from "@exceptions/Http";
 import UnauthorizedException from "@exceptions/Unauthorized";
 import { JwtPayload, sign, verify } from "jsonwebtoken";
 import { sendEmail } from "@utils/sendEmail";
-import env from "@config/validateEnv";
 import { compare, hash } from "bcrypt";
 import WrongCredentialsException from "@exceptions/WrongCredentials";
 import type Controller from "@interfaces/controller";
@@ -39,7 +39,7 @@ export default class AuthenticationController implements Controller {
             res.json(user);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 
@@ -50,31 +50,30 @@ export default class AuthenticationController implements Controller {
 
             const user = await this.user.findOne({ email: email, email_is_verified: true }).exec();
             if (user == null) {
-                return next(new HttpError("Email not found or not verified"));
+                return next(new HttpError("error.emailNotFoundOrVerified"));
             }
 
             if (user.password_reset_token) {
-                return next(new HttpError("Email already sent"));
+                return next(new HttpError("error.emailAlreadySent"));
             }
 
             //, { expiresIn: "6h" }
             const token = sign({ email }, env.SECRET);
 
             const emailBody = {
-                subject: "Password reset",
-                html: `<div>Hi,</div><br /><div>Password reset link: ${env.FRONT_URL}/reset-password?token=${token}.</div><br /><div>Thanks! The BookSwap team</div>
-                `,
+                subject: res.__("email.passwordSubject"),
+                html: res.__("email.passwordBody", { link: `${env.FRONT_URL}/reset-password?token=${token}` }),
             };
 
-            if (!env.isTest) await sendEmail(email, emailBody.subject, emailBody.html, next);
+            if (env.isProd) await sendEmail(email, emailBody.subject, emailBody.html, next);
 
             user.password_reset_token = token;
             await user.save();
 
-            res.json("Password reset email sent");
+            res.json(res.__("success.passwordResetEmail"));
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
     /* istanbul ignore next */
@@ -85,36 +84,44 @@ export default class AuthenticationController implements Controller {
     ) => {
         try {
             const { token, oldPassword, newPassword } = req.body;
-            if (newPassword.length < 6) {
-                return next(new HttpError("You need to send stronger password"));
-            }
             const { email } = verify(token, env.SECRET) as JwtPayload;
+            if (!email) {
+                return next(new HttpError("error.tokenNotValidOrExpired"));
+            }
 
             const user = await this.user
                 .findOne({ email: email, email_is_verified: true }, { password: 1, password_reset_token: 1 })
                 .exec();
             if (user == null) {
-                return next(new HttpError("Email is not valid or not verified"));
+                return next(new HttpError("error.emailNotFoundOrVerified"));
             }
 
             if (!user.password_reset_token) {
-                return next(new HttpError("Token already has been used"));
+                return next(new HttpError("error.tokenAlreadyUsed"));
             }
 
-            const isPasswordMatching = await compare(oldPassword, user.password as string);
-            if (!isPasswordMatching) return next(new WrongCredentialsException());
+            if (user.password != "stored at Google") {
+                const isPasswordMatching = await compare(oldPassword, user.password as string);
+                if (!isPasswordMatching) return next(new WrongCredentialsException());
+            }
+
+            if (newPassword.length < 8) {
+                return next(new HttpError("validation.user.passwordMinLength"));
+            } else if (newPassword.length > 64) {
+                return next(new HttpError("validation.user.passwordMaxLength"));
+            }
 
             const hashedPassword = await hash(newPassword, 10);
-            if (!hashedPassword) return next(new HttpError("Something wrong with the password."));
+            if (!hashedPassword) return next(new HttpError("error.defaultPassword"));
 
             user.password = hashedPassword;
             user.password_reset_token = undefined;
             await user.save();
 
-            res.json("Password reset successfully");
+            res.json(res.__("success.passwordReset"));
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 }

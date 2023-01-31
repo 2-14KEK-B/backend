@@ -21,25 +21,6 @@ export default class BookRateController implements Controller {
         this.initRoutes();
     }
 
-    /**
-     * Routok:
-     *  - mindenkinek:
-     *      GET
-     *      - /book/:id/rate
-     *  - usernek:
-     *      POST
-     *      - /book/:id/rate
-     *      PATCH
-     *      - /book/:id/rate/:id
-     *      DELETE
-     *      - /book/:id/rate/:id
-     *  - adminnak
-     *      PATCH
-     *      - /admin/book/:id/rate/:rateId
-     *      DELETE
-     *      - /admin/book/:id/rate/:rateId
-     */
-
     private initRoutes() {
         this.router
             .route(`/book/:bookId([0-9a-fA-F]{24})/rate/:rateId([0-9a-fA-F]{24})`)
@@ -68,12 +49,12 @@ export default class BookRateController implements Controller {
                 // .populate({ path: "from", select: "email username fullname picture" })
                 .lean<{ rates: BookRate[] }>()
                 .exec();
-            if (!rates) return next(new HttpError("Failed to get book rates"));
+            if (!rates) return next(new HttpError("error.bookRate.failedGetBookRates"));
 
             res.json(rates);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 
@@ -90,7 +71,7 @@ export default class BookRateController implements Controller {
             const alreadyRated = await this.book //
                 .exists({ _id: bookId, "rates.from": userId })
                 .exec();
-            if (alreadyRated) return next(new HttpError("Already rated this book"));
+            if (alreadyRated) return next(new HttpError("error.bookRate.alreadyRatedBook"));
 
             const ratedBook = await this.book
                 .findByIdAndUpdate(bookId, { $push: { rates: { ...req.body, from: userId } } }, { new: true })
@@ -98,17 +79,17 @@ export default class BookRateController implements Controller {
                 .populate({ path: "rates.from", select: "username fullname email picture" })
                 .lean<Book>()
                 .exec();
-            if (!ratedBook) return next(new HttpError("Failed to rate book"));
+            if (!ratedBook) return next(new HttpError("error.bookRate.failedCreateBookRate"));
 
-            const { acknowledged } = await this.user //
+            const { modifiedCount } = await this.user //
                 .updateOne({ _id: userId }, { $push: { rated_books: ratedBook._id } })
                 .exec();
-            if (!acknowledged) return next(new HttpError("Failed to update the user"));
+            if (modifiedCount != 1) return next(new HttpError("error.user.failedUpdateUser"));
 
             res.json(ratedBook);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
     private modifyBookRateByBookAndRateId = async (
@@ -126,7 +107,7 @@ export default class BookRateController implements Controller {
             const bookWithRate = await this.book
                 .findOne({ _id: bookId, "rates._id": rateId, "rates.from": userId })
                 .exec();
-            if (bookWithRate == null) return next(new HttpError("You do not have book rate to update"));
+            if (bookWithRate == null) return next(new HttpError("error.bookRate.notHaveBookRate"));
 
             if (bookWithRate.rates && bookWithRate.rates.length > 0) {
                 const modifiableRate = bookWithRate.rates.find(rate => rate._id?.toString() == rateId);
@@ -146,11 +127,11 @@ export default class BookRateController implements Controller {
                     );
                 }
             } else {
-                return next(new HttpError("Failed to update book rate"));
+                return next(new HttpError("error.bookRate.failedUpdateBookRate"));
             }
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
     private deleteBookRateByBookAndRateId = async (
@@ -167,17 +148,17 @@ export default class BookRateController implements Controller {
                 .exists({ _id: bookId, "rates._id": rateId, "rates.from": userId })
                 .exec();
 
-            if (bookWithRate == null) return next(new HttpError("You do not have rate for this book"));
+            if (bookWithRate == null) return next(new HttpError("error.bookRate.notHaveBookRate"));
 
-            const { acknowledged: successfullDeleteBookRate } = await this.book
+            const { modifiedCount: modifiedBookCount } = await this.book
                 .updateOne(
                     { _id: bookId, "rates._id": rateId, "rates.from": userId },
                     { $pull: { rates: { _id: rateId } } },
                 )
                 .exec();
-            if (!successfullDeleteBookRate) return next(new HttpError("Failed to delete rate"));
+            if (modifiedBookCount != 1) return next(new HttpError("error.bookRate.failedDeleteBookRate"));
 
-            const { acknowledged: successfullUpdateUser } = await this.user
+            const { modifiedCount: modifiedUserCount } = await this.user
                 .updateOne(
                     { _id: userId },
                     {
@@ -185,12 +166,12 @@ export default class BookRateController implements Controller {
                     },
                 )
                 .exec();
-            if (!successfullUpdateUser) return next(new HttpError("Failed to update user"));
+            if (modifiedUserCount != 1) return next(new HttpError("error.user.failedUpdateUser"));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 
@@ -209,7 +190,7 @@ export default class BookRateController implements Controller {
 
             const bookWithRate = await this.book.findOne({ _id: bookId, "rates._id": rateId }).exec();
 
-            if (bookWithRate == null) return next(new HttpError("This book does not contain rate with this id"));
+            if (bookWithRate == null) return next(new HttpError("error.bookRate.notContainBookRate"));
 
             if (bookWithRate.rates && bookWithRate.rates[0]) {
                 if (rate) {
@@ -221,11 +202,11 @@ export default class BookRateController implements Controller {
                 const updatedBook = await bookWithRate.save();
                 res.json(updatedBook);
             } else {
-                return next(new HttpError("Failed to update book rate"));
+                return next(new HttpError("error.bookRate.failedUpdateBookRate"));
             }
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
     private adminDeleteBookRateByBookAndRateId = async (
@@ -242,24 +223,24 @@ export default class BookRateController implements Controller {
                 .findOne({ _id: bookId, "rates._id": rateId })
                 .lean<{ rates: BookRate[] } & Book>()
                 .exec();
-            if (bookWithRate == null) return next(new HttpError("This book does not contain rate with this id"));
+            if (bookWithRate == null) return next(new HttpError("error.bookRate.notContainBookRate"));
 
             const fromId = bookWithRate.rates[0]?.from.toString();
 
-            const { acknowledged: successfullBookUpdate } = await this.book
+            const { modifiedCount: modifiedBookCount } = await this.book
                 .updateOne({ _id: bookId }, { $pull: { rates: { from: fromId } } })
                 .exec();
-            if (!successfullBookUpdate) return next(new HttpError("Failed to delete book"));
+            if (modifiedBookCount != 1) return next(new HttpError("error.bookRate.failedDeleteBookRate"));
 
-            const { acknowledged: successfullUserUpdate } = await this.user
+            const { modifiedCount: modifiedUserCount } = await this.user
                 .updateOne({ _id: fromId }, { $pull: { rated_books: bookId } })
                 .exec();
-            if (!successfullUserUpdate) return next(new HttpError("Failed to update the user"));
+            if (modifiedUserCount != 1) return next(new HttpError("error.user.failedUpdateUser"));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 }

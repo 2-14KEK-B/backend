@@ -13,10 +13,13 @@ import type { User } from "@interfaces/user";
 
 describe("BOOKS", () => {
     let app: Application;
+    const i18n = global.I18n;
     const pw = global.MOCK_PASSWORD,
         hpw = global.MOCK_HASHED_PASSWORD,
         mockBook1Id = new Types.ObjectId(),
         mockBook2Id = new Types.ObjectId(),
+        mockBookForLendId = new Types.ObjectId(),
+        mockUserLendUploaderId = new Types.ObjectId(),
         mockUser1Id = new Types.ObjectId(),
         mockUser2Id = new Types.ObjectId(),
         mockAdminId = new Types.ObjectId(),
@@ -36,24 +39,43 @@ describe("BOOKS", () => {
             for_borrow: true,
             available: true,
         },
+        mockBookForLend: Partial<Book> = {
+            _id: mockBookForLendId,
+            uploader: mockUserLendUploaderId,
+            author: "Lend Author",
+            title: "Title For Lend Book",
+            for_borrow: false,
+            available: true,
+        },
+        mockUserLendUploader: Partial<User> = {
+            _id: mockUserLendUploaderId,
+            email: "testuseruploaderforlend@test.com",
+            email_is_verified: true,
+            username: "testForBookUploaderLend",
+            password: pw,
+            books: [mockBook1Id, mockBook2Id],
+        },
         mockUser1: Partial<User> = {
             _id: mockUser1Id,
             email: "testuser1@test.com",
             email_is_verified: true,
+            username: "test1ForBook",
             password: pw,
             books: [mockBook1Id, mockBook2Id],
         },
         mockUser2: Partial<User> = {
             _id: mockUser2Id,
             email: "testuser2@test.com",
+            email_is_verified: true,
+            username: "test2ForBook",
             password: pw,
             books: [],
-            email_is_verified: true,
         },
         mockAdmin: Partial<User> = {
             _id: mockAdminId,
             email: "testadmin@test.com",
             email_is_verified: true,
+            username: "testAdminForBook",
             password: pw,
             books: [],
             role: "admin",
@@ -64,13 +86,10 @@ describe("BOOKS", () => {
         await userModel.create([
             { ...mockUser1, password: hpw },
             { ...mockUser2, password: hpw },
+            { ...mockUserLendUploader, password: hpw },
             { ...mockAdmin, password: hpw },
         ]);
-        await bookModel.create([
-            mockBook1,
-            mockBook2,
-            { title: "test", author: test, available: true, for_borrow: false },
-        ]);
+        await bookModel.create([mockBook1, mockBook2, mockBookForLend]);
     });
 
     describe("BOOKS without logged in", () => {
@@ -95,9 +114,9 @@ describe("BOOKS", () => {
             expect(res.body).toBeInstanceOf(Object as unknown as PaginateResult<Book>);
             expect(res.body.docs.length).toBe(1);
         });
-        it("GET /book/lend?keyword=test, should return statuscode 200", async () => {
+        it("GET /book/lend?keyword=lend, should return statuscode 200", async () => {
             expect.assertions(3);
-            const res = await request(app).get("/book/lend?keyword=test");
+            const res = await request(app).get("/book/lend?keyword=lend");
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body).toBeInstanceOf(Object as unknown as PaginateResult<Book>);
             expect(res.body.docs.length).toBe(1);
@@ -151,6 +170,50 @@ describe("BOOKS", () => {
             const res: Response = await agentForUser1.post("/book").send(newBook);
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body).toBeInstanceOf(Object as unknown as Book);
+        });
+        it("POST /book, should return 406 if validation fails", async () => {
+            expect.assertions(2);
+            const newBook: CreateBook = {
+                title: "",
+                author: "tes",
+                picture: "http://test.com",
+                isbn: "0112112425",
+                for_borrow: true,
+            };
+            const res: Response = await agentForUser1.post("/book").send(newBook);
+            expect(res.statusCode).toBe(StatusCode.NotAcceptable);
+            expect(res.body).toStrictEqual({
+                validation: [
+                    i18n?.__("validation.book.invalidIsbn"),
+                    i18n?.__("validation.book.authorShort"),
+                    i18n?.__("validation.book.titleRequired"),
+                    i18n?.__("validation.picture.invalidUrl"),
+                ],
+            });
+        });
+        it("POST /book, should return 406 if isbn validation fails", async () => {
+            expect.assertions(4);
+            const invalidRes = {
+                validation: [i18n?.__("validation.book.invalidIsbn")],
+            };
+            const newBook1: CreateBook = {
+                title: "fuafhlna",
+                author: "tesfkaw",
+                isbn: "ISBN 979-1235-16-16-11",
+                for_borrow: true,
+            };
+            const newBook2: CreateBook = {
+                title: "fuafhlna",
+                author: "tesfkaw",
+                isbn: "ISBN 9-87654321-X",
+                for_borrow: true,
+            };
+            const res1: Response = await agentForUser1.post("/book").send(newBook1);
+            const res2: Response = await agentForUser1.post("/book").send(newBook2);
+            expect(res1.statusCode).toBe(StatusCode.NotAcceptable);
+            expect(res2.statusCode).toBe(StatusCode.NotAcceptable);
+            expect(res1.body).toStrictEqual(invalidRes);
+            expect(res2.body).toStrictEqual(invalidRes);
         });
         it("PATCH /book/:id, should return statuscode 204 if logged in user uploaded the book", async () => {
             expect.assertions(2);

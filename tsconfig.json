@@ -40,6 +40,6 @@
     "ts-node": {
         "require": ["tsconfig-paths/register"]
     },
-    "include": ["src/**/*.ts", "test/*.ts", "src/**/*.test.ts", "jest.config.ts"],
+    "include": ["src/**/*.ts", "test/*.ts", "src/**/*.test.ts", "jest.config.ts", "src/locales/*.json"],
     "exclude": ["node_modules", "dist", "data", "coverage"]
 }

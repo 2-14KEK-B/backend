@@ -16,6 +16,7 @@ import type { User } from "@interfaces/user";
 
 describe("BORROWS", () => {
     let app: Application;
+    const i18n = global.I18n;
     const pw = global.MOCK_PASSWORD,
         hpw = global.MOCK_HASHED_PASSWORD,
         mockBook1FromUser2Id = new Types.ObjectId(),
@@ -31,16 +32,18 @@ describe("BORROWS", () => {
         },
         mockUser1: Partial<User> = {
             _id: mockUser1Id,
-            email: "testuser1@test.com",
+            email: "testuserborrow1@test.com",
             email_is_verified: true,
+            username: "test1ForBorrow",
             password: pw,
             books: [],
             borrows: [mockBorrowId],
         },
         mockUser2: Partial<User> = {
             _id: mockUser2Id,
-            email: "testuser2@test.com",
+            email: "testuserborrow2@test.com",
             email_is_verified: true,
+            username: "test2ForBorrow",
             password: pw,
             books: [mockBook1FromUser2Id],
             borrows: [mockBorrowId],
@@ -166,12 +169,17 @@ describe("BORROWS", () => {
         it("PATCH /borrow/:id/verify, should return statuscode 400 if logged in user have nothing to do with the borrow", async () => {
             expect.assertions(2);
             const thirdMockUserData = { email: "thirduser@test.com", password: pw };
-            await userModel.create({ email: thirdMockUserData.email, email_is_verified: true, password: hpw });
+            await userModel.create({
+                email: thirdMockUserData.email,
+                email_is_verified: true,
+                username: "testForBorrow",
+                password: hpw,
+            });
             const agent: SuperAgentTest = request.agent(app);
             await agent.post("/auth/login").send(thirdMockUserData);
             const res: Response = await agent.patch(`/borrow/${mockBorrowId.toString()}/verify`);
             expect(res.statusCode).toBe(StatusCode.BadRequest);
-            expect(res.body).toBe("You cannot modify this borrow");
+            expect(res.body).toBe(i18n?.__("error.borrow.cannotModifyBorrow"));
         });
         it("PATCH /borrow/:id/verify, should return statuscode 204 if logged in user who is the 'from' and modify 'verified'", async () => {
             expect.assertions(1);
@@ -184,7 +192,7 @@ describe("BORROWS", () => {
                 `/borrow/${mockBorrowForLoggedInUser._id?.toString()}/verify`,
             );
             expect(res.statusCode).toBe(StatusCode.BadRequest);
-            expect(res.body).toBe("You cannot modify the 'verified' field");
+            expect(res.body).toBe(i18n?.__("error.borrow.cannotModifyVerified"));
         });
         it("DELETE /borrow/:id, should return statuscode 204", async () => {
             expect.assertions(1);
@@ -209,8 +217,9 @@ describe("BORROWS", () => {
             },
             mockUser3: Partial<User> = {
                 _id: mockUser3Id,
-                email: "testuser1@test.com",
+                email: "testuserlend1@test.com",
                 email_is_verified: true,
+                username: "test3ForBorrow",
                 password: pw,
                 books: [mockBookFromUser3Id],
                 borrows: [],
@@ -263,21 +272,21 @@ describe("BORROWS", () => {
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body).toBeInstanceOf(Object as unknown as Borrow);
         });
-        it("PATCH /borrow/:id, should return statuscode 400 if new book id's not valid or empty", async () => {
+        it("PATCH /borrow/:id, should return statuscode 404 if new book id's not valid or empty", async () => {
             expect.assertions(4);
             const patch: ModifyBorrow = { books: [new Types.ObjectId().toString()] };
             const resNone = await agentForUser1.patch(`/borrow/${mockLendId.toString()}`);
             const resNotValid: Response = await agentForUser1.patch(`/borrow/${mockLendId.toString()}`).send(patch);
-            expect(resNone.statusCode).toBe(StatusCode.BadRequest);
-            expect(resNone.body).toBe("You cannot modify borrow without new data");
-            expect(resNotValid.statusCode).toBe(StatusCode.BadRequest);
-            expect(resNotValid.body).toBe("Books are not valid for lend");
+            expect(resNone.statusCode).toBe(StatusCode.NotFound);
+            expect(resNone.body).toBe(i18n?.__("error.idNotValid"));
+            expect(resNotValid.statusCode).toBe(StatusCode.NotFound);
+            expect(resNotValid.body).toBe(i18n?.__("error.idNotValid"));
         });
         it("PATCH /borrow/:id/verify, should return statuscode 400 if logged in user who is the 'from' and modify 'verified'", async () => {
             expect.assertions(2);
             const res = await agentForUser2.patch(`/borrow/${mockLendId.toString()}/verify`);
             expect(res.statusCode).toBe(StatusCode.BadRequest);
-            expect(res.body).toBe("You cannot modify the 'verified' field");
+            expect(res.body).toBe(i18n?.__("error.borrow.cannotModifyVerified"));
         });
         it("PATCH /borrow/:id/verify, should return statuscode 204 if logged in user who is the 'from' and modify 'verified'", async () => {
             expect.assertions(1);
@@ -293,6 +302,7 @@ describe("BORROWS", () => {
                 _id: mockAdminId,
                 email: "testadmin@test.com",
                 email_is_verified: true,
+                username: "testAdminForBorrow",
                 password: pw,
                 role: "admin",
                 books: [],

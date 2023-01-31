@@ -28,6 +28,7 @@ describe("NOTIFICATIONS", () => {
             _id: mockUser1Id,
             email: "testuser1@test.com",
             email_is_verified: true,
+            username: "test1ForNotification",
             password: pw,
             createdAt: new Date("2020-10-10"),
             notifications: [
@@ -45,6 +46,7 @@ describe("NOTIFICATIONS", () => {
             _id: mockUser2Id,
             email: "testuser2@test.com",
             email_is_verified: true,
+            username: "test2ForNotification",
             password: pw,
             createdAt: new Date("2021-10-10"),
         },

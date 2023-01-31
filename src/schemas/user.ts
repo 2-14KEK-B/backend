@@ -7,22 +7,28 @@ const notificationSchema = new Schema<Notification>(
     {
         from: {
             type: Schema.Types.ObjectId,
-            required: true,
+            required: [true, "notification.fromRequired"],
             ref: "User",
         },
         doc_id: {
             type: Schema.Types.ObjectId,
-            required: true,
+            required: [true, "notification.toRequired"],
         },
         doc_type: {
             type: String,
-            enum: ["lend", "borrow", "user_rate"],
-            required: true,
+            enum: {
+                values: ["lend", "borrow", "user_rate"],
+                message: "notification.onlyFromDocType",
+            },
+            required: [true, "notification.docTypeRequired"],
         },
         noti_type: {
             type: String,
-            enum: ["create", "update", "delete", "verify"],
-            required: true,
+            enum: {
+                values: ["create", "update", "delete", "verify"],
+                message: "notification.onlyFromNotiType",
+            },
+            required: [true, "notification.notiTypeRequired"],
         },
         seen: { type: Boolean, default: false },
     },
@@ -31,15 +37,63 @@ const notificationSchema = new Schema<Notification>(
 
 const userSchema = new Schema<User>(
     {
-        username: { type: String },
-        fullname: { type: String },
-        password: { type: String, required: true, select: 0 },
-        email: { type: String, required: true },
-        verification_token: { type: String, select: 0 },
-        password_reset_token: { type: String, select: 0 },
-        email_is_verified: { type: Boolean, default: false },
-        locale: { type: String, default: "hu" },
-        picture: { type: String },
+        username: {
+            type: String,
+            trim: true,
+            required: [true, "user.usernameRequired"],
+            minlength: [6, "user.usernameMinLength"],
+            maxlength: [32, "user.usernameMaxLength"],
+            unique: true,
+            sparse: true,
+        },
+        fullname: {
+            type: String,
+            minlength: [2, "user.fullnameMinLength"],
+            maxlength: [64, "user.fullnameMaxLength"],
+        },
+        password: {
+            type: String,
+            required: [true, "user.passwordRequired"],
+            select: 0,
+        },
+        email: {
+            type: String,
+            trim: true,
+            required: [true, "user.emailRequired"],
+            minlength: [8, "user.emailMinLength"],
+            maxlength: [64, "user.emailMaxLength"],
+            immutable: true,
+            index: true,
+            unique: true,
+        },
+        verification_token: {
+            type: String,
+            select: 0,
+            unique: true,
+            sparse: true,
+        },
+        password_reset_token: {
+            type: String,
+            select: 0,
+            unique: true,
+            sparse: true,
+        },
+        email_is_verified: {
+            type: Boolean,
+            default: false,
+        },
+        locale: {
+            type: String,
+            default: "hu",
+            enum: {
+                values: ["hu", "en"],
+                message: "user.onlyFromLocale",
+            },
+        },
+        picture: {
+            type: String,
+            trim: true,
+        },
         role: { type: String },
         books: [{ type: Schema.Types.ObjectId, ref: "Book" }],
         rated_books: [{ type: Schema.Types.ObjectId, ref: "Book" }],
@@ -53,6 +107,11 @@ const userSchema = new Schema<User>(
     },
     { timestamps: true, versionKey: false },
 );
+
+userSchema.path("picture").validate(function (val) {
+    const imgUrlRegex = /(http(s?):)([/|.|\w|\s|-])*\.(?:jpg|gif|png)/;
+    return imgUrlRegex.test(val);
+}, "picture.invalidUrl");
 
 userSchema.statics["getInitialData"] = async function (userId: string): Promise<User> {
     try {

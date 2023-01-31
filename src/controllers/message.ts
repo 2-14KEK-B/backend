@@ -22,24 +22,6 @@ export default class MessageController implements Controller {
         this.initializeRoutes();
     }
 
-    /**
-     * Routok:
-     *  - usernek
-     *      GET
-     *      - /user/me/message
-     *      - /user/:id/message?
-     *      POST
-     *      - /user/:id/message
-     *      PATCH
-     *      - /message/:id/seen
-     *  - adminnak
-     *      GET
-     *      - /admin/message
-     *      DELETE
-     *      - /admin/message/:id
-     *      - /admin/message/:id/content/:id
-     */
-
     private initializeRoutes() {
         this.router.get(`/user/me/message`, authentication, this.getLoggedInUserMessages);
         this.router
@@ -84,12 +66,12 @@ export default class MessageController implements Controller {
                 })
                 .lean<{ messages: Message[] }>()
                 .exec();
-            if (!messages) return next(new HttpError("Failed to get messages"));
+            if (!messages) return next(new HttpError("error.message.failedGetMessages"));
 
             res.json(messages);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 
@@ -154,11 +136,11 @@ export default class MessageController implements Controller {
             if (messages) {
                 res.json(messages[0]);
             } else {
-                return next(new HttpError("Failed to get message contents by this user"));
+                return next(new HttpError("error.message.failedGetMessagesByUserId"));
             }
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 
@@ -176,31 +158,41 @@ export default class MessageController implements Controller {
                 sender_id: new Types.ObjectId(from),
                 content: req.body.content,
             };
-            const exist = await this.message //
+            const isExists = await this.message //
                 .exists({ users: { $all: [from, to] } })
                 .exec();
 
-            if (exist != null) {
-                const { acknowledged } = await this.message
+            if (isExists != null) {
+                const { modifiedCount } = await this.message
                     .updateOne(
                         { users: { $all: [from, to] } },
                         { $push: { message_contents: { ...newMessageContent } } },
+                        { runValidators: true },
                     )
                     .exec();
-                if (!acknowledged) return next(new HttpError("Failed to add message content"));
+                if (modifiedCount != 1) return next(new HttpError("failedCreateMessage"));
                 res.json({ message: { ...newMessageContent, createdAt: new Date() }, isNew: false });
             } else {
-                const messages = await this.message.create({
+                const messages = new this.message({
                     users: [new Types.ObjectId(from), new Types.ObjectId(to)],
                     message_contents: [newMessageContent],
                 });
+                await messages.save({ validateBeforeSave: true });
+                // const messages = await this.message.create({
+                //     users: [new Types.ObjectId(from), new Types.ObjectId(to)],
+                //     message_contents: [newMessageContent],
+                // });
 
-                if (!messages) return next(new HttpError("Failed to create message"));
+                if (!messages) return next(new HttpError("error.message.failedCreateMessage"));
 
-                const { acknowledged } = await this.user
-                    .updateMany({ _id: { $in: [from, to] } }, { $push: { messages: { _id: messages._id } } })
+                const { modifiedCount } = await this.user
+                    .updateMany(
+                        { _id: { $in: [from, to] } },
+                        { $push: { messages: { _id: messages._id } } },
+                        { runValidators: true },
+                    )
                     .exec();
-                if (!acknowledged) return next(new HttpError("Failed to update users"));
+                if (modifiedCount != 2) return next(new HttpError("error.user.failedUpdateUsers"));
 
                 return res.json({
                     message: {
@@ -214,7 +206,7 @@ export default class MessageController implements Controller {
             }
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 
@@ -224,7 +216,7 @@ export default class MessageController implements Controller {
             if (await isIdNotValid(this.message, [messageId], next)) return;
             const loggedInUserId = req.session["userId"];
 
-            const { modifiedCount, matchedCount } = await this.message.updateOne(
+            const { modifiedCount } = await this.message.updateOne(
                 { _id: messageId, users: loggedInUserId },
                 {
                     $set: {
@@ -238,15 +230,15 @@ export default class MessageController implements Controller {
                             "elem.seen": false,
                         },
                     ],
+                    runValidators: true,
                 },
             );
-            if (matchedCount != 1 || modifiedCount != 1)
-                return next(new HttpError("Failed to update the 'seen' fields of the message contents"));
+            if (modifiedCount != 1) return next(new HttpError("error.message.failedUpdateMessageSeen"));
 
-            res.sendStatus(204);
+            res.sendStatus(StatusCode.NoContent);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 
@@ -269,7 +261,7 @@ export default class MessageController implements Controller {
             res.json(messages);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
     private adminDeleteMessageById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
@@ -281,22 +273,21 @@ export default class MessageController implements Controller {
                 .findById(messageId, { users: 1 })
                 .lean<{ users: Types.ObjectId[] }>()
                 .exec();
-            if (!users) return next(new HttpError("Failed to get ids from messages"));
 
-            const { acknowledged: successfullDeleteMessage } = await this.message //
+            const { deletedCount } = await this.message //
                 .deleteOne({ _id: messageId })
                 .exec();
-            if (!successfullDeleteMessage) return next(new HttpError(`Failed to delete message by id ${messageId}`));
+            if (deletedCount != 1) return next(new HttpError("error.message.failedDeleteMessage"));
 
-            const { acknowledged: successfullUpdateUsers } = await this.user
-                .updateMany({ _id: { $in: users } }, { $pull: { messages: messageId } })
+            const { modifiedCount } = await this.user
+                .updateMany({ _id: { $in: users } }, { $pull: { messages: messageId } }, { runValidators: true })
                 .exec();
-            if (!successfullUpdateUsers) return next(new HttpError("Failed to update users"));
+            if (modifiedCount != 2) return next(new HttpError("error.user.failedUpdateUsers"));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
     private adminDeleteMessageContentByMessageAndContentId = async (
@@ -309,21 +300,24 @@ export default class MessageController implements Controller {
             if (await isIdNotValid(this.message, [messageId], next)) return;
             const contentId = req.params["contentId"];
 
-            const { users } = await this.message //
-                .findOne({ _id: messageId, "message_contents._id": contentId }, { users: 1 })
-                .lean<{ users: Types.ObjectId[] }>()
+            const isContentExists = await this.message //
+                .exists({ _id: messageId, "message_contents._id": contentId })
                 .exec();
-            if (!users) return next(new HttpError("Failed to get message"));
+            if (isContentExists == null) return next(new HttpError("error.message.failedGetMessageContent"));
 
-            const { acknowledged: successfullDeleteMessageContent } = await this.message //
-                .updateOne({ _id: messageId }, { $pull: { message_contents: { _id: contentId } } })
+            const { modifiedCount } = await this.message //
+                .updateOne(
+                    { _id: messageId },
+                    { $pull: { message_contents: { _id: contentId } } },
+                    { runValidators: true },
+                )
                 .exec();
-            if (!successfullDeleteMessageContent) return next(new HttpError(`Failed to delete message content`));
+            if (modifiedCount != 1) return next(new HttpError("error.message.failedDeleteMessageContent"));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 }

@@ -1,0 +1,177 @@
+{
+    "hello": "Hello",
+    "success": {
+        "logout": "Logged out successFully.",
+        "emailVerification": "E-mail verified successfully.",
+        "passwordReset": "Password modified successfully",
+        "passwordResetEmail": "Password modification e-mail sent successfully."
+    },
+    "error": {
+        "default": "Something went wrong.",
+        "defaultPassword": "Something wrong with the password.",
+        "forbidden": "You do not have access!",
+        "unauthorized": "Please login.",
+        "wrongCredentials": "Wrong credentials provided.",
+        "userAlreadyExists": "User already exists, please try again with different e-mail or username.",
+        "idNotValid": "This identifier is not valid.",
+        "invalidUrl": "Invalid URL.",
+        "tokenAlreadyUsed": "This token already has been used",
+        "tokenNotValidOrExpired": "Token is not valid or expired.",
+        "failedUserCreation": "Something wrong with the user creation.",
+        "emailAlreadySent": "The e-mail has already been sent. You can also check the 'spam' directory.",
+        "emailNotFoundOrVerified": "E-mail is not found or not verified.",
+        "emailFailedVerify": "Failed to verify the email.",
+        "emailAlreadyVerified": "This e-mail is already verified.",
+        "emailSentNotVerified": "E-mail has been sent to your given email address. Please verify it.",
+        "failedGoogle": "Failed to receive data from Google.",
+        "fromOrTo": "Either 'from' or 'to' field is required.",
+        "alreadyInBorrow": "You can't send a request for this book now, it's probably already been lent.",
+        "book": {
+            "failedGetBooks": "Failed to get books.",
+            "failedCreateBook": "Failed to create book.",
+            "failedUpdateBook": "Failed to update book.",
+            "failedDeleteBook": "Failed to delete book.",
+            "failedGetBookById": "Failed to get book by id."
+        },
+        "bookRate": {
+            "notHaveBookRate": "You do not have book rate with this identifier.",
+            "notContainBookRate": "This book does not contain rate with this identifier.",
+            "alreadyRatedBook": "Already rated this book.",
+            "failedGetBookRates": "Failed to get book rates.",
+            "failedCreateBookRate": "Failed to create book rate.",
+            "failedUpdateBookRate": "Failed to update book rate.",
+            "failedDeleteBookRate": "Failed to delete book rate."
+        },
+        "message": {
+            "failedGetMessages": "Failed to get messages.",
+            "failedGetMessagesByUserId": "Failed to get message contents by this user.",
+            "failedCreateMessage": "Failed to create message.",
+            "failedUpdateMessageSeen": "Failed to update the 'seen' fields of the message contents.",
+            "failedDeleteMessage": "Failed to delete message by id.",
+            "failedGetMessageContent": "Failed to get message content by id.",
+            "failedDeleteMessageContent": "Failed to delete message content."
+        },
+        "borrow": {
+            "failedGetBorrows": "Failed to get borrows.",
+            "failedGetBorrowById": "Failed to get borrow by id.",
+            "booksAreForLend": "These books are uploaded for lend.",
+            "borrowFromYourself": "You cannot borrow books to yourself.",
+            "failedCreateBorrow": "Failed to create borrow.",
+            "cannotModifyBorrow": "You cannot modify this borrow.",
+            "cannotBorrowBook": "This book is not uploaded for that.",
+            "failedUpdateBorrow": "Failed to update borrow.",
+            "failedDeleteBorrow": "Failed to delete borrow.",
+            "cannotModifyVerified": "You cannot modify the 'verified' field.",
+            "cannotDeleteBorrow": "You cannot delete this borrow."
+        },
+        "lend": {
+            "booksAreForBorrow": "These books are uploaded for borrow.",
+            "lendToYourself": "You cannot lend books to yourself."
+        },
+        "user": {
+            "failedToGetUserById": "Failed to get user by id.",
+            "failedCreateUser": "Failed to create user account.",
+            "failedUpdateUser": "Failed to update user.",
+            "failedUpdateUsers": "Failed to update users.",
+            "failedUpdateYourUser": "Failed to modify your profile.",
+            "failedDeleteYourUser": "Failed to delete your profile.",
+            "failedDeleteUser": "Failed to delete user."
+        },
+        "userRate": {
+            "failedGetUserRates": "Failed to get the user rates.",
+            "failedGetUserRateById": "Failed to get the user rate by id.",
+            "failedGetUserRateByUserId": "Failed to get the user rate by user id.",
+            "failedGetUserRateByBorrowId": "Failed to get the user rate by borrow id.",
+            "notHaveUserRateById": "You do not have user rate by this id.",
+            "cannotIfBorrowNotVerified": "You can not rate user if borrow is not verified.",
+            "failedUpdateUserRate": "Failed to modify user rate.",
+            "failedCreateUserRate": "Failed to create user rate.",
+            "failedDeleteUserRate": "Failed to delete user rate."
+        },
+        "notification": {
+            "failedGetNotifications": "Failed to get notifications.",
+            "failedGetNotificationById": "Failed to get notification by id.",
+            "failedCreateNotification": "Failed to create notification.",
+            "failedUpdateNotificationSeen": "Failed to update the 'seen' fields of the notification.",
+            "failedDeleteNotificationById": "Failed to delete notification by id."
+        }
+    },
+    "email": {
+        "passwordSubject": "Password modification",
+        "passwordBody":
+            "<div>Hi,</div><br /><div>Password modification link: {{ link }}.</div><br /><div>Thanks! The BookSwap team</div>",
+        "verifySubject": "Email verification",
+        "verifyBody":
+            "<div>Hi,</div><br /><div>You registered an account on BookSwap, before being able to use your account you need to verify that this is your email address by clicking here: {{ link }}.</div><br /><div>Thanks! The BookSwap team</div>"
+    },
+    "validation": {
+        "picture": {
+            "invalidUrl": "Invalid url."
+        },
+        "book": {
+            "uploaderRequired": "Uploader is required.",
+            "authorRequired": "Author is required.",
+            "authorShort": "Author is too short.",
+            "authorLong": "Author is too long.",
+            "titleRequired": "Title is required.",
+            "titleShort": "Title is too short.",
+            "titleLong": "Title is too long.",
+            "invalidIsbn": "Invalid ISBN.",
+            "onlyFromGenres": "You can only choose from predefined genres.",
+            "genreRequired": "At least 1 genre must be specified.",
+            "minPrice": "The minimum price you can enter is 0.",
+            "maxPrice": "The maximum price you can enter is 1000000.",
+            "forBorrowRequired": "The purpose of the upload is mandatory."
+        },
+        "bookRate": {
+            "commentMaxLength": "The maximum number of characters in a comment is 256.",
+            "rateMin": "The minimum rating is 1.",
+            "rateMax": "The maximum rating is 5."
+        },
+        "borrow": {
+            "fromRequired": "From is required.",
+            "toRequired":"To is required.",
+            "typeRequired": "Type is required.",
+            "onlyFromTypes": "You can only choose from 'borrow' and 'lend'.",
+            "booksRequired": "At least 1 book required."
+        },
+        "message": {
+            "usersRequired": "Users are required.",
+            "senderRequired": "Sender is required.",
+            "contentMinLength": "The minimum number of characters in a content is 1.",
+            "contentMaxLength": "The maximum number of characters in a content is 256.",
+            "contentRequired": "Content is required."
+        },
+        "user": {
+            "usernameRequired": "Username is required.",
+            "usernameMinLength": "The minimum number of characters in a username is 6.",
+            "usernameMaxLength": "The maximum number of characters in a username is 32.",
+            "fullnameMinLength": "The minimum number of characters in a fullname is 2.",
+            "fullnameMaxLength": "The maximum number of characters in a fullname is 64.",
+            "passwordRequired": "Password is required.",
+            "passwordMinLength": "The minimum number of characters in a password is 8.",
+            "passwordMaxLength": "The maximum number of characters in a password is 64.",
+            "emailRequired": "E-mail is required.",
+            "emailMinLength": "The minimum number of characters in a e-mail is 8.",
+            "emailMaxLength": "The maximum number of characters in a e-mail is 64.",
+            "onlyFromLocale": "You can only choose from 'hu' and 'en'."
+        },
+        "notification": {
+            "fromRequired": "From is required.",
+            "toRequired": "To is required.",
+            "docIdRequired": "Document ID is required.",
+            "docTypeRequired": "Document type if required.",
+            "onlyFromDocType": "You can only choose from predefined document types.",
+            "notiTypeRequired": "Notification type if required.",
+            "onlyFromNotiType": "You can only choose from predefined notification types."
+        },
+        "userRate": {
+            "fromRequired": "From is required.",
+            "toRequired": "To is required.",
+            "borrowRequired": "Borrow is required.",
+            "commentMinLength": "The minimum number of characters in a comment is 1.",
+            "commentMaxLength": "The maximum number of characters in a comment is 256.",
+            "rareRequired": "Rate is required."
+        }
+    }
+}

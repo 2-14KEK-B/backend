@@ -37,13 +37,18 @@ export default class LoginController implements Controller {
             }
 
             const existingUser = await this.user
-                .findOne(query, { password: 1, email_is_verified: 1 })
-                .lean<{ _id: Types.ObjectId; password: string; email_is_verified: boolean }>()
+                .findOne(query, { password: 1, email_is_verified: 1, verification_token: 1 })
+                .lean<{
+                    _id: Types.ObjectId;
+                    password: string;
+                    email_is_verified: boolean;
+                    verification_token?: string;
+                }>()
                 .exec();
             if (!existingUser) return next(new WrongCredentialsException());
 
-            if (!existingUser.email_is_verified) {
-                return next(new HttpError("E-mail has been sent to your given email address. Please verify it."));
+            if (!existingUser.email_is_verified && existingUser.verification_token) {
+                return next(new HttpError("error.emailSentNotVerified"));
             }
 
             const isPasswordMatching = await compare(password, existingUser.password);
@@ -55,13 +60,12 @@ export default class LoginController implements Controller {
             delete user["password"];
 
             req.session["userId"] = user._id.toString();
-            req.session["locale"] = user.locale;
             req.session["role"] = user.role;
 
             res.json(user);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 
@@ -74,7 +78,7 @@ export default class LoginController implements Controller {
         try {
             const client: OAuth2Client = new OAuth2Client();
 
-            client.setCredentials({ access_token: req.body.token });
+            client.setCredentials({ access_token: req.body["token"] });
             const { data } = await client.request<{
                 email: string;
                 email_verified: boolean;
@@ -85,7 +89,7 @@ export default class LoginController implements Controller {
                 url: "https://www.googleapis.com/oauth2/v3/userinfo",
             });
 
-            if (!data) return next(new HttpError("Failed to receive data from google"));
+            if (!data) return next(new HttpError("error.failedGoogle"));
 
             const userId = await this.user //
                 .exists({ email: data.email })
@@ -96,29 +100,34 @@ export default class LoginController implements Controller {
                     .getInitialData(userId as unknown as string);
 
                 req.session["userId"] = user._id;
-                req.session["locale"] = user.locale;
                 req.session["role"] = user.role;
-
-                return res.send(user);
+                return res.json(user);
             } else {
+                const emailFirstSection = data.email.split("@")[0];
+                const isUsernameOccupied = await this.user.exists({ username: emailFirstSection }).exec();
+
+                const username = isUsernameOccupied
+                    ? `${data.email.split("@")[0]}_${Math.floor(Math.random() * (100 - 1 + 1)) + 1}`
+                    : emailFirstSection;
+
                 const newUser = await this.user //
                     .create({
                         ...data,
-                        email_is_verified: data.email_verified,
+                        email_is_verified: true,
+                        username,
                         fullname: data.name,
                         password: "stored at Google",
                     });
 
-                if (!newUser) return next(new HttpError("Failed to create user"));
+                if (!newUser) return next(new HttpError("error.user.failedCreateUser"));
 
                 req.session["userId"] = newUser._id;
-                req.session["locale"] = newUser.locale;
                 req.session["role"] = newUser.role;
-                return res.send(newUser);
+                return res.json(newUser);
             }
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 }
