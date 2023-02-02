@@ -72,7 +72,7 @@ describe("BORROWS", () => {
             _id: mockBorrowId,
             from_id: mockUser2Id,
             to_id: mockUser1Id,
-            books: [{ _id: mockBook1FromUser2Id, _version: 1 }],
+            books: [mockBook1FromUser2Id],
         };
 
     beforeAll(async () => {
@@ -152,7 +152,7 @@ describe("BORROWS", () => {
                 _id: new Types.ObjectId(),
                 to_id: mockUser1Id,
                 from_id: mockUser2Id,
-                books: [{ _id: book._id, _version: 1 }],
+                books: [book._id],
             });
             await userModel.updateMany(
                 { $and: [{ _id: mockUser1Id }, { _id: mockUser2Id }] },
@@ -173,7 +173,7 @@ describe("BORROWS", () => {
             expect.assertions(2);
             const mockBorrow: CreateBorrow = {
                 from_id: mockUser2Id.toString(),
-                books: [{ _id: mockBook2FromUser2Id.toString(), _version: 1 }],
+                books: [mockBook2FromUser2Id.toString()],
             };
             const res: Response = await agentForUser1.post("/borrow").send(mockBorrow);
             mockBorrowForLoggedInUser = res.body;
@@ -208,12 +208,7 @@ describe("BORROWS", () => {
         });
         it("PATCH /borrow/:id, should return statuscode 200 if logged in user who is borrowing the book and modify the 'books'", async () => {
             expect.assertions(2);
-            const patch: ModifyBorrow = {
-                books: [
-                    { _id: mockBook1FromUser2Id.toString(), _version: 1 },
-                    { _id: mockBook2FromUser2Id.toString(), _version: 1 },
-                ],
-            };
+            const patch: ModifyBorrow = { books: [mockBook1FromUser2Id.toString(), mockBook2FromUser2Id.toString()] };
             const res: Response = await agentForUser1
                 .patch(`/borrow/${mockBorrowForLoggedInUser._id?.toString()}`)
                 .send(patch);
@@ -248,7 +243,7 @@ describe("BORROWS", () => {
                 _id: new Types.ObjectId(),
                 to_id: mockUser2Id,
                 from_id: mockUser1Id,
-                books: [{ _id: book._id, _version: 1 }],
+                books: [book._id],
             });
             await userModel.updateMany(
                 { $and: [{ _id: mockUser1Id }, { _id: mockUser2Id }] },

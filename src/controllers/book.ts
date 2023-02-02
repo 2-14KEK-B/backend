@@ -5,14 +5,14 @@ import authentication from "@middlewares/authentication";
 import validation from "@middlewares/validation";
 import bookModel from "@models/book";
 import userModel from "@models/user";
-import { CreateBookDto, ModifyBookDto } from "@validators/book";
+import { CreateBookDto } from "@validators/book";
 import getPaginated from "@utils/getPaginated";
 import isIdNotValid from "@utils/idChecker";
 import StatusCode from "@utils/statusCodes";
 import HttpError from "@exceptions/Http";
 import type { FilterQuery, Types, SortOrder } from "mongoose";
 import type Controller from "@interfaces/controller";
-import type { Book, CreateBook, ModifyBook } from "@interfaces/book";
+import type { Book, CreateBook } from "@interfaces/book";
 
 export default class BookController implements Controller {
     path = "/book";
@@ -28,8 +28,6 @@ export default class BookController implements Controller {
     private initializeRoutes() {
         this.router.get(`${this.path}/all`, [authentication, authorizationMiddleware(["admin"])], this.getAllBooks);
         this.router.get(`${this.path}/me`, authentication, this.getUserBooks);
-        this.router.get(`${this.path}/:id([0-9a-fA-F]{24})/:v([0-9]*)`, this.getBookByVersion);
-        this.router.get(`${this.path}/:id([0-9a-fA-F]{24})/date`, this.getBookLastVersionByDate);
         this.router
             .route(this.path)
             .get(this.getBooks)
@@ -37,7 +35,7 @@ export default class BookController implements Controller {
         this.router
             .route(`${this.path}/:id([0-9a-fA-F]{24})`)
             .get(this.getBookById)
-            .patch([authentication, validation(ModifyBookDto, true)], this.modifyBookById)
+            // .patch(`${this.path}/:id`, [authentication, validation(ModifyBookDto), true], this.modifyBookById),
             .delete(authentication, this.deleteBookById);
     }
 
@@ -161,66 +159,27 @@ export default class BookController implements Controller {
         }
     };
 
-    private modifyBookById = async (req: Request, res: Response, next: NextFunction) => {
-        try {
-            const userId = req.session["userId"];
-            const bookId = req.params["id"] as string;
-            if (await isIdNotValid(this.book, [bookId], next)) return;
+    /**
+    TODO: Versioning
+     */
+    // private modifyBookById = async (req: Request, res: Response, next: NextFunction) => {
+    //     try {
+    //         const userId = req.session["userId"];
+    //         const bookId: string = req.params["id"];
+    //         if (await isIdNotValid(this.book, [bookId], next)) return;
 
-            const now = new Date();
-            const bookData: ModifyBook = req.body;
-            const newBook = await this.book.findByIdAndUpdate(
-                bookId,
-                { ...bookData, updated_on: now },
-                { returnDocument: "after" },
-            );
-            if (!newBook) return next(new HttpError("Failed to update book"));
+    //         const now = new Date();
+    //         const bookData: ModifyBook = req.body;
+    //         const newBook = await this.book.findByIdAndUpdate(bookId, { ...bookData, updated_on: now }, { returnDocument: "after" });
+    //         if (!newBook) return next(new HttpError("Failed to update book"));
 
-            await this.user.findByIdAndUpdate(userId, { $push: { books: { _id: newBook._id } } });
+    //         await this.user.findByIdAndUpdate(userId, { $push: { books: { _id: newBook._id } } });
 
-            res.json(newBook);
-        } catch (error) {
-            next(new HttpError(error.message));
-        }
-    };
-
-    private getBookByVersion = async (req: Request<{ id: string; v: string }>, res: Response, next: NextFunction) => {
-        try {
-            const { id, v } = req.params;
-            if (await isIdNotValid(this.book, [id], next)) return;
-
-            const versionAsNum = Number.parseInt(v as string);
-
-            const book = await this.book.findVersion(id, versionAsNum, this.book);
-            if (book == null) return next(new HttpError(`Not found book by this version: ${versionAsNum}`));
-
-            res.json(book);
-        } catch (error) {
-            next(new HttpError(error.message));
-        }
-    };
-    private getBookLastVersionByDate = async (
-        req: Request<{ id: string }, unknown, { date: string }>,
-        res: Response,
-        next: NextFunction,
-    ) => {
-        try {
-            const { id } = req.params;
-            if (await isIdNotValid(this.book, [id], next)) return;
-
-            const { date } = req.body;
-            const parsedDate = Date.parse(date);
-            if (isNaN(parsedDate)) return next(new HttpError("Not valid date"));
-            const validatedDate = new Date(parsedDate);
-
-            const book = await this.book.findValidVersion(id, validatedDate, this.book);
-            if (book == null) return next(new HttpError(`Not found book by this date: ${validatedDate}`));
-
-            res.json(book);
-        } catch (error) {
-            next(new HttpError(error.message));
-        }
-    };
+    //         res.json(newBook);
+    //     } catch (error) {
+    //         next(new HttpError(error.message));
+    //     }
+    // };
 
     private deleteBookById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
         try {

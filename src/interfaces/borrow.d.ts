@@ -9,17 +9,17 @@ interface Borrow {
     createdAt: Date;
     updatedAt: Date;
     verified: boolean;
-    books: (Book | { _id: ID; _version: number })[];
+    books: (Book | ID)[];
     user_ratings?: (UserRating | ID)[];
 }
 
 interface CreateBorrow {
     from_id: string;
-    books: { _id: ID; _version: number }[];
+    books: string[];
 }
 
 interface ModifyBorrow {
-    books?: { _id: ID; _version: number }[];
+    books?: string[];
     verified?: boolean;
 }
 

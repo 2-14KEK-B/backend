@@ -1,8 +1,6 @@
 import { Schema } from "mongoose";
 import type { Book } from "@interfaces/book";
 import type { BookRating } from "@interfaces/bookRating";
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const mongooseVersioned = require("mongoose-versioned");
 
 const bookRatingSchema = new Schema<BookRating>(
     {
@@ -21,7 +19,6 @@ const bookSchema = new Schema<Book>(
         uploader: {
             type: Schema.Types.ObjectId,
             ref: "User",
-            index: true,
         },
         author: { type: String, required: true },
         title: { type: String, required: true },
@@ -32,11 +29,7 @@ const bookSchema = new Schema<Book>(
         for_borrow: { type: Boolean, required: true },
         ratings: [bookRatingSchema],
     },
-    { timestamps: { createdAt: true, updatedAt: false } },
+    { timestamps: true },
 );
-
-bookSchema.plugin(mongooseVersioned, {
-    collection: "book_versions",
-});
 
 export default bookSchema;
