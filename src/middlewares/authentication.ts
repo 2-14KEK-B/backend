@@ -12,11 +12,7 @@ export default async function authenticationMiddleware(
     next: NextFunction,
 ): Promise<void> {
     const userId = req.session["userId"];
-    if (!userId) {
-        return next(new UnauthorizedException());
-    }
-
-    if (await isIdNotValid(userModel, [userId], next)) {
+    if (!userId || (await isIdNotValid(userModel, [userId], next))) {
         return next(new UnauthorizedException());
     }
     next();

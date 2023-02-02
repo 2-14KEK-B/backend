@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from "express";
-import UserRatingController from "./userRating";
+import UserRateController from "./userRate";
+import NotificationController from "./notification";
 import authentication from "@middlewares/authentication";
 import authorization from "@middlewares/authorization";
 import validation from "@middlewares/validation";
@@ -14,26 +15,122 @@ import type { ModifyUser, User } from "@interfaces/user";
 import type { FilterQuery, SortOrder } from "mongoose";
 
 export default class UserController implements Controller {
-    path = "/user";
     router = Router();
     private user = userModel;
 
     constructor() {
-        this.router.use(`${this.path}/rate`, new UserRatingController().router);
+        this.router.use("/", new UserRateController().router);
+        this.router.use("/", new NotificationController().router);
         this.initializeRoutes();
     }
 
     private initializeRoutes() {
-        this.router.get(`${this.path}/me`, authentication, this.getMyUserInfo);
-        this.router.get(this.path, [authentication, authorization(["admin"])], this.getAllUsers);
+        this.router.get("/user/:id([0-9a-fA-F]{24})", this.getUserById);
         this.router
-            .route(`${this.path}/:id([0-9a-fA-F]{24})`)
-            .get(this.getUserById)
-            .patch([authentication, validation(ModifyUserDto, true)], this.modifyUserById)
-            .delete(authentication, this.deleteUserById);
+            .route(`/user/me`)
+            .all(authentication)
+            .get(this.getLoggedInUser)
+            .patch(validation(ModifyUserDto, true), this.modifyLoggedInUser)
+            .delete(this.deleteLoggedInUser);
+        // ADMIN
+        this.router.get("/admin/user", [authentication, authorization(["admin"])], this.adminGetUsers);
+        this.router
+            .route("/admin/user/:id([0-9a-fA-F]{24})")
+            .all([authentication, authorization(["admin"])])
+            .patch(validation(ModifyUserDto, true), this.adminModifyUserById)
+            .delete(this.adminDeleteUserById);
     }
 
-    private getAllUsers = async (
+    //TODO: csak a szükséges adatok küldése
+    private getUserById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+        try {
+            const userId = req.params["id"];
+            if (await isIdNotValid(this.user, [userId], next)) return;
+
+            const user = await this.user
+                .findById(userId, "-email_is_verified -role -messages -rated_books -borrows")
+                .populate({ path: "books", match: { available: true }, select: "author title picture category" })
+                .populate({
+                    path: "user_rates",
+                    populate: {
+                        path: "to",
+                        select: "from createdAt rate comment",
+                        populate: { path: "from", select: "username email fullname picture" },
+                    },
+                })
+                .lean<User>()
+                .exec();
+            if (!user) return next(new HttpError("error.user.failedToGetUserById"));
+
+            res.json(user);
+        } catch (error) {
+            /* istanbul ignore next */
+            next(error);
+        }
+    };
+
+    private getLoggedInUser = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const userId = req.session["userId"] as string;
+
+            const user = await this.user.getInitialData(userId);
+
+            res.json(user);
+        } catch (error) {
+            /* istanbul ignore next */
+            next(error);
+        }
+    };
+    private modifyLoggedInUser = async (
+        req: Request<unknown, unknown, ModifyUser>,
+        res: Response,
+        next: NextFunction,
+    ) => {
+        try {
+            const userId = req.session["userId"];
+
+            const userData: Partial<User> = { ...req.body, updatedAt: new Date() };
+
+            const user = await this.user //
+                .findByIdAndUpdate(userId, userData, { new: true, runValidators: true })
+                .lean<User>()
+                .exec();
+            if (user == null) {
+                return next(new HttpError("error.user.failedUpdateYourUser"));
+            }
+
+            res.json(user);
+        } catch (error) {
+            /* istanbul ignore next */
+            next(error);
+        }
+    };
+    private deleteLoggedInUser = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const userId = req.session["userId"] as string;
+
+            const { deletedCount } = await this.user //
+                .deleteOne({ _id: userId })
+                .exec();
+            if (deletedCount != 1) {
+                return next(new HttpError("error.user.failedDeleteYourUser"));
+            }
+
+            req.session.destroy(error => {
+                if (error) {
+                    return next(error);
+                }
+                res.clearCookie("session-id");
+                res.sendStatus(StatusCode.NoContent);
+            });
+        } catch (error) {
+            /* istanbul ignore next */
+            next(error);
+        }
+    };
+
+    // ADMIN
+    private adminGetUsers = async (
         req: Request<
             unknown,
             unknown,
@@ -65,55 +162,10 @@ export default class UserController implements Controller {
             res.json(users);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
-
-    private getMyUserInfo = async (req: Request, res: Response, next: NextFunction) => {
-        try {
-            const userId = req.session["userId"];
-
-            const user = await this.user.getInitialData(userId as string);
-
-            res.json(user);
-        } catch (error) {
-            /* istanbul ignore next */
-            next(new HttpError(error.message));
-        }
-    };
-
-    private getUserById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
-        try {
-            const userId = req.params["id"];
-            if (await isIdNotValid(this.user, [userId], next)) return;
-
-            const user = await this.user
-                .findById(userId, "-email_is_verified -role -messages -rated_books")
-                .populate({ path: "books" })
-                .populate({
-                    path: "borrows",
-                    select: "books from_id to_id verified",
-                    populate: { path: "books", select: "author available createdAt for_borrow price title picture" },
-                })
-                .populate({
-                    path: "user_ratings",
-                    populate: {
-                        path: "from_me to_me",
-                        select: "from_id to_id createdAt rate comment",
-                        populate: { path: "from_id to_id" },
-                    },
-                })
-                .lean<User>()
-                .exec();
-
-            res.json(user);
-        } catch (error) {
-            /* istanbul ignore next */
-            next(new HttpError(error.message));
-        }
-    };
-
-    private modifyUserById = async (
+    private adminModifyUserById = async (
         req: Request<{ id: string }, unknown, ModifyUser>,
         res: Response,
         next: NextFunction,
@@ -122,47 +174,34 @@ export default class UserController implements Controller {
             const userId = req.params["id"];
             if (await isIdNotValid(this.user, [userId], next)) return;
 
-            if (req.session["role"] != "admin") {
-                if (req.session["userId"] != userId) {
-                    return next(new HttpError("You cannot modify other user's data.", StatusCode.Forbidden));
-                }
-            }
-
             const userData: Partial<User> = { ...req.body, updatedAt: new Date() };
 
-            const user = await this.user
-                .findByIdAndUpdate(userId, userData, { returnDocument: "after", projection: "-password" })
+            const user = await this.user //
+                .findByIdAndUpdate(userId, userData, { new: true, runValidators: true })
                 .lean<User>()
                 .exec();
-            if (!user) return next(new HttpError("Failed to update user"));
+            if (!user) return next(new HttpError("error.user.failedUpdateUser"));
 
             res.json(user);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
-
-    private deleteUserById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+    private adminDeleteUserById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
         try {
             const userId = req.params["id"];
             if (await isIdNotValid(this.user, [userId], next)) return;
 
-            if (req.session["role"] != "admin") {
-                if (req.session["userId"] != userId) {
-                    return next(new HttpError("You can not delete other user"));
-                }
-            }
-
-            const { acknowledged } = await this.user //
+            const { deletedCount } = await this.user //
                 .deleteOne({ _id: userId })
                 .exec();
-            if (!acknowledged) return next(new HttpError("Failed to delete user"));
+            if (deletedCount != 1) return next(new HttpError("error.user.failedDeleteUser"));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
 }

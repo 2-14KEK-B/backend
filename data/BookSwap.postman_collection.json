@@ -1,7 +1,7 @@
 {
 	"info": {
 		"_postman_id": "89fa902e-7c98-4f9d-b547-737bb68c2c23",
-		"name": "BookSwap_dev",
+		"name": "BookSwap",
 		"description": "Vizsgamunka",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "24411448"
@@ -10,6 +10,28 @@
 		{
 			"name": "auth",
 			"item": [
+				{
+					"name": "at least logged in as user",
+					"item": [
+						{
+							"name": "logged in user",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/auth",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"auth"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
 				{
 					"name": "login",
 					"event": [
@@ -121,93 +143,326 @@
 						}
 					},
 					"response": []
-				},
-				{
-					"name": "logged in user",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{URL}}/auth",
-							"host": [
-								"{{URL}}"
-							],
-							"path": [
-								"auth"
-							]
-						}
-					},
-					"response": []
 				}
 			]
 		},
 		{
-			"name": "books",
+			"name": "book",
 			"item": [
 				{
-					"name": "rating",
+					"name": "without logged in",
 					"item": [
 						{
-							"name": "get all by book id",
+							"name": "rate",
+							"item": [
+								{
+									"name": "get by book id",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{URL}}/book/:id/rate",
+											"host": [
+												"{{URL}}"
+											],
+											"path": [
+												"book",
+												":id",
+												"rate"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "6357da8b3441ea1273216971"
+												}
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "get books for borrow",
 							"request": {
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{URL}}/book/rate/6357d9e43441ea127321696d",
+									"raw": "{{URL}}/book/borrow?skip=0&limit=10",
 									"host": [
 										"{{URL}}"
 									],
 									"path": [
 										"book",
-										"rate",
-										"6357d9e43441ea127321696d"
+										"borrow"
+									],
+									"query": [
+										{
+											"key": "skip",
+											"value": "0"
+										},
+										{
+											"key": "limit",
+											"value": "10"
+										}
 									]
 								}
 							},
 							"response": []
 						},
 						{
-							"name": "delete by book id",
+							"name": "get books for lend",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/book/lend?skip=0&limit=10",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"book",
+										"lend"
+									],
+									"query": [
+										{
+											"key": "skip",
+											"value": "0"
+										},
+										{
+											"key": "limit",
+											"value": "10"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "get by id",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/book/:id",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"book",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "6357da8b3441ea1273216971"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "at least logged in as user",
+					"item": [
+						{
+							"name": "rate",
+							"item": [
+								{
+									"name": "create by book id",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"rate\": 1,\r\n    \"comment\": \"szoszi\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{URL}}/book/:id/rate",
+											"host": [
+												"{{URL}}"
+											],
+											"path": [
+												"book",
+												":id",
+												"rate"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "6357da8b3441ea1273216971"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "patch by book and rate id",
+									"request": {
+										"method": "PATCH",
+										"header": [],
+										"url": {
+											"raw": "{{URL}}/book/:bookId/rate/:rateId",
+											"host": [
+												"{{URL}}"
+											],
+											"path": [
+												"book",
+												":bookId",
+												"rate",
+												":rateId"
+											],
+											"variable": [
+												{
+													"key": "bookId",
+													"value": "6357da8b3441ea1273216971"
+												},
+												{
+													"key": "rateId",
+													"value": "6357d9e43441ea127321696d"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "delete by book and rate id",
+									"request": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{URL}}/book/:bookId/rate/:rateId",
+											"host": [
+												"{{URL}}"
+											],
+											"path": [
+												"book",
+												":bookId",
+												"rate",
+												":rateId"
+											],
+											"variable": [
+												{
+													"key": "bookId",
+													"value": "6357da8b3441ea1273216971"
+												},
+												{
+													"key": "rateId",
+													"value": "6357d9e43441ea127321696d"
+												}
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "get by logged user",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/user/me/book",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"user",
+										"me",
+										"book"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "create",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"author\": \"Turbó Titán\",\r\n  \"title\": \"A lét elviselhetetlen könnyűsége. 4\",\r\n  \"picture\": \"https://smartmobilestudio.com/wp-content/uploads/2012/06/leather-book-preview.png\",\r\n  \"for_borrow\": true\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URL}}/book",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"book"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "patch by id",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"title\": \"Zsolti a Béka\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URL}}/book/:id",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"book",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "63ac88b334ea3004166ad6cd"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "delete by id",
 							"request": {
 								"method": "DELETE",
 								"header": [],
 								"url": {
-									"raw": "{{URL}}/book/rate/6357d9e43441ea127321696d",
+									"raw": "{{URL}}/book/:id",
 									"host": [
 										"{{URL}}"
 									],
 									"path": [
 										"book",
-										"rate",
-										"6357d9e43441ea127321696d"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "create by book id",
-							"request": {
-								"method": "POST",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": "{\r\n    \"rate\": 1,\r\n    \"comment\": \"szoszi\"\r\n}",
-									"options": {
-										"raw": {
-											"language": "json"
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "6357d9e43441ea127321696d"
 										}
-									}
-								},
-								"url": {
-									"raw": "{{URL}}/book/rate/6357d9e43441ea127321696d",
-									"host": [
-										"{{URL}}"
-									],
-									"path": [
-										"book",
-										"rate",
-										"6357d9e43441ea127321696d"
 									]
 								}
 							},
@@ -216,170 +471,122 @@
 					]
 				},
 				{
-					"name": "paginate",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{URL}}/book?sort=asc",
-							"host": [
-								"{{URL}}"
-							],
-							"path": [
-								"book"
-							],
-							"query": [
-								{
-									"key": "sort",
-									"value": "asc"
-								},
-								{
-									"key": "limit",
-									"value": "1",
-									"disabled": true
-								},
-								{
-									"key": "skip",
-									"value": "1",
-									"disabled": true
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "get all",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{URL}}/book/all",
-							"host": [
-								"{{URL}}"
-							],
-							"path": [
-								"book",
-								"all"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "get by id",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{URL}}/book/6357d9e43441ea127321696d",
-							"host": [
-								"{{URL}}"
-							],
-							"path": [
-								"book",
-								"6357d9e43441ea127321696d"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "get of logged user",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{URL}}/book",
-							"host": [
-								"{{URL}}"
-							],
-							"path": [
-								"book"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "create",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n  \"author\": \"Turbó Titán\",\r\n  \"title\": \"A lét elviselhetetlen könnyűsége. 4\",\r\n  \"picture\": \"https://smartmobilestudio.com/wp-content/uploads/2012/06/leather-book-preview.png\",\r\n  \"for_borrow\": true\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{URL}}/book",
-							"host": [
-								"{{URL}}"
-							],
-							"path": [
-								"book"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "delete",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{URL}}/book/6357d9e43441ea127321696d",
-							"host": [
-								"{{URL}}"
-							],
-							"path": [
-								"book",
-								"6357d9e43441ea127321696d"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "borrows",
-			"item": [
-				{
-					"name": "user ratings",
+					"name": "only admin",
 					"item": [
 						{
-							"name": "get by borrowId",
+							"name": "rate",
+							"item": [
+								{
+									"name": "patch by book and rate id",
+									"request": {
+										"method": "PATCH",
+										"header": [],
+										"url": {
+											"raw": "{{URL}}/admin/book/:bookId/rate/:rateId",
+											"host": [
+												"{{URL}}"
+											],
+											"path": [
+												"admin",
+												"book",
+												":bookId",
+												"rate",
+												":rateId"
+											],
+											"variable": [
+												{
+													"key": "bookId",
+													"value": "6357d9e43441ea127321696d"
+												},
+												{
+													"key": "rateId",
+													"value": "635aaacf447026c9b91950fd"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "delete by book and rate id",
+									"request": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{URL}}/admin/book/:bookId/rate/:rateId",
+											"host": [
+												"{{URL}}"
+											],
+											"path": [
+												"admin",
+												"book",
+												":bookId",
+												"rate",
+												":rateId"
+											],
+											"variable": [
+												{
+													"key": "bookId",
+													"value": "6357d9e43441ea127321696d"
+												},
+												{
+													"key": "rateId",
+													"value": "635aaacf447026c9b91950fd"
+												}
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "get paginate",
 							"request": {
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{URL}}/borrow/6357f9bf7b60ee488385f955/rate",
+									"raw": "{{URL}}/admin/book?sort=asc",
 									"host": [
 										"{{URL}}"
 									],
 									"path": [
-										"borrow",
-										"6357f9bf7b60ee488385f955",
-										"rate"
+										"admin",
+										"book"
+									],
+									"query": [
+										{
+											"key": "sort",
+											"value": "asc"
+										},
+										{
+											"key": "limit",
+											"value": "1",
+											"disabled": true
+										},
+										{
+											"key": "skip",
+											"value": "1",
+											"disabled": true
+										},
+										{
+											"key": "keyword",
+											"value": "Turbinnyo",
+											"disabled": true
+										}
 									]
 								}
 							},
 							"response": []
 						},
 						{
-							"name": "create by borrowId",
+							"name": "patch by id",
 							"request": {
-								"method": "POST",
+								"method": "PATCH",
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"rate\": false\r\n}",
+									"raw": "{\r\n    \"title\": \"Kelepce\"\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -387,15 +594,226 @@
 									}
 								},
 								"url": {
-									"raw": "{{URL}}/borrow/6357f9bf7b60ee488385f955/rate/6357b544447026c9b91950fd",
+									"raw": "{{URL}}/admin/book/:id",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"admin",
+										"book",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "6357d9e43441ea127321696d"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "delete by id",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/admin/book/:id",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"admin",
+										"book",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "6357d9e43441ea127321696d"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "borrow",
+			"item": [
+				{
+					"name": "at least logged in as user",
+					"item": [
+						{
+							"name": "get by logged user",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/user/me/borrow",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"user",
+										"me",
+										"borrow"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "get by id",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/borrow/:id",
 									"host": [
 										"{{URL}}"
 									],
 									"path": [
 										"borrow",
-										"6357f9bf7b60ee488385f955",
-										"rate",
-										"6357b544447026c9b91950fd"
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "6357f9bf7b60ee488385f955"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "create",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"from\": \"6357b544447026c9b91950fd\",\r\n  \"books\": [\"63c41cac50f045beb60d8c06\"]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URL}}/borrow",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"borrow"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "patch by id",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"verified\": true\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URL}}/borrow/:id",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"borrow",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "6357f9bf7b60ee488385f955"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "verify borrow",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/borrow/:id/verify",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"borrow",
+										":id",
+										"verify"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "6357f9bf7b60ee488385f955"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "delete by id",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/borrow/:id",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"borrow",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "6357f9bf7b60ee488385f955"
+										}
 									]
 								}
 							},
@@ -404,358 +822,834 @@
 					]
 				},
 				{
-					"name": "get all",
-					"event": [
+					"name": "only admin",
+					"item": [
 						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript"
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{URL}}/borrow/all",
-							"host": [
-								"{{URL}}"
-							],
-							"path": [
-								"borrow",
-								"all"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "get by id",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{URL}}/borrow/6357f9bf7b60ee488385f955",
-							"host": [
-								"{{URL}}"
-							],
-							"path": [
-								"borrow",
-								"6357f9bf7b60ee488385f955"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "paginate",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{URL}}/borrow?sort=asc",
-							"host": [
-								"{{URL}}"
-							],
-							"path": [
-								"borrow"
-							],
-							"query": [
+							"name": "get paginated",
+							"event": [
 								{
-									"key": "sort",
-									"value": "asc"
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
 								},
 								{
-									"key": "limit",
-									"value": "1",
-									"disabled": true
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/admin/borrow",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"admin",
+										"borrow"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "get by id",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/admin/borrow/:id",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"admin",
+										"borrow",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "6357f9bf7b60ee488385f955"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "patch by id",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"verified\": true\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
 								},
-								{
-									"key": "skip",
-									"value": "1",
-									"disabled": true
+								"url": {
+									"raw": "{{URL}}/admin/borrow/:id",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"admin",
+										"borrow",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "6357f9bf7b60ee488385f955"
+										}
+									]
 								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "create",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n  \"from_id\": \"6357b544447026c9b91950fd\",\r\n  \"books\": [\"6357da8b3441ea1273216971\"]\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
+							},
+							"response": []
 						},
-						"url": {
-							"raw": "{{URL}}/borrow",
-							"host": [
-								"{{URL}}"
-							],
-							"path": [
-								"borrow"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "update",
-					"request": {
-						"method": "PATCH",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"verified\": true\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
+						{
+							"name": "delete by id",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/admin/borrows/:id",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"admin",
+										"borrows",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "6357f9bf7b60ee488385f955"
+										}
+									]
 								}
-							}
-						},
-						"url": {
-							"raw": "{{URL}}/borrow/6357f9bf7b60ee488385f955",
-							"host": [
-								"{{URL}}"
-							],
-							"path": [
-								"borrow",
-								"6357f9bf7b60ee488385f955"
-							]
+							},
+							"response": []
 						}
-					},
-					"response": []
-				},
-				{
-					"name": "delete",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{URL}}/borrows/6357f9bf7b60ee488385f955",
-							"host": [
-								"{{URL}}"
-							],
-							"path": [
-								"borrows",
-								"6357f9bf7b60ee488385f955"
-							]
-						}
-					},
-					"response": []
+					]
 				}
 			]
 		},
 		{
-			"name": "messages",
+			"name": "message",
 			"item": [
 				{
-					"name": "get all",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{URL}}/message/all",
-							"host": [
-								"{{URL}}"
-							],
-							"path": [
-								"message",
-								"all"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "get by id paginate",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{URL}}/message/635803e76fe4028063397763?sort=asc",
-							"host": [
-								"{{URL}}"
-							],
-							"path": [
-								"message",
-								"635803e76fe4028063397763"
-							],
-							"query": [
-								{
-									"key": "sort",
-									"value": "asc"
+					"name": "at least logged in as user",
+					"item": [
+						{
+							"name": "get by logged user",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/user/me/message",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"user",
+										"me",
+										"message"
+									]
 								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "create",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n  \"from_id\": \"6357b544447026c9b91950fd\",\r\n  \"to_id\": \"6357b59c447026c9b9195100\",\r\n  \"content\": \"mizu\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
+							},
+							"response": []
 						},
-						"url": {
-							"raw": "{{URL}}/message",
-							"host": [
-								"{{URL}}"
-							],
-							"path": [
-								"message"
-							]
+						{
+							"name": "get content by user id",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/user/:id/message",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"user",
+										":id",
+										"message"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "6357b59c447026c9b9195100"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "create",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"content\": \"mizu\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URL}}/user/:id/message",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"user",
+										":id",
+										"message"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "6357b59c447026c9b9195100"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "update seen by message id",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/message/:id/seen",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"message",
+										":id",
+										"seen"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "635803e76fe4028063397763"
+										}
+									]
+								}
+							},
+							"response": []
 						}
-					},
-					"response": []
+					]
 				},
 				{
-					"name": "delete",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{URL}}/messages/635803e76fe4028063397763",
-							"host": [
-								"{{URL}}"
-							],
-							"path": [
-								"messages",
-								"635803e76fe4028063397763"
-							]
+					"name": "only admin",
+					"item": [
+						{
+							"name": "get paginated",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/admin/message",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"admin",
+										"message"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "delete by message id",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/admin/message/:id",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"admin",
+										"message",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "635803e76fe4028063397763"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "delete by message and content id",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/admin/message/:messageId/content/:contentId",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"admin",
+										"message",
+										":messageId",
+										"content",
+										":contentId"
+									],
+									"variable": [
+										{
+											"key": "messageId",
+											"value": "635803e76fe4028063397763"
+										},
+										{
+											"key": "contentId",
+											"value": "635803e76fe4028063397764"
+										}
+									]
+								}
+							},
+							"response": []
 						}
-					},
-					"response": []
+					]
 				}
 			]
 		},
 		{
-			"name": "users",
+			"name": "user",
 			"item": [
 				{
-					"name": "get users paginate",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{URL}}/user",
-							"host": [
-								"{{URL}}"
-							],
-							"path": [
-								"user"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "get logged in user",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{URL}}/user/me",
-							"host": [
-								"{{URL}}"
-							],
-							"path": [
-								"user",
-								"me"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "get user by id",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{URL}}/user/6357b544447026c9b91950fd",
-							"host": [
-								"{{URL}}"
-							],
-							"path": [
-								"user",
-								"6357b544447026c9b91950fd"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "update user by id",
-					"request": {
-						"method": "PATCH",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"fullname\": \"Nagy József\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
+					"name": "without logged in",
+					"item": [
+						{
+							"name": "get by id",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/user/:id",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"user",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "6357b59c447026c9b9195100"
+										}
+									]
 								}
-							}
-						},
-						"url": {
-							"raw": "{{URL}}/user/6357b544447026c9b91950fd",
-							"host": [
-								"{{URL}}"
-							],
-							"path": [
-								"user",
-								"6357b544447026c9b91950fd"
-							]
+							},
+							"response": []
 						}
-					},
-					"response": []
+					]
 				},
 				{
-					"name": "delete by id",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{URL}}/user/6357b544447026c9b91950fd",
-							"host": [
-								"{{URL}}"
-							],
-							"path": [
-								"user",
-								"6357b544447026c9b91950fd"
+					"name": "at least logged in as user",
+					"item": [
+						{
+							"name": "rate",
+							"item": [
+								{
+									"name": "get logged in",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{URL}}/user/me/rate",
+											"host": [
+												"{{URL}}"
+											],
+											"path": [
+												"user",
+												"me",
+												"rate"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "get by user id",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{URL}}/user/:id/rate",
+											"host": [
+												"{{URL}}"
+											],
+											"path": [
+												"user",
+												":id",
+												"rate"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "6357b544447026c9b91950fd"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "get by borrow id",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{URL}}/borrow/:id/rate",
+											"host": [
+												"{{URL}}"
+											],
+											"path": [
+												"borrow",
+												":id",
+												"rate"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "6357f9bf7b60ee488385f955"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "create",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"url": {
+											"raw": "{{URL}}/user/:id/rate",
+											"host": [
+												"{{URL}}"
+											],
+											"path": [
+												"user",
+												":id",
+												"rate"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "6357b59c447026c9b9195100"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "patch by user and rate id",
+									"request": {
+										"method": "PATCH",
+										"header": [],
+										"url": {
+											"raw": "{{URL}}/user/:userId/rate/:rateId",
+											"host": [
+												"{{URL}}"
+											],
+											"path": [
+												"user",
+												":userId",
+												"rate",
+												":rateId"
+											],
+											"variable": [
+												{
+													"key": "userId",
+													"value": "6357b59c447026c9b9195100"
+												},
+												{
+													"key": "rateId",
+													"value": "638906990097a84550cec128"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "delete  by user and rate id",
+									"request": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{URL}}/user/:userId/rate/:rateId",
+											"host": [
+												"{{URL}}"
+											],
+											"path": [
+												"user",
+												":userId",
+												"rate",
+												":rateId"
+											],
+											"variable": [
+												{
+													"key": "userId",
+													"value": "6357b59c447026c9b9195100"
+												},
+												{
+													"key": "rateId",
+													"value": "638906990097a84550cec128"
+												}
+											]
+										}
+									},
+									"response": []
+								}
 							]
+						},
+						{
+							"name": "notification",
+							"item": [
+								{
+									"name": "get logged in",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{URL}}/user/me/notification",
+											"host": [
+												"{{URL}}"
+											],
+											"path": [
+												"user",
+												"me",
+												"notification"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "create",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"doc_id\": \"63b86b3ef0526f984d659ecd\",\r\n    \"doc_type\": \"user_rate\",\r\n    \"noti_type\": \"rate\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{URL}}/user/:id/notification",
+											"host": [
+												"{{URL}}"
+											],
+											"path": [
+												"user",
+												":id",
+												"notification"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "6357b59c447026c9b9195100"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "New Request",
+									"request": {
+										"method": "PATCH",
+										"header": [],
+										"url": {
+											"raw": "{{URL}}/user/me/notification/:id",
+											"host": [
+												"{{URL}}"
+											],
+											"path": [
+												"user",
+												"me",
+												"notification",
+												":id"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": null
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "delete by id",
+									"request": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{URL}}/user/me/notification/:id",
+											"host": [
+												"{{URL}}"
+											],
+											"path": [
+												"user",
+												"me",
+												"notification",
+												":id"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": null
+												}
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "patch logged in",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"fullname\": \"Nagy József\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URL}}/user/me",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"user",
+										"me"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "delete logged in",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/user/me",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"user",
+										"me"
+									]
+								}
+							},
+							"response": []
 						}
-					},
-					"response": []
+					]
+				},
+				{
+					"name": "only admin",
+					"item": [
+						{
+							"name": "rate",
+							"item": [
+								{
+									"name": "get paginated",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{URL}}/admin/user/rate",
+											"host": [
+												"{{URL}}"
+											],
+											"path": [
+												"admin",
+												"user",
+												"rate"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "patch by rate id",
+									"request": {
+										"method": "PATCH",
+										"header": [],
+										"url": {
+											"raw": "{{URL}}/admin/user/rate/:rateId",
+											"host": [
+												"{{URL}}"
+											],
+											"path": [
+												"admin",
+												"user",
+												"rate",
+												":rateId"
+											],
+											"variable": [
+												{
+													"key": "rateId",
+													"value": "638917990097a84550cec129"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "delete by rate id",
+									"request": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{URL}}/admin/user/rate/:rateId",
+											"host": [
+												"{{URL}}"
+											],
+											"path": [
+												"admin",
+												"user",
+												"rate",
+												":rateId"
+											],
+											"variable": [
+												{
+													"key": "rateId",
+													"value": "63b72715519c587badbd2088"
+												}
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "get paginated",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/admin/user",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"admin",
+										"user"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "patch by id",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"fullname\": \"Nagy József\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URL}}/admin/user/:id",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"admin",
+										"user",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "6357b544447026c9b91950fd"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "delete by id",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}/admin/user/:id",
+									"host": [
+										"{{URL}}"
+									],
+									"path": [
+										"admin",
+										"user",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "6357b544447026c9b91950fd"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
 				}
 			]
 		}

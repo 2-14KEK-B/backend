@@ -11,6 +11,7 @@ const jestConfig: JestConfigWithTsJest = {
     setupFilesAfterEnv: ["<rootDir>/test/setupFilesAfterEnv.ts"],
     testEnvironment: "node",
     testTimeout: 5000,
+    cache: false,
     detectOpenHandles: true,
     forceExit: true,
     maxWorkers: "50%",
@@ -24,11 +25,18 @@ const jestConfig: JestConfigWithTsJest = {
             },
         ],
     },
-    testMatch: ["<rootDir>/**/__tests__/**/*.ts"],
+    testMatch: ["<rootDir>/**/__tests__/**/*.test.ts"],
     moduleFileExtensions: ["ts", "js", "json", "node"],
     collectCoverage: true,
     coverageDirectory: "coverage",
-    collectCoverageFrom: ["src/**/*.{ts,js}", "!src/**/*.d.ts", "!src/db/*.ts", "!src/server.ts", "!src/app.ts"],
+    collectCoverageFrom: [
+        "src/**/*.{ts,js}",
+        "!src/**/*.d.ts",
+        "!src/db/*.ts",
+        "!src/server.ts",
+        "!src/app.ts",
+        "!src/socket.ts",
+    ],
     moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, { prefix: "<rootDir>/" }),
 };
 

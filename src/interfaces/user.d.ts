@@ -2,6 +2,7 @@ import type ID from "./id";
 import type { Book } from "./book";
 import type { Borrow } from "./borrow";
 import type { Message } from "./message";
+import type { Notification } from "./notification";
 
 type ID = Types.ObjectId | string;
 
@@ -13,6 +14,8 @@ interface User {
     fullname: string;
     email: string;
     email_is_verified?: boolean;
+    verification_token?: string;
+    password_reset_token?: string;
     password?: string;
     locale?: string;
     picture?: string;
@@ -20,8 +23,9 @@ interface User {
     books: (Book | ID)[];
     messages: (Message | ID)[];
     rated_books: (Book | ID)[];
-    user_ratings: { from_me: ID[]; to_me: ID[] };
+    user_rates: { from: ID[]; to: ID[] };
     borrows: (Borrow | ID)[];
+    notifications: Notification[];
 }
 
 interface CreateUser {
@@ -36,6 +40,7 @@ interface CreateUser {
 interface ModifyUser {
     username?: string;
     fullname?: string;
+    picture?: string;
     updated_on?: Date;
     email?: string;
     email_is_verified?: boolean;

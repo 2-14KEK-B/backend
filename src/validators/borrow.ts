@@ -1,19 +1,23 @@
-import { IsBoolean, IsString } from "class-validator";
+import { IsMongoId, ArrayMinSize, IsOptional } from "class-validator";
 import type { CreateBorrow, ModifyBorrow } from "@interfaces/borrow";
 
 class CreateBorrowDto implements CreateBorrow {
-    @IsString()
-    public from_id: string;
+    @IsMongoId()
+    @IsOptional()
+    public to: string;
 
-    @IsString({ each: true })
+    @IsMongoId()
+    @IsOptional()
+    public from: string;
+
+    @IsMongoId({ each: true })
+    @ArrayMinSize(1)
     public books: string[];
 }
 class ModifyBorrowDto implements ModifyBorrow {
-    @IsString({ each: true })
+    @IsMongoId({ each: true })
+    @ArrayMinSize(1)
     public books?: string[];
-
-    @IsBoolean()
-    public verified?: boolean;
 }
 
 export { CreateBorrowDto, ModifyBorrowDto };

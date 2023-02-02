@@ -13,7 +13,7 @@
         "username": "test",
         "email": "test@test.com",
         "email_is_verified": false,
-        "locale": "hu-HU",
+        "locale": "hu",
         "role": "admin",
         "books": [
             {
@@ -35,21 +35,63 @@
         ],
         "rated_books": [
             {
-                "$oid": "635aaacf447026c9b91950fd"
+                "$oid": "6357d9e43441ea127321696d"
             }
         ],
-        "user_ratings": {
-            "from_me": [
+        "user_rates": {
+            "from": [
                 {
                     "$oid": "638906990097a84550cec128"
                 }
             ],
-            "to_me": [
+            "to": [
                 {
                     "$oid": "638917990097a84550cec129"
                 }
             ]
-        }
+        },
+        "notifications": [
+            {
+                "_id": {
+                    "$oid": "63c4193e1136459138d6c78e"
+                },
+                "from": {
+                    "$oid": "6357b59c447026c9b9195100"
+                },
+                "doc_id": {
+                    "$oid": "6357f9bf7b60ee488385f955"
+                },
+                "doc_type": "borrow",
+                "noti_type": "verify",
+                "seen": true,
+                "createdAt": {
+                    "$date": "2022-10-25T15:59:11.000Z"
+                },
+                "updatedAt": {
+                    "$date": "2022-10-25T16:59:11.000Z"
+                }
+            },
+            {
+                "_id": {
+                    "$oid": "63c4194d68f79f2c01ed775b"
+                },
+                "from": {
+                    "$oid": "6357b59c447026c9b9195100"
+                },
+                "doc_id": {
+                    "$oid": "638917990097a84550cec129"
+                },
+                "doc_type": "user_rate",
+                "noti_type": "create",
+                "seen": false,
+                "createdAt": {
+                    "$date": "2022-12-01T19:59:21.000Z"
+                },
+                "updatedAt": {
+                    "$date": "2022-12-01T19:59:21.000Z"
+                }
+            }
+        ]
     },
     {
         "_id": {
@@ -65,7 +107,7 @@
         "username": "test2",
         "email": "test2@test.com",
         "email_is_verified": false,
-        "locale": "hu-HU",
+        "locale": "hu",
         "books": [],
         "messages": [
             {
@@ -79,20 +121,197 @@
         ],
         "rated_books": [
             {
-                "$oid": "635ab8df447026c9b91950fd"
+                "$oid": "6357d9e43441ea127321696d"
             }
         ],
-        "user_ratings": {
-            "from_me": [
+        "user_rates": {
+            "from": [
                 {
                     "$oid": "638917990097a84550cec129"
                 }
             ],
-            "to_me": [
+            "to": [
                 {
                     "$oid": "638906990097a84550cec128"
                 }
             ]
-        }
+        },
+        "notifications": [
+            {
+                "_id": {
+                    "$oid": "63c41700d1fa0a406f172b3f"
+                },
+                "from": {
+                    "$oid": "6357b544447026c9b91950fd"
+                },
+                "doc_id": {
+                    "$oid": "6357f9bf7b60ee488385f955"
+                },
+                "doc_type": "borrow",
+                "noti_type": "create",
+                "seen": true,
+                "createdAt": {
+                    "$date": "2022-10-25T14:59:11.000Z"
+                },
+                "updatedAt": {
+                    "$date": "2022-10-25T15:59:11.000Z"
+                }
+            },
+            {
+                "_id": {
+                    "$oid": "63c419dc90983cc727ddc365"
+                },
+                "from": {
+                    "$oid": "6357b544447026c9b91950fd"
+                },
+                "doc_id": {
+                    "$oid": "638906990097a84550cec128"
+                },
+                "doc_type": "user_rate",
+                "noti_type": "create",
+                "seen": false,
+                "createdAt": {
+                    "$date": "2022-12-01T19:55:05.000Z"
+                },
+                "updatedAt": {
+                    "$date": "2022-12-01T19:55:05.000Z"
+                }
+            }
+        ]
+    },
+    {
+        "_id": {
+            "$oid": "63c7cf5ad1bc6fac460264a1"
+        },
+        "createdAt": {
+            "$date": "2022-11-25T10:08:28.000Z"
+        },
+        "updatedAt": {
+            "$date": "2022-11-25T10:08:28.000Z"
+        },
+        "password": "$2a$10$W6.Jpyy3D./f021F2XWSSeqEOkh0bAEUDlZemIEDKIxPCq.sLf1vK",
+        "username": "zetenan",
+        "fullname": "Zétény Orbán",
+        "picture": "https://www.random-name-generator.com/images/faces/male-white/33.jpg?ezimgfmt=rs:148x143/rscb1/ng:webp/ngcb1",
+        "email": "jboros@szoke.com",
+        "email_is_verified": true,
+        "locale": "hu",
+        "books": [],
+        "messages": [],
+        "borrows": [],
+        "rated_books": [],
+        "user_rates": {
+            "from": [],
+            "to": []
+        },
+        "notifications": []
+    },
+    {
+        "_id": {
+            "$oid": "63c7cf5ad1bc6fac460264a2"
+        },
+        "createdAt": {
+            "$date": "2022-10-25T10:08:28.000Z"
+        },
+        "updatedAt": {
+            "$date": "2022-10-25T10:08:28.000Z"
+        },
+        "password": "$2a$10$anPGp7U50x9yPUn9Q244iem2Pu86fxg9ZKHGheR4RO3hvt7wzjZOa",
+        "username": "adelter",
+        "fullname": "Adél Péter",
+        "picture": "https://www.random-name-generator.com/images/faces/female-white/29.jpg?ezimgfmt=rs:148x143/rscb1/ng:webp/ngcb1",
+        "email": "laszlo28@hotmail.com",
+        "email_is_verified": true,
+        "locale": "hu",
+        "books": [],
+        "messages": [],
+        "borrows": [],
+        "rated_books": [],
+        "user_rates": {
+            "from": [],
+            "to": []
+        },
+        "notifications": []
+    },
+    {
+        "_id": {
+            "$oid": "63c7cf5ad1bc6fac460264a3"
+        },
+        "createdAt": {
+            "$date": "2022-11-26T10:08:28.000Z"
+        },
+        "updatedAt": {
+            "$date": "2022-11-26T10:08:28.000Z"
+        },
+        "password": "$2a$10$H4ozSGthe23e2hPFriuMHORiT/Vyu5oEuFHVnAp4P3HyWaeiwiMIu",
+        "username": "zsomos",
+        "fullname": "Zsombor Orsós",
+        "picture": "https://www.random-name-generator.com/images/faces/male-white/35.jpg?ezimgfmt=rs:148x143/rscb1/ng:webp/ngcb1",
+        "email": "vbalogh@gmail.com",
+        "email_is_verified": true,
+        "locale": "hu",
+        "books": [],
+        "messages": [],
+        "borrows": [],
+        "rated_books": [],
+        "user_rates": {
+            "from": [],
+            "to": []
+        },
+        "notifications": []
+    },
+    {
+        "_id": {
+            "$oid": "63c7cf5ad1bc6fac460264a4"
+        },
+        "createdAt": {
+            "$date": "2022-11-27T10:08:28.000Z"
+        },
+        "updatedAt": {
+            "$date": "2022-11-27T10:08:28.000Z"
+        },
+        "password": "$2a$10$IUA1t07UcrV.cQqKKApVVeEYvPIfWvbS8SV39.us6kVvtVRAMDfgC",
+        "username": "attilpp",
+        "fullname": "Attila Papp",
+        "picture": "https://www.random-name-generator.com/images/faces/male-white/34.jpg?ezimgfmt=rs:148x143/rscb1/ng:webp/ngcb1",
+        "email": "flaszlo@borbely.biz",
+        "email_is_verified": true,
+        "locale": "hu",
+        "books": [],
+        "messages": [],
+        "borrows": [],
+        "rated_books": [],
+        "user_rates": {
+            "from": [],
+            "to": []
+        },
+        "notifications": []
+    },
+    {
+        "_id": {
+            "$oid": "63c7cf5ad1bc6fac460264a5"
+        },
+        "createdAt": {
+            "$date": "2022-11-28T10:08:28.000Z"
+        },
+        "updatedAt": {
+            "$date": "2022-11-28T10:08:28.000Z"
+        },
+        "password": "$2a$10$FDPumwyTvXSAmJ9lXPF.7uyolROIeFoYrpnPb0/WS8TVYQMv2xzsy",
+        "username": "botondass",
+        "fullname": "Botond Vass",
+        "picture": "https://www.random-name-generator.com/images/faces/male-white/06.jpg?ezimgfmt=rs:148x143/rscb1/ng:webp/ngcb1",
+        "email": "npinter@hotmail.com",
+        "email_is_verified": true,
+        "locale": "hu",
+        "books": [],
+        "messages": [],
+        "borrows": [],
+        "rated_books": [],
+        "user_rates": {
+            "from": [],
+            "to": []
+        },
+        "notifications": []
     }
 ]

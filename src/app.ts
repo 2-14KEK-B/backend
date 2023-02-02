@@ -1,49 +1,91 @@
-import express, { Express, json, Request, Response, urlencoded } from "express";
+import express, { Application, json, Request, Response, urlencoded } from "express";
 import { createServer, Server } from "http";
-import { Server as Socket } from "socket.io";
 import session, { SessionOptions } from "express-session";
 import cors from "cors";
+import { I18n } from "i18n";
+import { join } from "node:path";
 import morgan from "morgan";
+import { initSocket } from "./socket";
 import { createSessionStore } from "@db/sessionStore";
 import errorMiddleware from "@middlewares/error";
+import { mongooseErrorMiddleware } from "@middlewares/mongooseError";
 import env from "@config/validateEnv";
 import corsOptions from "@config/corsOptions";
 import StatusCode from "@utils/statusCodes";
 import type Controller from "@interfaces/controller";
-import type { Message, MessageContent } from "@interfaces/message";
-import type { User } from "@interfaces/user";
 
 export default class App {
-    public app: Express;
-    private httpServer: Server;
+    public app: Application;
+    private server: Server;
 
     constructor(controllers: Controller[]) {
         this.app = express();
-        this.httpServer = createServer(this.app);
+        this.server = createServer(this.app);
         this.initSession();
         this.initializeMiddlewares();
         this.initializeControllers(controllers);
         this.initializeErrorHandling();
     }
 
-    public getServer(): Express {
+    public getApp(): Application {
         return this.app;
+    }
+
+    private initLanguage() {
+        const i18n = new I18n();
+
+        i18n.configure({
+            locales: ["en", "hu"],
+            defaultLocale: "hu",
+            directory: join(__dirname, "/locales"),
+            objectNotation: true,
+        });
+
+        this.app.use(i18n.init);
     }
 
     private initializeMiddlewares() {
         if (env.isDev) this.app.use(morgan("| :date[iso] | :method | :url | :status | :response-time ms |"));
         if (env.isProd) this.app.use(morgan("tiny"));
 
+        this.app.disable("x-powered-by");
+        this.app.use((_req, res, next) => {
+            res.setHeader(
+                "Content-Security-Policy",
+                "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests",
+            );
+            res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+            res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+            res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
+            res.setHeader("Origin-Agent-Cluster", "?1");
+            res.setHeader("Referrer-Policy", "no-referrer");
+            res.setHeader("Strict-Transport-Security", "max-age=15552000; includeSubDomains");
+            res.setHeader("X-Content-Type-Options", "nosniff");
+            res.setHeader("X-DNS-Prefetch-Control", "off");
+            res.setHeader("X-Download-Options", "noopen");
+            res.setHeader("X-Frame-Options", "SAMEORIGIN");
+            res.setHeader("X-Permitted-Cross-Domain-Policies", "none");
+            res.setHeader("X-XSS-Protection", "0");
+            next();
+        });
+
         this.app.use(json());
-        this.app.use(urlencoded({ extended: true }));
+        this.app.use(urlencoded({ extended: false }));
         this.app.use(cors(corsOptions));
+        this.initLanguage();
     }
 
     private initializeErrorHandling() {
+        this.app.use(mongooseErrorMiddleware);
         this.app.use(errorMiddleware);
     }
 
     private initializeControllers(controllers: Controller[]) {
+        this.app.get("/test", (_req, res) => {
+            console.log(res.getLocale());
+            res.json(res.__("hello"));
+        });
+
         this.app.get("/healthcheck", (_req: Request, res: Response) => res.sendStatus(StatusCode.OK));
         controllers.forEach(controller => {
             this.app.use("/", controller.router);
@@ -62,7 +104,7 @@ export default class App {
                 maxAge: MAX_AGE,
                 httpOnly: true,
                 signed: true,
-                sameSite: true,
+                sameSite: "strict",
                 secure: "auto",
             },
             saveUninitialized: false,
@@ -79,67 +121,13 @@ export default class App {
     }
 
     public listen(): void {
-        this.initSocketIO();
-
-        this.httpServer.listen(env.PORT, () => {
+        this.server.listen(env.PORT, () => {
             console.log(`App listening on the port ${env.PORT}`);
         });
     }
 
-    private initSocketIO() {
-        const io = new Socket(this.httpServer, { cors: corsOptions });
-
-        let onlineUsers: { user_id: string; socket_id: string }[] = [];
-
-        io.on("connection", socket => {
-            socket.on("disconnecting", () => {
-                const disconnectedId = socket.id;
-                console.log(
-                    disconnectedId,
-                    onlineUsers.find(u => u.socket_id == disconnectedId),
-                );
-                onlineUsers = onlineUsers.filter(user => user.socket_id !== disconnectedId);
-
-                // onlineUsers.forEach(user => {
-                //     socket.to(user.socket_id).emit(
-                //         "other-users",
-                //         onlineUsers.map(user => user.user_id),
-                //     );
-                // });
-            });
-            socket.on("user-online", (userId: string) => {
-                // socket.emit(
-                //     "other-users",
-                //     onlineUsers.map(user => user.user_id),
-                // );
-
-                onlineUsers.push({ user_id: userId, socket_id: socket.id });
-                console.log(onlineUsers);
-                // socket.broadcast.emit("new-user", userId);
-            });
-
-            socket.on("send-msg", (data: { from: string; to: string; message: string }, sender?: User) => {
-                const sendUserSocket = onlineUsers.find(user => user.user_id === data.to);
-                if (sendUserSocket) {
-                    const now = new Date();
-                    const messageContent: MessageContent = {
-                        content: data.message,
-                        createdAt: now,
-                        sender_id: data.from,
-                    };
-                    const message: Message = {
-                        createdAt: now,
-                        updatedAt: now,
-                        users: [data.from, data.to],
-                        message_contents: [messageContent],
-                    };
-                    if (sender) {
-                        socket.to(sendUserSocket.socket_id).emit("msg-recieved", message, sender);
-                    } else {
-                        socket.to(sendUserSocket.socket_id).emit("msg-recieved", messageContent);
-                    }
-                }
-            });
-        });
+    public initSocketIO() {
+        const io = initSocket(this.server);
+        this.app.io = io;
     }
 }

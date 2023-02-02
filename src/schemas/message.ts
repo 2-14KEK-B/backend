@@ -1,4 +1,5 @@
 import { Schema } from "mongoose";
+import paginate from "mongoose-paginate-v2";
 import type { Message, MessageContent } from "@interfaces/message";
 
 const messageContentSchema = new Schema<MessageContent>(
@@ -6,11 +7,17 @@ const messageContentSchema = new Schema<MessageContent>(
         sender_id: {
             type: Schema.Types.ObjectId,
             ref: "User",
-            required: true,
+            required: [true, "message.senderRequired"],
         },
-        content: { type: String, required: true },
+        content: {
+            type: String,
+            minlength: [1, "message.contentMinLength"],
+            maxlength: [256, "message.contentMaxLength"],
+            required: [true, "message.contentRequired"],
+        },
+        seen: { type: Boolean, default: false },
     },
-    { timestamps: { createdAt: true, updatedAt: false }, versionKey: false },
+    { timestamps: true, versionKey: false },
 );
 
 const messageSchema = new Schema<Message>(
@@ -19,12 +26,14 @@ const messageSchema = new Schema<Message>(
             {
                 type: Schema.Types.ObjectId,
                 ref: "User",
-                required: true,
+                required: [true, ""],
             },
         ],
         message_contents: [messageContentSchema],
     },
     { timestamps: true, versionKey: false },
 );
+
+messageSchema.plugin(paginate);
 
 export default messageSchema;

@@ -18,5 +18,6 @@ debug("express");
         new MessageController(),
         new UserController(),
     ]);
+    app.initSocketIO();
     app.listen();
 })();

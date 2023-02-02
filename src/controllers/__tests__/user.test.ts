@@ -4,12 +4,13 @@ import userModel from "@models/user";
 import UserController from "@controllers/user";
 import AuthenticationController from "@authentication/index";
 import StatusCode from "@utils/statusCodes";
-import { Types } from "mongoose";
-import type { Express } from "express";
+import { PaginateResult, Types } from "mongoose";
+import type { Application } from "express";
 import type { ModifyUser, User } from "@interfaces/user";
 
 describe("USERS", () => {
-    let server: Express;
+    let app: Application;
+    const i18n = global.I18n;
     const pw = global.MOCK_PASSWORD,
         hpw = global.MOCK_HASHED_PASSWORD,
         mockUser1Id = new Types.ObjectId(),
@@ -18,19 +19,30 @@ describe("USERS", () => {
         mockUser1: Partial<User> = {
             _id: mockUser1Id,
             email: "testuser1@test.com",
+            email_is_verified: true,
+            username: "test1ForUser",
             password: pw,
             createdAt: new Date("2020-10-10"),
         },
         mockUser2: Partial<User> = {
             _id: mockUser2Id,
             email: "testuser2@test.com",
+            email_is_verified: true,
+            username: "test2ForUser",
             password: pw,
             createdAt: new Date("2021-10-10"),
         },
-        mockAdmin: Partial<User> = { _id: mockAdminId, email: "testadmin@test.com", password: pw, role: "admin" };
+        mockAdmin: Partial<User> = {
+            _id: mockAdminId,
+            email: "testadmin@test.com",
+            email_is_verified: true,
+            username: "testAdminForUser",
+            password: pw,
+            role: "admin",
+        };
 
     beforeAll(async () => {
-        server = new App([new AuthenticationController(), new UserController()]).getServer();
+        app = new App([new AuthenticationController(), new UserController()]).getApp();
         await userModel.create([
             { ...mockUser1, password: hpw },
             { ...mockUser2, password: hpw },
@@ -41,22 +53,26 @@ describe("USERS", () => {
     describe("USERS, not logged in", () => {
         it("GET /user/:id, should return statuscode 200", async () => {
             expect.assertions(2);
-            const res = await request(server).get(`/user/${mockUser1Id.toString()}`);
+            const res = await request(app).get(`/user/${mockUser1Id.toString()}`);
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body).toBeInstanceOf(Object as unknown as User);
         });
         it("any PATH, should return statuscode 401", async () => {
-            expect.assertions(4);
+            expect.assertions(6);
             const randomId = new Types.ObjectId().toString();
             const dummyUser: Partial<User> = { email: "justsomeemail@domain.com" };
-            const meRes = await request(server).get("/user/me");
-            const allRes = await request(server).get("/user");
-            const patchRes = await request(server).patch(`/user/${randomId}`).send(dummyUser);
-            const deleteRes = await request(server).delete(`/user/${randomId}`);
+            const meRes = await request(app).get("/user/me");
+            const patchRes = await request(app).patch(`/user/me`).send(dummyUser);
+            const deleteRes = await request(app).delete(`/user/me`);
+            const adminUsersRes = await request(app).get("/admin/user");
+            const adminPatchRes = await request(app).patch(`/admin/user/${randomId}`).send(dummyUser);
+            const adminDeleteRes = await request(app).delete(`/admin/user/${randomId}`);
             expect(meRes.statusCode).toBe(StatusCode.Unauthorized);
-            expect(allRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(patchRes.statusCode).toBe(StatusCode.Unauthorized);
             expect(deleteRes.statusCode).toBe(StatusCode.Unauthorized);
+            expect(adminUsersRes.statusCode).toBe(StatusCode.Unauthorized);
+            expect(adminPatchRes.statusCode).toBe(StatusCode.Unauthorized);
+            expect(adminDeleteRes.statusCode).toBe(StatusCode.Unauthorized);
         });
     });
 
@@ -64,45 +80,37 @@ describe("USERS", () => {
         let agent: SuperAgentTest;
 
         beforeAll(async () => {
-            agent = request.agent(server);
+            agent = request.agent(app);
             await agent.post("/auth/login").send({ email: mockUser1.email, password: pw });
         });
-
+        it("GET /admin/user, should return statuscode 403", async () => {
+            expect.assertions(1);
+            const res: Response = await agent.get("/admin/user");
+            expect(res.statusCode).toBe(StatusCode.Forbidden);
+        });
         it("GET /user/me, should return statuscode 200", async () => {
             expect.assertions(2);
             const res: Response = await agent.get("/user/me");
             expect(res.statusCode).toBe(StatusCode.OK);
             expect(res.body).toBeInstanceOf(Object as unknown as User);
         });
-        it("GET /user, should return statuscode 403", async () => {
-            expect.assertions(2);
-            const res: Response = await agent.get("/user");
-            expect(res.statusCode).toBe(StatusCode.Forbidden);
-            expect(res.body).toBe("Forbidden");
-        });
-        it("PATCH /user/:id, should return statuscode 200, if it's the logged in user's", async () => {
+        it("PATCH /user/me, should return statuscode 200", async () => {
             expect.assertions(2);
             const newData: ModifyUser = { username: "justatestuser" };
-            const res: Response = await agent.patch(`/user/${mockUser1Id.toString()}`).send(newData);
+            const res: Response = await agent.patch(`/user/me`).send(newData);
             expect(res.statusCode).toBe(StatusCode.OK);
-            expect(res.body).toHaveProperty("username", newData.username);
+            expect(res.body.username).toBe(newData.username);
         });
-        it("PATCH /user/:id, should return statuscode 403, if it's not the logged in user's", async () => {
+        it("PATCH /user/me, should return statuscode 406 if picture is not valid url", async () => {
             expect.assertions(2);
-            const newData: ModifyUser = { username: "anything" };
-            const res: Response = await agent.patch(`/user/${mockUser2Id.toString()}`).send(newData);
-            expect(res.statusCode).toBe(StatusCode.Forbidden);
-            expect(res.body).toBe("You cannot modify other user's data.");
+            const newData: ModifyUser = { picture: "http://www.justatestforerror.com" };
+            const res: Response = await agent.patch(`/user/me`).send(newData);
+            expect(res.statusCode).toBe(StatusCode.NotAcceptable);
+            expect(res.body).toStrictEqual({ validation: [i18n?.__("validation.picture.invalidUrl")] });
         });
-        it("DELETE /user/:id, should return statuscode 400 if it's not logged in user", async () => {
-            expect.assertions(2);
-            const res: Response = await agent.delete(`/user/${mockUser2Id.toString()}`);
-            expect(res.statusCode).toBe(StatusCode.BadRequest);
-            expect(res.body).toBe("You can not delete other user");
-        });
-        it("DELETE /user/:id, should return statuscode 204", async () => {
+        it("DELETE /user/me, should return statuscode 200 if it's not logged in user", async () => {
             expect.assertions(1);
-            const res: Response = await agent.delete(`/user/${mockUser1Id.toString()}`);
+            const res: Response = await agent.delete(`/user/me`);
             expect(res.statusCode).toBe(StatusCode.NoContent);
         });
     });
@@ -111,58 +119,58 @@ describe("USERS", () => {
         let agent: SuperAgentTest;
 
         beforeAll(async () => {
-            agent = request.agent(server);
+            agent = request.agent(app);
             await agent.post("/auth/login").send({ email: mockAdmin.email, password: pw });
         });
-
-        it("GET /user/me, should return statuscode 200", async () => {
+        it("GET /admin/user, should return statuscode 200", async () => {
             expect.assertions(2);
-            const res: Response = await agent.get("/user/me");
+            const res: Response = await agent.get("/admin/user");
             expect(res.statusCode).toBe(StatusCode.OK);
-            expect(res.body).toBeInstanceOf(Object as unknown as User);
+            expect(res.body).toBeInstanceOf(Object as unknown as PaginateResult<User>);
         });
-        it("GET /user, should return statuscode 200", async () => {
-            expect.assertions(2);
-            const res: Response = await agent.get("/user");
-            expect(res.statusCode).toBe(StatusCode.OK);
-            expect(res.body).toBeInstanceOf(Array<User>);
-        });
-        it("GET /user?sort=asc&sortBy=createdAt, should return statuscode 200", async () => {
+        it("GET /admin/user?sort=asc&sortBy=createdAt, should return statuscode 200", async () => {
             expect.assertions(3);
             const mockUser = await userModel.create({
                 email: "testemail@email.com",
+                email_is_verified: true,
+                username: "testForUser",
                 password: hpw,
                 createdAt: new Date("2010-10-10"),
             });
-            const res: Response = await agent.get("/user?sort=asc&sortBy=createdAt");
+            const res: Response = await agent.get("/admin/user?sort=asc&sortBy=createdAt");
             expect(res.statusCode).toBe(StatusCode.OK);
-            expect(res.body).toBeInstanceOf(Array<User>);
-            expect(res.body[0].createdAt).toBe(mockUser.createdAt?.toISOString());
+            expect(res.body).toBeInstanceOf(Object as unknown as PaginateResult<User>);
+            expect(res.body.docs[0].createdAt).toBe(mockUser.createdAt?.toISOString());
         });
-        it("GET /user?keyword=testuser2@test.com, should return statuscode 200", async () => {
+        it("GET /admin/user?keyword=testuser2@test.com, should return statuscode 200", async () => {
             expect.assertions(3);
-            const res: Response = await agent.get(`/user?keyword=${mockUser2.email}`);
+            const res: Response = await agent.get(`/admin/user?keyword=${mockUser2.email}`);
             expect(res.statusCode).toBe(StatusCode.OK);
-            expect(res.body).toBeInstanceOf(Array<User>);
-            expect(res.body[0].email).toBe(mockUser2.email);
+            expect(res.body).toBeInstanceOf(Object as unknown as PaginateResult<User>);
+            expect(res.body.docs[0].email).toBe(mockUser2.email);
         });
-        it("PATCH /user/:id, should return statuscode 200", async () => {
+        it("PATCH /admin/user/:id, should return statuscode 200", async () => {
             expect.assertions(2);
             const newData: ModifyUser = { fullname: "John Doe" };
-            const res: Response = await agent.patch(`/user/${mockUser2Id.toString()}`).send(newData);
+            const res: Response = await agent.patch(`/admin/user/${mockUser2Id.toString()}`).send(newData);
             expect(res.statusCode).toBe(StatusCode.OK);
-            expect(res.body).toHaveProperty("fullname", newData.fullname);
+            expect(res.body.fullname).toBe(newData.fullname);
         });
-        it("DELETE /user/:id, should return statuscode 204", async () => {
+        it("PATCH /admin/user/:id, should return statuscode 404 if user id not valid", async () => {
             expect.assertions(1);
-            const res: Response = await agent.delete(`/user/${mockUser2Id.toString()}`);
+            const newData: ModifyUser = { fullname: "John Doe" };
+            const res: Response = await agent.patch(`/admin/user/${new Types.ObjectId()}`).send(newData);
+            expect(res.statusCode).toBe(StatusCode.NotFound);
+        });
+        it("DELETE /admin/user/:id, should return statuscode 204", async () => {
+            expect.assertions(1);
+            const res: Response = await agent.delete(`/admin/user/${mockUser2Id.toString()}`);
             expect(res.statusCode).toBe(StatusCode.NoContent);
         });
-        it("DELETE /user/:id, should return statuscode 404 if user not found", async () => {
-            expect.assertions(2);
-            const res: Response = await agent.delete(`/user/${mockUser2Id.toString()}`);
-            expect(res.statusCode).toBe(404);
-            expect(res.body).toBe(`This ${mockUser2Id.toString()} id is not valid.`);
+        it("DELETE /admin/user/:id, should return statuscode 404", async () => {
+            expect.assertions(1);
+            const res: Response = await agent.delete(`/admin/user/${new Types.ObjectId()}`);
+            expect(res.statusCode).toBe(StatusCode.NotFound);
         });
     });
 });

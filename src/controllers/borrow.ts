@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from "express";
-import authentication from "@middlewares/authentication";
-import authorization from "@middlewares/authorization";
+import authenticationMiddleware from "@middlewares/authentication";
+import authorizationMiddleware from "@middlewares/authorization";
 import validation from "@middlewares/validation";
 import bookModel from "@models/book";
 import borrowModel from "@models/borrow";
@@ -12,10 +12,9 @@ import { CreateBorrowDto, ModifyBorrowDto } from "@validators/borrow";
 import HttpError from "@exceptions/Http";
 import type Controller from "@interfaces/controller";
 import type { Borrow, CreateBorrow, ModifyBorrow } from "@interfaces/borrow";
-import type { FilterQuery, SortOrder, Types } from "mongoose";
+import type { FilterQuery, Types } from "mongoose";
 
 export default class BorrowController implements Controller {
-    path = "/borrow";
     router = Router();
     private user = userModel;
     private book = bookModel;
@@ -26,75 +25,314 @@ export default class BorrowController implements Controller {
     }
 
     private initializeRoutes() {
-        this.router.all(`${this.path}*`, authentication);
-        this.router.get(`${this.path}/all`, authorization(["admin"]), this.getAllBorrows);
-        this.router //
-            .route(this.path)
-            .get(this.getBorrows)
-            .post(validation(CreateBorrowDto), this.createBorrow);
+        this.router.get("/user/me/borrow", authenticationMiddleware, this.getLoggedInUserBorrows);
+        this.router.post("/borrow", [authenticationMiddleware, validation(CreateBorrowDto)], this.createBorrow);
+        this.router.patch(
+            "/borrow/:id([0-9a-fA-F]{24})/verify",
+            authenticationMiddleware,
+            this.modifyVerificationByBorrowId,
+        );
         this.router
-            .route(`${this.path}/:id([0-9a-fA-F]{24})`)
+            .route(`/borrow/:id([0-9a-fA-F]{24})`)
+            .all(authenticationMiddleware)
             .get(this.getBorrowById)
             .patch(validation(ModifyBorrowDto, true), this.modifyBorrowById)
-            .delete(authorization(["admin"]), this.deleteBorrowById);
+            .delete(this.deleteBorrowById);
+        // ADMIN
+        this.router.get(
+            `/admin/borrow`,
+            [authenticationMiddleware, authorizationMiddleware(["admin"])],
+            this.adminGetBorrows,
+        );
+        this.router
+            .route("/admin/borrow/:id([0-9a-fA-F]{24})")
+            .all([authenticationMiddleware, authorizationMiddleware(["admin"])])
+            .get(this.adminGetBorrowById)
+            .patch(this.adminModifyBorrowById)
+            .delete(this.adminDeleteBorrowById);
     }
 
-    private getAllBorrows = async (_req: Request, res: Response, next: NextFunction) => {
+    private getLoggedInUserBorrows = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const borrows = await this.borrow //
-                .find()
-                .lean<Borrow[]>()
-                .exec();
+            const loggedInUserId = req.session["userId"];
 
-            res.json(borrows);
+            const borrow = await this.borrow //
+                .findOne({ $or: [{ from: loggedInUserId }, { to: loggedInUserId }] })
+                .populate("books from to")
+                .populate({
+                    path: "from to",
+                    select: "username fullname email picture",
+                })
+                .populate({
+                    path: "user_rates",
+                    populate: {
+                        path: "from to",
+                        select: "comment rate createdAt",
+                    },
+                })
+                .lean<Borrow>()
+                .exec();
+            if (!borrow) return next(new HttpError(`error.borrow.failedGetBorrows`));
+
+            res.json(borrow);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
+        }
+    };
+    private getBorrowById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+        try {
+            const borrowId = req.params["id"];
+            if (await isIdNotValid(this.borrow, [borrowId], next)) return;
+            const loggedInUserId = req.session["userId"];
+
+            const borrow = await this.borrow //
+                .findOne({ _id: borrowId, $or: [{ from: loggedInUserId }, { to: loggedInUserId }] })
+                .populate({ path: "from to", select: "username fullname email picture" })
+                .populate({
+                    path: "user_rates",
+                    populate: { path: "from to", select: "username fullname email picture" },
+                })
+                .populate({
+                    path: "books",
+                    populate: [
+                        { path: "uploader", select: "username fullname email picture" },
+                        {
+                            path: "rates",
+                            populate: { path: "from", select: "username fullname email picture" },
+                        },
+                    ],
+                })
+                .lean<Borrow>()
+                .exec();
+            if (!borrow) return next(new HttpError(`error.borrow.failedGetBorrowById`));
+
+            res.json(borrow);
+        } catch (error) {
+            /* istanbul ignore next */
+            next(error);
+        }
+    };
+    private createBorrow = async (req: Request<unknown, unknown, CreateBorrow>, res: Response, next: NextFunction) => {
+        try {
+            const { to, from, books } = req.body;
+            if (await isIdNotValid(this.book, books, next)) return;
+            const loggedInUserId = req.session["userId"] as string;
+
+            const existQuery: FilterQuery<Borrow> = { books: { $in: books } };
+            const newBorrow: Partial<Borrow> = { books: books };
+            let otherUser: string | undefined = undefined;
+
+            if (to /* lend book to someone */) {
+                if (await isBooksNotValidForBorrow(books, "lend")) {
+                    return next(new HttpError("error.lend.booksAreForBorrow"));
+                }
+                if (loggedInUserId == to) {
+                    return next(new HttpError("error.lend.lendToYourself"));
+                }
+                if (await isIdNotValid(this.user, [to], next)) return;
+                existQuery["from"] = newBorrow["from"] = loggedInUserId;
+                existQuery["to"] = newBorrow["to"] = to;
+
+                newBorrow["type"] = "lend";
+                otherUser = to;
+            } else if (from) {
+                if (await isBooksNotValidForBorrow(books, "borrow")) {
+                    return next(new HttpError("error.borrow.booksAreForLend"));
+                }
+                if (loggedInUserId == from) {
+                    return next(new HttpError("error.borrow.borrowFromYourself"));
+                }
+                if (await isIdNotValid(this.user, [from], next)) return;
+                existQuery["from"] = newBorrow["from"] = from;
+                existQuery["to"] = newBorrow["to"] = loggedInUserId;
+
+                newBorrow["type"] = "borrow";
+                otherUser = from;
+            } else {
+                return next(new HttpError("error.fromOrTo"));
+            }
+
+            const alreadyExist = await this.borrow //
+                .exists(existQuery)
+                .exec();
+            if (alreadyExist != null) return next(new HttpError("error.alreadyInBorrow"));
+
+            // const createdNewBorrow = await this.borrow //
+            //     .create(newBorrow);
+            const createdNewBorrow = new this.borrow(newBorrow);
+            await createdNewBorrow.save({ validateBeforeSave: true });
+            if (!newBorrow) return next(new HttpError("error.borrow.failedCreateBorrow"));
+
+            const { modifiedCount } = await this.user //
+                .updateMany(
+                    {
+                        _id: { $in: [otherUser, loggedInUserId] },
+                    },
+                    { $push: { borrows: { _id: createdNewBorrow._id } } },
+                )
+                .exec();
+            if (modifiedCount != 2) return next(new HttpError("error.user.failedUpdateUser"));
+
+            await this.user.createNotification(
+                otherUser,
+                loggedInUserId,
+                createdNewBorrow._id.toString(),
+                newBorrow["type"],
+                "create",
+            );
+
+            res.json(
+                await createdNewBorrow.populate([
+                    { path: "from to", select: "username fullname email picture" },
+                    { path: "books", select: "author title picture" },
+                    { path: "user_rates", populate: { path: "from to", select: "username fullname email picture" } },
+                ]),
+            );
+        } catch (error) {
+            /* istanbul ignore next */
+            next(error);
+        }
+    };
+    private modifyBorrowById = async (
+        req: Request<{ id: string }, unknown, ModifyBorrow>,
+        res: Response,
+        next: NextFunction,
+    ) => {
+        try {
+            const books = req.body["books"];
+            if (await isIdNotValid(this.book, books, next)) return;
+
+            const borrowId = req.params["id"];
+            if (await isIdNotValid(this.borrow, [borrowId], next)) return;
+            const loggedInUserId = req.session["userId"] as string;
+
+            const borrowToModify = await this.borrow
+                .findOne({ _id: borrowId, $or: [{ from: loggedInUserId }, { to: loggedInUserId }], verified: false })
+                .lean<Borrow>()
+                .exec();
+            if (borrowToModify == null) return next(new HttpError("error.borrow.cannotModifyBorrow"));
+
+            if (await isBooksNotValidForBorrow(books, borrowToModify["type"])) {
+                return next(new HttpError("error.borrow.cannotBorrowBook"));
+            }
+
+            const modifiedBorrow = await this.borrow
+                .findByIdAndUpdate(borrowId, { ...req.body, updatedAt: new Date() }, { new: true, runValidators: true })
+                .populate({ path: "from to", select: "username fullname email picture" })
+                .populate({ path: "books", select: "username fullname email picture" })
+                .lean<Borrow>()
+                .exec();
+            if (!modifiedBorrow) return next(new HttpError("error.borrow.failedUpdateBorrow"));
+
+            const otherUserId =
+                modifiedBorrow["type"] == "borrow" ? borrowToModify.from.toString() : borrowToModify.to.toString();
+
+            await this.user.createNotification(otherUserId, loggedInUserId, borrowId, modifiedBorrow["type"], "update");
+
+            res.json(modifiedBorrow);
+        } catch (error) {
+            /* istanbul ignore next */
+            next(error);
+        }
+    };
+    private modifyVerificationByBorrowId = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+        try {
+            const borrowId = req.params["id"];
+            if (await isIdNotValid(this.borrow, [borrowId], next)) return;
+            const loggedInUserId = req.session["userId"] as string;
+
+            const borrowToModify = await this.borrow
+                .findOne({ _id: borrowId, $or: [{ from: loggedInUserId }, { to: loggedInUserId }], verified: false })
+                .lean<Borrow>()
+                .exec();
+            if (borrowToModify == null) return next(new HttpError("error.borrow.cannotModifyBorrow"));
+
+            let otherUser: string | undefined = undefined;
+
+            if (borrowToModify.type == "borrow") {
+                if (loggedInUserId != borrowToModify.from.toString()) {
+                    return next(new HttpError("error.borrow.cannotModifyVerified"));
+                }
+                otherUser = borrowToModify.to.toString();
+            } else {
+                if (loggedInUserId != borrowToModify.to.toString()) {
+                    return next(new HttpError("error.borrow.cannotModifyVerified"));
+                }
+                otherUser = borrowToModify.from.toString();
+            }
+
+            const { modifiedCount } = await this.borrow
+                .updateOne({ _id: borrowId }, { $set: { verified: true } }, { runValidators: true })
+                .exec();
+            if (modifiedCount != 1) return next(new HttpError("error.borrow.failedUpdateBorrow"));
+
+            await this.user.createNotification(otherUser, loggedInUserId, borrowId, borrowToModify["type"], "verify");
+
+            res.sendStatus(StatusCode.NoContent);
+        } catch (error) {
+            /* istanbul ignore next */
+            next(error);
+        }
+    };
+    private deleteBorrowById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+        try {
+            const borrowId = req.params["id"];
+            if (await isIdNotValid(this.borrow, [borrowId], next)) return;
+            const loggedInUserId = req.session["userId"] as string;
+
+            const borrowToDelete = await this.borrow //
+                .findOne({ _id: borrowId, $or: [{ from: loggedInUserId }, { to: loggedInUserId }], verified: false })
+                .lean<Borrow>()
+                .exec();
+            if (borrowToDelete == null) return next(new HttpError("error.borrow.cannotDeleteBorrow"));
+
+            const { from, to } = borrowToDelete;
+
+            const { deletedCount } = await this.borrow //
+                .deleteOne({ _id: borrowId })
+                .exec();
+            if (!deletedCount && deletedCount != 1) return next(new HttpError("error.borrow.failedDeleteBorrow"));
+
+            const otherUserId = borrowToDelete["type"] == "borrow" ? from.toString() : to.toString();
+
+            await this.user.createNotification(otherUserId, loggedInUserId, borrowId, borrowToDelete["type"], "delete");
+
+            const { modifiedCount } = await this.user
+                .updateMany({ _id: { $in: [from, to] } }, { $pull: { borrows: borrowId } }, { runValidators: true })
+                .exec();
+            if (modifiedCount != 2) return next(new HttpError("error.user.failedUpdateUsers"));
+
+            res.sendStatus(StatusCode.NoContent);
+        } catch (error) {
+            /* istanbul ignore next */
+            next(error);
         }
     };
 
-    private getBorrows = async (
+    // ADMIN
+    private adminGetBorrows = async (
         req: Request<
             unknown,
             unknown,
             unknown,
-            {
-                skip?: string;
-                limit?: string;
-                sort?: SortOrder;
-                sortBy?: string;
-                userId?: string;
-            }
+            { skip?: string; limit?: string; sort?: "asc" | "desc"; sortBy?: string; keyword?: string }
         >,
         res: Response,
         next: NextFunction,
     ) => {
         try {
-            const loggedInUserId = req.session["userId"];
-            const { skip, limit, sort, sortBy, userId } = req.query;
+            const { skip, limit, sort, sortBy } = req.query;
 
-            let query: FilterQuery<Borrow> = { $or: [{ from_id: loggedInUserId }, { to_id: loggedInUserId }] };
-
-            if (userId && userId != loggedInUserId) {
-                if (await isIdNotValid(this.user, [userId], next)) {
-                    return;
-                }
-                if (req.session["role"] != "admin") {
-                    return next(new HttpError("You cannot get other user's borrows.", StatusCode.Forbidden));
-                }
-                query = { $or: [{ from_id: userId }, { to_id: userId }] };
-            }
-
-            const borrows = await getPaginated(this.borrow, query, skip, limit, sort, sortBy);
+            const borrows = await getPaginated(this.borrow, {}, skip, limit, sort, sortBy);
 
             res.json(borrows);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
-
-    private getBorrowById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+    private adminGetBorrowById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
         try {
             const borrowId = req.params["id"];
             if (await isIdNotValid(this.borrow, [borrowId], next)) return;
@@ -104,111 +342,74 @@ export default class BorrowController implements Controller {
                 .populate("books")
                 .lean<Borrow>()
                 .exec();
-            if (!borrow) return next(new HttpError(`Failed to get borrow by id ${borrowId}`));
+            if (!borrow) return next(new HttpError("error.borrow.failedGetBorrowById"));
 
             res.json(borrow);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
-
-    private createBorrow = async (req: Request<unknown, unknown, CreateBorrow>, res: Response, next: NextFunction) => {
-        try {
-            const userId = req.session["userId"];
-            const { from_id, books } = req.body;
-            if (await isIdNotValid(this.user, [from_id], next)) return;
-            if (await isIdNotValid(this.book, books, next)) return;
-
-            const newBorrow = await this.borrow //
-                .create({
-                    to_id: userId,
-                    from_id: from_id,
-                    books: [...books],
-                });
-            if (!newBorrow) return next(new HttpError("Failed to create borrow"));
-
-            const { acknowledged } = await this.user //
-                .updateMany(
-                    {
-                        _id: { $in: [from_id, userId] },
-                    },
-                    { $push: { borrows: { _id: newBorrow._id } } },
-                )
-                .exec();
-            if (!acknowledged) return next(new HttpError("Failed to update users"));
-
-            res.json(newBorrow);
-        } catch (error) {
-            /* istanbul ignore next */
-            next(new HttpError(error.message));
-        }
-    };
-
-    private modifyBorrowById = async (
+    private adminModifyBorrowById = async (
         req: Request<{ id: string }, unknown, ModifyBorrow>,
         res: Response,
         next: NextFunction,
     ) => {
         try {
-            const loggedInUserId = req.session["userId"];
             const borrowId = req.params["id"];
             if (await isIdNotValid(this.borrow, [borrowId], next)) return;
 
-            const { from_id, to_id } = await this.borrow //
-                .findById(borrowId, { from_id: 1, to_id: 1 })
-                .lean<{ from_id: Types.ObjectId; to_id: Types.ObjectId }>()
-                .exec();
-
-            if (req.session["role"] != "admin") {
-                if (![from_id.toString(), to_id.toString()].includes(loggedInUserId as string)) {
-                    return next(new HttpError("Unauthorized", StatusCode.Unauthorized));
-                }
-                if (from_id.toString() !== loggedInUserId) {
-                    if (req.body.verified !== undefined) {
-                        return next(new HttpError("You can not modify this value", StatusCode.Unauthorized));
-                    }
-                }
-            }
-
             const modifiedBorrow = await this.borrow
-                .findByIdAndUpdate(borrowId, { ...req.body, updatedAt: new Date() }, { returnDocument: "after" })
+                .findByIdAndUpdate(borrowId, { ...req.body, updatedAt: new Date() }, { new: true, runValidators: true })
                 .lean<Borrow>()
                 .exec();
-            if (!modifiedBorrow) return next(new HttpError("Failed to update borrow"));
+            if (!modifiedBorrow) return next(new HttpError("error.borrow.failedUpdateBorrow"));
 
             res.json(modifiedBorrow);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
-
-    private deleteBorrowById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+    private adminDeleteBorrowById = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
         try {
             const borrowId = req.params["id"];
             if (await isIdNotValid(this.borrow, [borrowId], next)) return;
 
-            const { from_id, to_id } = await this.borrow //
-                .findById(borrowId, { from_id: 1, to_id: 1 })
-                .lean<{ from_id: Types.ObjectId; to_id: Types.ObjectId }>()
+            const { from, to } = await this.borrow //
+                .findById(borrowId, { from: 1, to: 1 })
+                .lean<{ from: Types.ObjectId; to: Types.ObjectId }>()
                 .exec();
-            if (!from_id || !to_id) return next(new HttpError("Failed to get ids from borrow"));
 
-            const { acknowledged: successfullBorrowDelete } = await this.borrow //
+            const { deletedCount } = await this.borrow //
                 .deleteOne({ _id: borrowId })
                 .exec();
-            if (!successfullBorrowDelete) return next(new HttpError(`Failed to delete borrow by id ${borrowId}`));
+            if (deletedCount != 1) return next(new HttpError("error.borrow.failedDeleteBorrow"));
 
-            const { acknowledged: successfullDeleteFromUser } = await this.user
-                .updateMany({ _id: { $in: [from_id, to_id] } }, { $pull: { borrows: borrowId } })
+            const { modifiedCount } = await this.user
+                .updateMany({ _id: { $in: [from, to] } }, { $pull: { borrows: borrowId } }, { runValidators: true })
                 .exec();
-            if (!successfullDeleteFromUser) return next(new HttpError("Failed to update users"));
+            if (modifiedCount != 2) return next(new HttpError("error.user.failedUpdateUsers"));
 
             res.sendStatus(StatusCode.NoContent);
         } catch (error) {
             /* istanbul ignore next */
-            next(new HttpError(error.message));
+            next(error);
         }
     };
+}
+
+async function isBooksNotValidForBorrow(books: string[] | undefined, type: "borrow" | "lend") {
+    try {
+        if (!books) return true;
+        const forBorrow = type == "borrow";
+        const validBooks = await bookModel
+            .find({ _id: { $in: books }, for_borrow: forBorrow }, { _id: 1 })
+            .lean()
+            .exec();
+        return validBooks.length != books.length;
+    } catch {
+        /* istanbul ignore next */
+        return true;
+    }
 }

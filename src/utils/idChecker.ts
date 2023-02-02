@@ -5,13 +5,18 @@ import type { NextFunction } from "express";
 /**
 Check id/ids if not valid ObjectId or not existing in the collection
  */
-export default async function isIdNotValid<T>(model: Model<T>, [...ids]: (string | undefined)[], next: NextFunction): Promise<boolean> {
+export default async function isIdNotValid<T>(
+    model: Model<T>,
+    ids: string[] | undefined,
+    next: NextFunction,
+): Promise<boolean> {
+    if (!ids) {
+        next(new IdNotValidException());
+        return true;
+    }
     for (const id of ids) {
-        if (!id || !isValidObjectId(id)) {
-            next(new IdNotValidException(id));
-            return true;
-        } else if (!(await model.exists({ _id: id }))) {
-            next(new IdNotValidException(id));
+        if (!isValidObjectId(id) || !(await model.exists({ _id: id }))) {
+            next(new IdNotValidException());
             return true;
         }
     }

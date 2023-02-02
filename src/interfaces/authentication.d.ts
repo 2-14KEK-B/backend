@@ -1,6 +1,7 @@
 interface RegisterCred {
     email: string;
-    username?: string;
+    username: string;
+    fullname?: string;
     password: string;
 }
 

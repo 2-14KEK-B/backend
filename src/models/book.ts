@@ -1,6 +1,9 @@
-import { model } from "mongoose";
+import { Model, PaginateModel, model } from "mongoose";
 import bookSchema from "@schemas/book";
+import type { Book } from "@interfaces/book";
 
-const bookModel = model("Book", bookSchema, "books");
+interface BookModel extends PaginateModel<Book>, Model<Book> {}
+
+const bookModel = model<Book, BookModel>("Book", bookSchema, "books");
 
 export default bookModel;
