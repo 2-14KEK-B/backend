@@ -25,6 +25,7 @@ export default class LoginController implements Controller {
     private initializeRoute() {
         this.router.post(`${this.path}/login`, validationMiddleware(LoginDto), this.login);
         this.router.post(`${this.path}/google`, this.loginAndRegisterWithGoogle);
+        this.router.post(`${this.path}/facebook`, this.loginAndRegisterWithFacebook);
     }
 
     private login = async (req: Request<unknown, unknown, LoginCred>, res: Response, next: NextFunction) => {
@@ -88,7 +89,6 @@ export default class LoginController implements Controller {
             }>({
                 url: "https://www.googleapis.com/oauth2/v3/userinfo",
             });
-
             if (!data) return next(new HttpError("error.failedGoogle"));
 
             const userId = await this.user //
@@ -118,7 +118,76 @@ export default class LoginController implements Controller {
                         fullname: data.name,
                         password: "stored at Google",
                     });
+                if (!newUser) return next(new HttpError("error.user.failedCreateUser"));
 
+                req.session["userId"] = newUser._id;
+                req.session["role"] = newUser.role;
+                return res.json(newUser);
+            }
+        } catch (error) {
+            /* istanbul ignore next */
+            next(error);
+        }
+    };
+
+    /* istanbul ignore next */
+    private loginAndRegisterWithFacebook = async (
+        req: Request<unknown, unknown, { userID: string; token: string }>,
+        res: Response,
+        next: NextFunction,
+    ) => {
+        try {
+            const { userID, token } = req.body;
+
+            const resp = await fetch(
+                `https://graph.facebook.com/${userID}?fields=email,name,picture&access_token=${token}`,
+                { method: "GET" },
+            );
+            if (!resp.ok) {
+                return next(new HttpError("error.failedFacebook"));
+            }
+            const data: {
+                email: string;
+                name: string;
+                picture: {
+                    data: {
+                        height: number;
+                        is_silhouette: boolean;
+                        url: string;
+                        width: number;
+                    };
+                };
+                id: string;
+            } = await resp.json();
+
+            const userId = await this.user //
+                .exists({ email: data.email })
+                .exec();
+
+            if (userId) {
+                const user = await this.user //
+                    .getInitialData(userId as unknown as string);
+
+                req.session["userId"] = user._id;
+                req.session["role"] = user.role;
+                return res.json(user);
+            } else {
+                const emailFirstSection = data.email.split("@")[0];
+                const isUsernameOccupied = await this.user.exists({ username: emailFirstSection }).exec();
+
+                const username = isUsernameOccupied
+                    ? `${data.email.split("@")[0]}_${Math.floor(Math.random() * (100 - 1 + 1)) + 1}`
+                    : emailFirstSection;
+
+                const newUser = await this.user //
+                    .create({
+                        picture: data.picture.data.url,
+                        email: data.email,
+                        email_is_verified: true,
+                        username,
+                        fullname: data.name,
+                        password: "stored at Facebook",
+                    });
                 if (!newUser) return next(new HttpError("error.user.failedCreateUser"));
 
                 req.session["userId"] = newUser._id;

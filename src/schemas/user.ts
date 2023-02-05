@@ -108,7 +108,8 @@ const userSchema = new Schema<User>(
     { timestamps: true, versionKey: false },
 );
 
-userSchema.path("picture").validate(function (val) {
+userSchema.path("picture").validate(function (val: string) {
+    if (val.includes("googleusercontent.com")) return true;
     const imgUrlRegex = /(http(s?):)([/|.|\w|\s|-])*\.(?:jpg|gif|png)/;
     return imgUrlRegex.test(val);
 }, "picture.invalidUrl");
