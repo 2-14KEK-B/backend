@@ -81,11 +81,6 @@ export default class App {
     }
 
     private initializeControllers(controllers: Controller[]) {
-        this.app.get("/test", (_req, res) => {
-            console.log(res.getLocale());
-            res.json(res.__("hello"));
-        });
-
         this.app.get("/healthcheck", (_req: Request, res: Response) => res.sendStatus(StatusCode.OK));
         controllers.forEach(controller => {
             this.app.use("/", controller.router);

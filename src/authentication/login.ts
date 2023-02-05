@@ -93,14 +93,17 @@ export default class LoginController implements Controller {
 
             const userId = await this.user //
                 .exists({ email: data.email })
+                .lean<{ _id: Types.ObjectId }>()
                 .exec();
+            console.log(userId);
 
             if (userId) {
                 const user = await this.user //
-                    .getInitialData(userId as unknown as string);
+                    .getInitialData(userId._id.toString());
 
-                req.session["userId"] = user._id;
+                req.session["userId"] = (user._id as Types.ObjectId).toString();
                 req.session["role"] = user.role;
+
                 return res.json(user);
             } else {
                 const emailFirstSection = data.email.split("@")[0];
@@ -119,9 +122,9 @@ export default class LoginController implements Controller {
                         password: "stored at Google",
                     });
                 if (!newUser) return next(new HttpError("error.user.failedCreateUser"));
-
-                req.session["userId"] = newUser._id;
+                req.session["userId"] = (newUser._id as Types.ObjectId).toString();
                 req.session["role"] = newUser.role;
+
                 return res.json(newUser);
             }
         } catch (error) {
@@ -162,14 +165,16 @@ export default class LoginController implements Controller {
 
             const userId = await this.user //
                 .exists({ email: data.email })
+                .lean<{ _id: Types.ObjectId }>()
                 .exec();
 
             if (userId) {
                 const user = await this.user //
-                    .getInitialData(userId as unknown as string);
+                    .getInitialData(userId._id.toString());
 
-                req.session["userId"] = user._id;
+                req.session["userId"] = (user._id as Types.ObjectId).toString();
                 req.session["role"] = user.role;
+
                 return res.json(user);
             } else {
                 const emailFirstSection = data.email.split("@")[0];
@@ -190,8 +195,9 @@ export default class LoginController implements Controller {
                     });
                 if (!newUser) return next(new HttpError("error.user.failedCreateUser"));
 
-                req.session["userId"] = newUser._id;
+                req.session["userId"] = (newUser._id as Types.ObjectId).toString();
                 req.session["role"] = newUser.role;
+
                 return res.json(newUser);
             }
         } catch (error) {
