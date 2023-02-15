@@ -1,4 +1,4 @@
-import { Schema, UpdateWriteOpResult } from "mongoose";
+import { Model, Schema, UpdateWriteOpResult } from "mongoose";
 import paginate from "mongoose-paginate-v2";
 import type { User } from "@interfaces/user";
 import type { docType, Notification, notiType } from "@interfaces/notification";
@@ -114,7 +114,7 @@ userSchema.path("picture").validate(function (val: string) {
     return imgUrlRegex.test(val);
 }, "picture.invalidUrl");
 
-userSchema.statics["getInitialData"] = async function (userId: string): Promise<User> {
+userSchema.statics["getInitialData"] = async function (this: Model<User>, userId: string): Promise<User | null> {
     try {
         return await this.findById<User>(userId)
             .populate(["books"])
