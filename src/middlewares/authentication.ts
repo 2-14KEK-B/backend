@@ -1,6 +1,6 @@
-import userModel from "@models/user";
+import { userModel } from "@models";
 import isIdNotValid from "@utils/idChecker";
-import UnauthorizedException from "@exceptions/Unauthorized";
+import { UnauthorizedException } from "@exceptions";
 import type { Request, Response, NextFunction } from "express";
 
 /**

@@ -37,6 +37,8 @@ const jestConfig: JestConfigWithTsJest = {
         "!src/app.ts",
         "!src/socket.ts",
     ],
+    modulePaths: [compilerOptions.baseUrl],
+    moduleDirectories: ["node_modules", "<rootDir>"],
     moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, { prefix: "<rootDir>/" }),
 };
 

@@ -1,10 +1,4 @@
-import type ID from "./id";
-import type { Book } from "./book";
-import type { Borrow } from "./borrow";
-import type { Message } from "./message";
-import type { Notification } from "./notification";
-
-type ID = Types.ObjectId | string;
+import type { ID, Book, Borrow, Message, Notification } from ".";
 
 interface User {
     _id: ID;
@@ -47,4 +41,4 @@ interface ModifyUser {
     password?: string;
 }
 
-export { User, CreateUser, ModifyUser };
+export type { User, CreateUser, ModifyUser };

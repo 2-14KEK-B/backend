@@ -1,20 +1,19 @@
-import express, { Application, json, Request, Response, urlencoded } from "express";
+import express, { type Application, json, type Request, type Response, urlencoded } from "express";
 import { createServer, Server } from "http";
-import session, { SessionOptions } from "express-session";
+import session, { type SessionOptions } from "express-session";
 import cors from "cors";
 import { I18n } from "i18n";
 import { join } from "node:path";
 import morgan from "morgan";
 import { initSocket } from "./socket";
 import { createSessionStore } from "@db/sessionStore";
-import errorMiddleware from "@middlewares/error";
-import { mongooseErrorMiddleware } from "@middlewares/mongooseError";
+import { mongooseErrorMiddleware, errorMiddleware } from "@middlewares";
 import env from "@config/validateEnv";
 import corsOptions from "@config/corsOptions";
 import StatusCode from "@utils/statusCodes";
-import type Controller from "@interfaces/controller";
+import type { Controller } from "@interfaces";
 
-export default class App {
+class App {
     public app: Application;
     private server: Server;
 
@@ -126,3 +125,5 @@ export default class App {
         this.app.io = io;
     }
 }
+
+export default App;

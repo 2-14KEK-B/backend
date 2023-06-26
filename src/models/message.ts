@@ -1,6 +1,6 @@
-import { Model, model, PaginateModel } from "mongoose";
-import messageSchema from "@schemas/message";
-import type { Message } from "@interfaces/message";
+import { Model, model, type PaginateModel } from "mongoose";
+import { messageSchema } from "@schemas";
+import type { Message } from "@interfaces";
 
 interface MessageModel extends PaginateModel<Message>, Model<Message> {}
 

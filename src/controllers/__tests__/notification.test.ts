@@ -1,18 +1,11 @@
 import request, { Response, SuperAgentTest } from "supertest";
 import App from "../../app";
-import userRateModel from "@models/userRate";
-import borrowModel from "@models/borrow";
-import userModel from "@models/user";
-import bookModel from "@models/book";
-import UserController from "@controllers/user";
-import AuthenticationController from "@authentication/index";
-import StatusCode from "@utils/statusCodes";
+import { userRateModel, borrowModel, userModel, bookModel } from "@models";
+import { UserController, AuthenticationController } from "@controllers";
+import { StatusCode } from "@utils";
 import { Types } from "mongoose";
 import type { Application } from "express";
-import type { User } from "@interfaces/user";
-import type { CreateNotification } from "@interfaces/notification";
-import type { Borrow } from "@interfaces/borrow";
-import type { Book } from "@interfaces/book";
+import type { User, CreateNotification, Borrow, Book } from "@interfaces";
 
 describe("NOTIFICATIONS", () => {
     let server: Application;

@@ -1,6 +1,6 @@
-import authMiddleware from "@middlewares/authentication";
+import { authenticationMiddleware as authentication } from "@middlewares";
 import type { NextFunction, Request, Response, Router } from "express";
-import type Controller from "@interfaces/controller";
+import type { Controller } from "@interfaces";
 
 export default class LogoutController implements Controller {
     path: string;
@@ -13,7 +13,7 @@ export default class LogoutController implements Controller {
     }
 
     private initializeRoute() {
-        this.router.get(`${this.path}/logout`, authMiddleware, this.logout);
+        this.router.get(`${this.path}/logout`, authentication, this.logout);
     }
 
     private logout = async (req: Request, res: Response, next: NextFunction) => {

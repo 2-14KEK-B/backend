@@ -7,7 +7,7 @@ import { resolve } from "node:path";
 
 const password = "test1234";
 
-export = async function globalSetup() {
+export default async function globalSetup() {
     const instance = await MongoMemoryServer.create();
     const uri = instance.getUri();
 
@@ -32,4 +32,4 @@ export = async function globalSetup() {
     // await connect(`${process.env["TEST_URI"]}/bookswap_test`);
     await connection.db.dropDatabase();
     await disconnect();
-};
+}

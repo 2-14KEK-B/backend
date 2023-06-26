@@ -1,17 +1,16 @@
 import getPaginated from "@utils/getPaginated";
-import { Router, Request, Response, NextFunction } from "express";
-import authentication from "@middlewares/authentication";
-import authorization from "@middlewares/authorization";
-import validation from "@middlewares/validation";
-import messageModel from "@models/message";
-import userModel from "@models/user";
-import StatusCode from "@utils/statusCodes";
-import isIdNotValid from "@utils/idChecker";
-import CreateMessageDto from "@validators/message";
-import HttpError from "@exceptions/Http";
+import { Router, type Request, type Response, type NextFunction } from "express";
+import {
+    authenticationMiddleware as authentication,
+    authorizationMiddleware as authorization,
+    validationMiddleware as validation,
+} from "@middlewares";
+import { messageModel, userModel } from "@models";
+import { StatusCode, isIdNotValid } from "@utils";
+import { CreateMessageDto } from "@validators";
+import { HttpError } from "@exceptions";
 import { Types } from "mongoose";
-import type { CreateMessageContent, Message, MessageContent } from "@interfaces/message";
-import type Controller from "@interfaces/controller";
+import type { Controller, CreateMessageContent, Message, MessageContent } from "@interfaces";
 
 export default class MessageController implements Controller {
     router = Router();
@@ -47,7 +46,7 @@ export default class MessageController implements Controller {
         try {
             const loggedInUserId = req.session["userId"];
 
-            const { messages } = await this.user
+            const user = await this.user
                 .findById(loggedInUserId, { messages: 1 })
                 .populate({
                     path: "messages",
@@ -66,6 +65,9 @@ export default class MessageController implements Controller {
                 })
                 .lean<{ messages: Message[] }>()
                 .exec();
+            if (user == null) return;
+            const { messages } = user;
+
             if (!messages) return next(new HttpError("error.message.failedGetMessages"));
 
             res.json(messages);
@@ -269,10 +271,12 @@ export default class MessageController implements Controller {
             const messageId = req.params["id"];
             if (await isIdNotValid(this.message, [messageId], next)) return;
 
-            const { users } = await this.message //
+            const message = await this.message //
                 .findById(messageId, { users: 1 })
                 .lean<{ users: Types.ObjectId[] }>()
                 .exec();
+            if (message == null) return;
+            const { users } = message;
 
             const { deletedCount } = await this.message //
                 .deleteOne({ _id: messageId })

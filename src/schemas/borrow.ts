@@ -1,6 +1,6 @@
 import { Schema } from "mongoose";
 import paginate from "mongoose-paginate-v2";
-import type { Borrow } from "@interfaces/borrow";
+import type { Borrow } from "@interfaces";
 
 const borrowSchema = new Schema<Borrow>(
     {

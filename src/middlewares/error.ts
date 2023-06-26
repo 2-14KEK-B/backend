@@ -1,7 +1,7 @@
 import env from "@config/validateEnv";
 import { I18n } from "i18n";
 import { join, normalize } from "node:path";
-import type HttpError from "@exceptions/Http";
+import type { HttpError } from "@exceptions";
 import type { NextFunction, Request, Response } from "express";
 
 export default async function errorMiddleware(

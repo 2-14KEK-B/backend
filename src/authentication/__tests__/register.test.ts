@@ -1,11 +1,10 @@
-import request, { Response } from "supertest";
+import request, { type Response } from "supertest";
 import App from "../../app";
-import AuthenticationController from "@authentication/index";
-import userModel from "@models/user";
-import StatusCode from "@utils/statusCodes";
+import { AuthenticationController } from "@controllers";
+import { userModel } from "@models";
+import { StatusCode } from "@utils";
 import type { Application } from "express";
-import type { User } from "@interfaces/user";
-import type { RegisterCred } from "@interfaces/authentication";
+import type { User, RegisterCred } from "@interfaces";
 
 describe("POST /auth/register", () => {
     let app: Application;

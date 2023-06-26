@@ -5,7 +5,7 @@ import StatusCode from "@utils/statusCodes";
 import type { Error } from "mongoose";
 import type { Request, Response, NextFunction } from "express";
 
-export function mongooseErrorMiddleware(error: any, _req: Request, res: Response, next: NextFunction) {
+function mongooseErrorMiddleware(error: any, _req: Request, res: Response, next: NextFunction) {
     const i18n = new I18n({
         locales: ["en", "hu"],
         defaultLocale: "hu",
@@ -46,3 +46,5 @@ function isValidationError(error: any): error is Error.ValidationError {
 function isCastError(error: any): error is Error.CastError {
     return error.name == "CastError";
 }
+
+export default mongooseErrorMiddleware;

@@ -1,10 +1,6 @@
 import { connect, connection, set } from "mongoose";
 import env from "@config/validateEnv";
-import userModel from "@models/user";
-import bookModel from "@models/book";
-import borrowModel from "@models/borrow";
-import messageModel from "@models/message";
-import userRateModel from "@models/userRate";
+import { userModel, bookModel, borrowModel, messageModel, userRateModel } from "@models";
 
 export default async function connectToDatabase(connectionString?: string): Promise<void> {
     try {

@@ -1,17 +1,11 @@
 import getPaginated from "@utils/getPaginated";
-import { Router, Request, Response, NextFunction } from "express";
-import validationMiddleware from "@middlewares/validation";
-import authenticationMiddleware from "@middlewares/authentication";
-import authorizationMiddleware from "@middlewares/authorization";
-import userRateModel from "@models/userRate";
-import borrowModel from "@models/borrow";
-import userModel from "@models/user";
-import isIdNotValid from "@utils/idChecker";
-import { ModifyUserRateDto, CreateUserRateDto } from "@validators/userRate";
-import StatusCode from "@utils/statusCodes";
-import HttpError from "@exceptions/Http";
-import type Controller from "@interfaces/controller";
-import type { CreateUserRate, ModifyUserRate, UserRate } from "@interfaces/userRate";
+import { Router, type Request, type Response, type NextFunction } from "express";
+import { validationMiddleware, authenticationMiddleware, authorizationMiddleware } from "@middlewares";
+import { userRateModel, borrowModel, userModel } from "@models";
+import { ModifyUserRateDto, CreateUserRateDto } from "@validators";
+import { StatusCode, isIdNotValid } from "@utils";
+import { HttpError } from "@exceptions";
+import type { Controller, CreateUserRate, ModifyUserRate, UserRate } from "@interfaces";
 
 export default class UserRateController implements Controller {
     router = Router();
@@ -209,11 +203,11 @@ export default class UserRateController implements Controller {
             );
             if (modifiedCount != 1) return next(new HttpError("error.borrow.failedUpdateBorrow"));
 
-            const { nModified } = await this.user.bulkWrite([
+            const { modifiedCount: modifiedUser } = await this.user.bulkWrite([
                 { updateOne: { filter: { _id: loggedInUserId }, update: { $push: { "user_rates.from": rate._id } } } },
                 { updateOne: { filter: { _id: userId }, update: { $push: { "user_rates.to": rate._id } } } },
             ]);
-            if (nModified != 2) return next(new HttpError("error.user.failedUpdateUsers"));
+            if (modifiedUser != 2) return next(new HttpError("error.user.failedUpdateUsers"));
 
             res.json(await rate.populate({ path: "from to", select: "username fullname email picture" }));
         } catch (error) {
@@ -314,6 +308,7 @@ export default class UserRateController implements Controller {
             if (await isIdNotValid(this.userRate, [rateId], next)) return;
 
             const rate = await this.userRate.findById(rateId).lean<UserRate>().exec();
+            if (rate == null) return;
 
             const { acknowledged } = await this.userRate //
                 .deleteOne({ _id: rateId })

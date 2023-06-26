@@ -1,7 +1,6 @@
-import { Model, model, PaginateModel, UpdateWriteOpResult } from "mongoose";
-import userSchema from "@schemas/user";
-import type { User } from "@interfaces/user";
-import type { docType, notiType } from "@interfaces/notification";
+import { Model, model, type PaginateModel, type UpdateWriteOpResult } from "mongoose";
+import { userSchema } from "@schemas";
+import type { User, docType, notiType } from "@interfaces";
 
 interface UserModel extends PaginateModel<User>, Model<User> {
     getInitialData(userId: string): Promise<User>;

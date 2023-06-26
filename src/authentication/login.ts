@@ -1,15 +1,12 @@
 import { OAuth2Client } from "google-auth-library";
 import { compare } from "bcrypt";
-import userModel from "@models/user";
-import validationMiddleware from "@middlewares/validation";
-import LoginDto from "@validators/login";
-import HttpError from "@exceptions/Http";
-import WrongCredentialsException from "@exceptions/WrongCredentials";
+import { userModel } from "@models";
+import { validationMiddleware as validation } from "@middlewares";
+import { LoginDto } from "@validators";
+import { HttpError, WrongCredentialsException } from "@exceptions";
 import type { FilterQuery, Types } from "mongoose";
 import type { NextFunction, Request, Response, Router } from "express";
-import type { LoginCred } from "@interfaces/authentication";
-import type { User } from "@interfaces/user";
-import type Controller from "@interfaces/controller";
+import type { LoginCred, User, Controller } from "@interfaces";
 
 export default class LoginController implements Controller {
     path: string;
@@ -23,7 +20,7 @@ export default class LoginController implements Controller {
     }
 
     private initializeRoute() {
-        this.router.post(`${this.path}/login`, validationMiddleware(LoginDto), this.login);
+        this.router.post(`${this.path}/login`, validation(LoginDto), this.login);
         this.router.post(`${this.path}/google`, this.loginAndRegisterWithGoogle);
         this.router.post(`${this.path}/facebook`, this.loginAndRegisterWithFacebook);
     }

@@ -1,6 +1,4 @@
-import type ID from "./id";
-import type { User } from "./user";
-import type { BookRate } from "./bookRate";
+import type { ID, User, BookRate } from ".";
 
 interface Book {
     _id: ID;
@@ -40,4 +38,4 @@ interface ModifyBook {
     price?: number;
 }
 
-export { Book, CreateBook, ModifyBook };
+export type { Book, CreateBook, ModifyBook };

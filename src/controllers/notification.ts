@@ -1,13 +1,9 @@
-import { NextFunction, Request, Response, Router } from "express";
-import userModel from "@models/user";
-import authenticationMiddleware from "@middlewares/authentication";
-import borrowModel from "@models/borrow";
-import userRateModel from "@models/userRate";
-import isIdNotValid from "@utils/idChecker";
-import StatusCode from "@utils/statusCodes";
-import HttpError from "@exceptions/Http";
-import type Controller from "@interfaces/controller";
-import type { CreateNotification } from "@interfaces/notification";
+import { type NextFunction, type Request, type Response, Router } from "express";
+import { userModel, borrowModel, userRateModel } from "@models";
+import { authenticationMiddleware as authentication } from "@middlewares";
+import { isIdNotValid, StatusCode } from "@utils";
+import { HttpError } from "@exceptions";
+import type { Controller, CreateNotification } from "@interfaces";
 
 export default class NotificationController implements Controller {
     router = Router();
@@ -20,15 +16,11 @@ export default class NotificationController implements Controller {
     }
 
     private initRoutes() {
-        this.router.get("/user/me/notification", authenticationMiddleware, this.getAllNotificationByLoggedInUser);
-        this.router.post(
-            "/user/:id([0-9a-fA-F]{24})/notification",
-            authenticationMiddleware,
-            this.createNotificationByUserId,
-        );
+        this.router.get("/user/me/notification", authentication, this.getAllNotificationByLoggedInUser);
+        this.router.post("/user/:id([0-9a-fA-F]{24})/notification", authentication, this.createNotificationByUserId);
         this.router
             .route("/user/me/notification/:id([0-9a-fA-F]{24})")
-            .all(authenticationMiddleware)
+            .all(authentication)
             .patch(this.modifySeenByNotificationId)
             .delete(this.deleteNotificationOfLoggedInUserById);
     }
@@ -37,11 +29,14 @@ export default class NotificationController implements Controller {
         try {
             const loggedInId = req.session["userId"];
 
-            const { notifications } = await this.user
+            const user = await this.user
                 .findById(loggedInId, { _id: 0, notifications: 1 })
                 .populate({ path: "notifications.from", select: "username fullname email picture" })
                 .lean<{ notifications: Notification[] }>()
                 .exec();
+            if (user == null) return;
+            const { notifications } = user;
+
             if (notifications == null) return next(new HttpError("error.notification.failedGetNotifications"));
 
             res.json(notifications);

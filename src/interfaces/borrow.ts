@@ -1,6 +1,4 @@
-import type ID from "./id";
-import type { Book } from "./book";
-import type { UserRate } from "./userRate";
+import type { ID, Book, UserRate } from ".";
 
 interface Borrow {
     _id: ID;
@@ -24,4 +22,4 @@ interface ModifyBorrow {
     books?: string[];
 }
 
-export { Borrow, CreateBorrow, ModifyBorrow };
+export type { Borrow, CreateBorrow, ModifyBorrow };

@@ -1,5 +1,5 @@
 import { IsEmail, IsOptional, IsString } from "class-validator";
-import type { LoginCred } from "@interfaces/authentication";
+import type { LoginCred } from "@interfaces";
 
 export default class LoginDto implements LoginCred {
     @IsOptional()

@@ -1,16 +1,13 @@
 import { hash } from "bcrypt";
-import { JwtPayload, sign, verify } from "jsonwebtoken";
-import userModel from "@models/user";
+import { type JwtPayload, sign, verify } from "jsonwebtoken";
 import env from "@config/validateEnv";
-import validationMiddleware from "@middlewares/validation";
-import { sendEmail } from "@utils/sendEmail";
-import StatusCode from "@utils/statusCodes";
-import RegisterDto from "@validators/register";
-import HttpError from "@exceptions/Http";
-import UserAlreadyExistsException from "@exceptions/UserAlreadyExists";
+import { userModel } from "@models";
+import { validationMiddleware as validation } from "@middlewares";
+import { sendEmail, StatusCode } from "@utils";
+import { RegisterDto } from "@validators";
+import { HttpError, UserAlreadyExistsException } from "@exceptions";
 import type { NextFunction, Request, Response, Router } from "express";
-import type Controller from "@interfaces/controller";
-import type { RegisterCred } from "@interfaces/authentication";
+import type { Controller, RegisterCred } from "@interfaces";
 
 export default class RegisterController implements Controller {
     path: string;
@@ -24,7 +21,7 @@ export default class RegisterController implements Controller {
     }
 
     private initializeRoute() {
-        this.router.post(`${this.path}/register`, validationMiddleware(RegisterDto), this.register);
+        this.router.post(`${this.path}/register`, validation(RegisterDto), this.register);
         this.router.get(`${this.path}/verify-email`, this.emailVerification);
     }
 

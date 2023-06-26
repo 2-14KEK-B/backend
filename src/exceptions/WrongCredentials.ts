@@ -1,5 +1,5 @@
 import HttpError from "./Http";
-import StatusCode from "@utils/statusCodes";
+import { StatusCode } from "@utils";
 
 export default class WrongCredentialsException extends HttpError {
     constructor() {

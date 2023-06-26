@@ -1,6 +1,6 @@
 import env from "@config/validateEnv";
 import { createTransport } from "nodemailer";
-import HttpError from "@exceptions/Http";
+import { HttpError } from "@exceptions";
 import type { NextFunction } from "express";
 
 /* istanbul ignore next */

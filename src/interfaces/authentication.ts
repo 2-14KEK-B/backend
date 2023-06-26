@@ -11,4 +11,4 @@ interface LoginCred {
     password: string;
 }
 
-export { LoginCred, RegisterCred };
+export type { LoginCred, RegisterCred };

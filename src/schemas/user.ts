@@ -1,7 +1,6 @@
-import { Model, Schema, UpdateWriteOpResult } from "mongoose";
+import { Model, Schema, type UpdateWriteOpResult } from "mongoose";
 import paginate from "mongoose-paginate-v2";
-import type { User } from "@interfaces/user";
-import type { docType, Notification, notiType } from "@interfaces/notification";
+import type { User, docType, Notification, notiType } from "@interfaces";
 
 const notificationSchema = new Schema<Notification>(
     {

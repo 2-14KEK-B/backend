@@ -177,5 +177,7 @@
 	"Illegal invocation": "Illegal invocation",
 	"Can't validate() the same doc multiple times in parallel": {
 		" Document": " 63dbb6e7411f994d6439e7a1"
-	}
+	},
+	"property something should not exist, property something2 should not exist, username must be a string, email must be an email, password must be a string": "property something should not exist, property something2 should not exist, username must be a string, email must be an email, password must be a string",
+	"email must be an email": "email must be an email"
 }

@@ -1,15 +1,12 @@
 import request, { Response, SuperAgentTest } from "supertest";
 import App from "../../app";
-import bookModel from "@models/book";
-import userModel from "@models/user";
-import BookController from "@controllers/book";
-import AuthenticationController from "@authentication/index";
-import StatusCode from "@utils/statusCodes";
 import { Types } from "mongoose";
-import type { PaginateResult } from "mongoose";
+import { BookController, AuthenticationController } from "@controllers";
+import { bookModel, userModel } from "@models";
+import { StatusCode } from "@utils";
 import type { Application } from "express";
-import type { Book, CreateBook } from "@interfaces/book";
-import type { User } from "@interfaces/user";
+import type { PaginateResult } from "mongoose";
+import type { User, Book, CreateBook } from "@interfaces";
 
 describe("BOOKS", () => {
     let app: Application;

@@ -1,17 +1,14 @@
-import { Router, Request, Response, NextFunction } from "express";
-import authenticationMiddleware from "@middlewares/authentication";
-import authorizationMiddleware from "@middlewares/authorization";
-import validation from "@middlewares/validation";
-import bookModel from "@models/book";
-import borrowModel from "@models/borrow";
-import userModel from "@models/user";
-import isIdNotValid from "@utils/idChecker";
-import StatusCode from "@utils/statusCodes";
-import getPaginated from "@utils/getPaginated";
-import { CreateBorrowDto, ModifyBorrowDto } from "@validators/borrow";
-import HttpError from "@exceptions/Http";
-import type Controller from "@interfaces/controller";
-import type { Borrow, CreateBorrow, ModifyBorrow } from "@interfaces/borrow";
+import { Router, type Request, type Response, type NextFunction } from "express";
+import {
+    authenticationMiddleware as authentication,
+    authorizationMiddleware as authorization,
+    validationMiddleware as validation,
+} from "@middlewares";
+import { bookModel, borrowModel, userModel } from "@models";
+import { isIdNotValid, getPaginated, StatusCode } from "@utils";
+import { CreateBorrowDto, ModifyBorrowDto } from "@validators";
+import { HttpError } from "@exceptions";
+import type { Controller, Borrow, CreateBorrow, ModifyBorrow } from "@interfaces";
 import type { FilterQuery, Types } from "mongoose";
 
 export default class BorrowController implements Controller {
@@ -25,28 +22,20 @@ export default class BorrowController implements Controller {
     }
 
     private initializeRoutes() {
-        this.router.get("/user/me/borrow", authenticationMiddleware, this.getLoggedInUserBorrows);
-        this.router.post("/borrow", [authenticationMiddleware, validation(CreateBorrowDto)], this.createBorrow);
-        this.router.patch(
-            "/borrow/:id([0-9a-fA-F]{24})/verify",
-            authenticationMiddleware,
-            this.modifyVerificationByBorrowId,
-        );
+        this.router.get("/user/me/borrow", authentication, this.getLoggedInUserBorrows);
+        this.router.post("/borrow", [authentication, validation(CreateBorrowDto)], this.createBorrow);
+        this.router.patch("/borrow/:id([0-9a-fA-F]{24})/verify", authentication, this.modifyVerificationByBorrowId);
         this.router
             .route(`/borrow/:id([0-9a-fA-F]{24})`)
-            .all(authenticationMiddleware)
+            .all(authentication)
             .get(this.getBorrowById)
             .patch(validation(ModifyBorrowDto, true), this.modifyBorrowById)
             .delete(this.deleteBorrowById);
         // ADMIN
-        this.router.get(
-            `/admin/borrow`,
-            [authenticationMiddleware, authorizationMiddleware(["admin"])],
-            this.adminGetBorrows,
-        );
+        this.router.get(`/admin/borrow`, [authentication, authorization(["admin"])], this.adminGetBorrows);
         this.router
             .route("/admin/borrow/:id([0-9a-fA-F]{24})")
-            .all([authenticationMiddleware, authorizationMiddleware(["admin"])])
+            .all([authentication, authorization(["admin"])])
             .get(this.adminGetBorrowById)
             .patch(this.adminModifyBorrowById)
             .delete(this.adminDeleteBorrowById);
@@ -262,6 +251,8 @@ export default class BorrowController implements Controller {
                 otherUser = borrowToModify.from.toString();
             }
 
+            if (!otherUser) return;
+
             const { modifiedCount } = await this.borrow
                 .updateOne({ _id: borrowId }, { $set: { verified: true } }, { runValidators: true })
                 .exec();
@@ -376,10 +367,12 @@ export default class BorrowController implements Controller {
             const borrowId = req.params["id"];
             if (await isIdNotValid(this.borrow, [borrowId], next)) return;
 
-            const { from, to } = await this.borrow //
+            const borrow = await this.borrow //
                 .findById(borrowId, { from: 1, to: 1 })
                 .lean<{ from: Types.ObjectId; to: Types.ObjectId }>()
                 .exec();
+            if (borrow == null) return;
+            const { from, to } = borrow;
 
             const { deletedCount } = await this.borrow //
                 .deleteOne({ _id: borrowId })

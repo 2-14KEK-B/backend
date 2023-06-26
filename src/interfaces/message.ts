@@ -1,5 +1,4 @@
-import type ID from "./id";
-import type { User } from "./user";
+import type { ID, User } from ".";
 
 interface Message {
     _id?: ID;
@@ -22,4 +21,4 @@ interface CreateMessageContent {
     content: string;
 }
 
-export { Message, MessageContent, CreateMessageContent };
+export type { Message, MessageContent, CreateMessageContent };

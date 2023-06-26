@@ -1,6 +1,6 @@
 import { Schema } from "mongoose";
 import paginate from "mongoose-paginate-v2";
-import type { UserRate } from "@interfaces/userRate";
+import type { UserRate } from "@interfaces";
 
 const userRateSchema = new Schema<UserRate>(
     {

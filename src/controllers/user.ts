@@ -1,17 +1,15 @@
-import { Router, Request, Response, NextFunction } from "express";
-import UserRateController from "./userRate";
-import NotificationController from "./notification";
-import authentication from "@middlewares/authentication";
-import authorization from "@middlewares/authorization";
-import validation from "@middlewares/validation";
-import userModel from "@models/user";
-import StatusCode from "@utils/statusCodes";
-import isIdNotValid from "@utils/idChecker";
-import getPaginated from "@utils/getPaginated";
-import ModifyUserDto from "@validators/user";
-import HttpError from "@exceptions/Http";
-import type Controller from "@interfaces/controller";
-import type { ModifyUser, User } from "@interfaces/user";
+import { Router, type Request, type Response, type NextFunction } from "express";
+import { UserRateController, NotificationController } from "@controllers";
+import {
+    authenticationMiddleware as authentication,
+    authorizationMiddleware as authorization,
+    validationMiddleware as validation,
+} from "@middlewares";
+import { userModel } from "@models";
+import { StatusCode, isIdNotValid, getPaginated } from "@utils";
+import { ModifyUserDto } from "@validators";
+import { HttpError } from "@exceptions";
+import type { Controller, ModifyUser, User } from "@interfaces";
 import type { FilterQuery, SortOrder } from "mongoose";
 
 export default class UserController implements Controller {

@@ -1,18 +1,11 @@
 import request, { Response, SuperAgentTest } from "supertest";
 import App from "../../app";
-import AuthenticationController from "@authentication/index";
-import BorrowController from "@controllers/borrow";
-import BookController from "@controllers/book";
-import userModel from "@models/user";
-import bookModel from "@models/book";
-import borrowModel from "@models/borrow";
-import StatusCode from "@utils/statusCodes";
+import { BorrowController, BookController, AuthenticationController } from "@controllers";
+import { userModel, bookModel, borrowModel } from "@models";
+import { StatusCode } from "@utils";
 import { PaginateResult, Types } from "mongoose";
 import type { Application } from "express";
-import type { CreateBorrow, ModifyBorrow } from "@interfaces/borrow";
-import type { Borrow } from "@interfaces/borrow";
-import type { Book } from "@interfaces/book";
-import type { User } from "@interfaces/user";
+import type { CreateBorrow, ModifyBorrow, Borrow, Book, User } from "@interfaces";
 
 describe("BORROWS", () => {
     let app: Application;

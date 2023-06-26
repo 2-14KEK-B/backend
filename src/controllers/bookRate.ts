@@ -1,16 +1,14 @@
-import { Router, Request, Response, NextFunction } from "express";
-import validationMiddleware from "@middlewares/validation";
-import authenticationMiddleware from "@middlewares/authentication";
-import authorizationMiddleware from "@middlewares/authorization";
-import bookModel from "@models/book";
-import userModel from "@models/user";
-import isIdNotValid from "@utils/idChecker";
-import StatusCode from "@utils/statusCodes";
-import { CreateBookRateDto, ModifyBookRateDto } from "@validators/book";
-import HttpError from "@exceptions/Http";
-import type { Book } from "@interfaces/book";
-import type Controller from "@interfaces/controller";
-import type { BookRate, CreateBookRate, ModifyBookRate } from "@interfaces/bookRate";
+import { Router, type Request, type Response, type NextFunction } from "express";
+import {
+    authenticationMiddleware as authentication,
+    authorizationMiddleware as authorization,
+    validationMiddleware as validation,
+} from "@middlewares";
+import { bookModel, userModel } from "@models";
+import { isIdNotValid, StatusCode } from "@utils";
+import { CreateBookRateDto, ModifyBookRateDto } from "@validators";
+import { HttpError } from "@exceptions";
+import type { Book, Controller, BookRate, CreateBookRate, ModifyBookRate } from "@interfaces";
 
 export default class BookRateController implements Controller {
     router = Router();
@@ -24,18 +22,18 @@ export default class BookRateController implements Controller {
     private initRoutes() {
         this.router
             .route(`/book/:bookId([0-9a-fA-F]{24})/rate/:rateId([0-9a-fA-F]{24})`)
-            .all(authenticationMiddleware)
-            .patch(validationMiddleware(ModifyBookRateDto, true), this.modifyBookRateByBookAndRateId)
+            .all(authentication)
+            .patch(validation(ModifyBookRateDto, true), this.modifyBookRateByBookAndRateId)
             .delete(this.deleteBookRateByBookAndRateId);
         this.router
             .route(`/book/:id([0-9a-fA-F]{24})/rate`)
             .get(this.getBookRatesByBookId)
-            .post([authenticationMiddleware, validationMiddleware(CreateBookRateDto)], this.createBookRateByBookId);
+            .post([authentication, validation(CreateBookRateDto)], this.createBookRateByBookId);
         // ADMIN
         this.router
             .route("/admin/book/:id([0-9a-fA-F]{24})/rate/:rateId([0-9a-fA-F]{24})")
-            .all([authenticationMiddleware, authorizationMiddleware(["admin"])])
-            .patch(validationMiddleware(ModifyBookRateDto, true), this.adminModifyBookRateByBookAndRateId)
+            .all([authentication, authorization(["admin"])])
+            .patch(validation(ModifyBookRateDto, true), this.adminModifyBookRateByBookAndRateId)
             .delete(this.adminDeleteBookRateByBookAndRateId);
     }
 
@@ -44,11 +42,14 @@ export default class BookRateController implements Controller {
             const bookId = req.params["id"];
             if (await isIdNotValid(this.book, [bookId], next)) return;
 
-            const { rates } = await this.book
+            const book = await this.book
                 .findById(bookId, { rates: 1 })
                 // .populate({ path: "from", select: "email username fullname picture" })
                 .lean<{ rates: BookRate[] }>()
                 .exec();
+            if (book == null) return;
+            const { rates } = book;
+
             if (!rates) return next(new HttpError("error.bookRate.failedGetBookRates"));
 
             res.json(rates);

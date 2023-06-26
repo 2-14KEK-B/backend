@@ -1,18 +1,16 @@
-import { Router, Request, Response, NextFunction } from "express";
-import BookRateController from "./bookRate";
-import authorizationMiddleware from "@middlewares/authorization";
-import authenticationMiddleware from "@middlewares/authentication";
-import validationMiddleware from "@middlewares/validation";
-import bookModel from "@models/book";
-import userModel from "@models/user";
-import { CreateBookDto, ModifyBookDto } from "@validators/book";
-import getPaginated from "@utils/getPaginated";
-import isIdNotValid from "@utils/idChecker";
-import StatusCode from "@utils/statusCodes";
-import HttpError from "@exceptions/Http";
+import { Router, type Request, type Response, type NextFunction } from "express";
+import { BookRateController } from "@controllers";
+import {
+    authenticationMiddleware as authentication,
+    authorizationMiddleware as authorization,
+    validationMiddleware as validation,
+} from "@middlewares";
+import { bookModel, userModel } from "@models";
+import { CreateBookDto, ModifyBookDto } from "@validators";
+import { getPaginated, isIdNotValid, StatusCode } from "@utils";
+import { HttpError } from "@exceptions";
 import type { FilterQuery, Types, SortOrder } from "mongoose";
-import type Controller from "@interfaces/controller";
-import type { Book, CreateBook, ModifyBook } from "@interfaces/book";
+import type { Controller, Book, CreateBook, ModifyBook } from "@interfaces";
 
 export default class BookController implements Controller {
     router = Router();
@@ -27,22 +25,18 @@ export default class BookController implements Controller {
     private initializeRoutes() {
         this.router.get(`/book/borrow`, this.getBooksForBorrow);
         this.router.get(`/book/lend`, this.getBooksForLend);
-        this.router.get(`/user/me/book`, authenticationMiddleware, this.getLoggedInUserBooks);
-        this.router.post("/book", [authenticationMiddleware, validationMiddleware(CreateBookDto)], this.createBook);
+        this.router.get(`/user/me/book`, authentication, this.getLoggedInUserBooks);
+        this.router.post("/book", [authentication, validation(CreateBookDto)], this.createBook);
         this.router
             .route(`/book/:id([0-9a-fA-F]{24})`)
             .get(this.getBookById)
-            .patch([authenticationMiddleware, validationMiddleware(ModifyBookDto, true)], this.modifyBookById)
-            .delete(authenticationMiddleware, this.deleteBookById);
+            .patch([authentication, validation(ModifyBookDto, true)], this.modifyBookById)
+            .delete(authentication, this.deleteBookById);
         // ADMIN
-        this.router.get(
-            "/admin/book",
-            [authenticationMiddleware, authorizationMiddleware(["admin"])],
-            this.adminGetBooks,
-        );
+        this.router.get("/admin/book", [authentication, authorization(["admin"])], this.adminGetBooks);
         this.router
             .route("/admin/book/:id([0-9a-fA-F]{24})")
-            .all([authenticationMiddleware, authorizationMiddleware(["admin"])])
+            .all([authentication, authorization(["admin"])])
             .patch(this.adminModifyBookById)
             .delete(this.adminDeleteBookById);
     }
@@ -298,10 +292,12 @@ export default class BookController implements Controller {
             const bookId = req.params["id"];
             if (await isIdNotValid(this.book, [bookId], next)) return;
 
-            const { uploader } = await this.book //
+            const user = await this.book //
                 .findById(bookId)
                 .lean<{ uploader: Types.ObjectId }>()
                 .exec();
+            if (user == null) return;
+            const { uploader } = user;
 
             const { deletedCount } = await this.book //
                 .deleteOne({ _id: bookId })

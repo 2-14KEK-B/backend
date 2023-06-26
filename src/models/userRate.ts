@@ -1,6 +1,6 @@
-import { Model, model, PaginateModel } from "mongoose";
-import userRateSchema from "@schemas/userRate";
-import type { UserRate } from "@interfaces/userRate";
+import { Model, model, type PaginateModel } from "mongoose";
+import { userRateSchema } from "@schemas";
+import type { UserRate } from "@interfaces";
 
 interface UserRateModel extends PaginateModel<UserRate>, Model<UserRate> {}
 

@@ -1,8 +1,7 @@
 import { Server } from "socket.io";
 import corsOptions from "@config/corsOptions";
-import type { Message, MessageContent } from "@interfaces/message";
 import type { Server as HttpServer } from "http";
-import type { docType, notiType } from "@interfaces/notification";
+import type { Message, MessageContent, docType, notiType } from "@interfaces";
 
 //TODO: borrow / user-rate értesítések
 

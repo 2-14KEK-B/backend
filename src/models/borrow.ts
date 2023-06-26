@@ -1,6 +1,6 @@
-import { Model, model, PaginateModel } from "mongoose";
-import borrowSchema from "@schemas/borrow";
-import type { Borrow } from "@interfaces/borrow";
+import { Model, model, type PaginateModel } from "mongoose";
+import { borrowSchema } from "@schemas";
+import type { Borrow } from "@interfaces";
 
 interface BorrowModel extends PaginateModel<Borrow>, Model<Borrow> {}
 

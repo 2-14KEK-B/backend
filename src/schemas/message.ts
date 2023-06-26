@@ -1,6 +1,6 @@
 import { Schema } from "mongoose";
 import paginate from "mongoose-paginate-v2";
-import type { Message, MessageContent } from "@interfaces/message";
+import type { Message, MessageContent } from "@interfaces";
 
 const messageContentSchema = new Schema<MessageContent>(
     {

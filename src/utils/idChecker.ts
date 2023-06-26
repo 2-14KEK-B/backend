@@ -1,5 +1,5 @@
 import { isValidObjectId, Model } from "mongoose";
-import IdNotValidException from "@exceptions/IdNotValid";
+import { IdNotValidException } from "@exceptions";
 import type { NextFunction } from "express";
 
 /**

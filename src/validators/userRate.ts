@@ -1,5 +1,5 @@
 import { IsBoolean, IsOptional, IsString, IsMongoId } from "class-validator";
-import type { CreateUserRate, ModifyUserRate } from "@interfaces/userRate";
+import type { CreateUserRate, ModifyUserRate } from "@interfaces";
 
 class CreateUserRateDto implements CreateUserRate {
     @IsMongoId()

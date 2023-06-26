@@ -1,12 +1,8 @@
-import StatusCode from "@utils/statusCodes";
 import env from "@config/validateEnv";
+import { StatusCode } from "@utils";
 
 export default class HttpError extends Error {
-    constructor(
-        // eslint-disable-next-line @typescript-eslint/ban-types
-        public message = "error.default",
-        public status: number = StatusCode.BadRequest,
-    ) {
+    constructor(public message = "error.default", public status = StatusCode.BadRequest) {
         super(message);
 
         Object.setPrototypeOf(this, new.target.prototype);

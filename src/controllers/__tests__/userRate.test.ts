@@ -1,20 +1,11 @@
 import request, { SuperAgentTest, Response } from "supertest";
 import App from "../../app";
-import AuthenticationController from "@authentication/index";
-import BorrowController from "@controllers/borrow";
-import UserController from "@controllers/user";
-import UserRateController from "@controllers/userRate";
-import userModel from "@models/user";
-import borrowModel from "@models/borrow";
-import bookModel from "@models/book";
-import userRateModel from "@models/userRate";
-import StatusCode from "@utils/statusCodes";
+import { AuthenticationController, BorrowController, UserController, UserRateController } from "@controllers";
+import { userModel, borrowModel, bookModel, userRateModel } from "@models";
+import { StatusCode } from "@utils";
 import { PaginateResult, Types } from "mongoose";
 import type { Application } from "express";
-import type { User } from "@interfaces/user";
-import type { Book } from "@interfaces/book";
-import type { Borrow } from "@interfaces/borrow";
-import type { UserRate } from "@interfaces/userRate";
+import type { User, Book, Borrow, UserRate } from "@interfaces";
 
 describe("USER rate", () => {
     let app: Application;

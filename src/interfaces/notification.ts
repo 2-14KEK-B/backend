@@ -1,7 +1,7 @@
-import type ID from "./id";
+import type { ID } from ".";
 
-export type docType = "lend" | "borrow" | "user_rate";
-export type notiType = "create" | "update" | "delete" | "verify";
+type docType = "lend" | "borrow" | "user_rate";
+type notiType = "create" | "update" | "delete" | "verify";
 
 interface Notification {
     _id: ID;
@@ -18,4 +18,4 @@ interface CreateNotification {
     not_type: notiType;
 }
 
-export { Notification, CreateNotification };
+export type { Notification, CreateNotification, docType, notiType };

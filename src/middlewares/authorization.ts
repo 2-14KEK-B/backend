@@ -1,5 +1,5 @@
 // import userModel from "@models/user";
-import ForbiddenException from "@exceptions/Forbidden";
+import { ForbiddenException } from "@exceptions";
 import type { NextFunction, Request, RequestHandler, Response } from "express";
 
 export default function authorizationMiddleware(permittedRoles?: string[]): RequestHandler {

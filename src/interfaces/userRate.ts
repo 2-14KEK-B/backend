@@ -1,4 +1,4 @@
-import type ID from "./id";
+import type { ID } from ".";
 
 interface CreateUserRate {
     borrow: string;
@@ -21,4 +21,4 @@ interface UserRate {
     createdAt: Date;
 }
 
-export { UserRate, CreateUserRate, ModifyUserRate };
+export type { UserRate, CreateUserRate, ModifyUserRate };

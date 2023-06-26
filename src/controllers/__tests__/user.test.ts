@@ -1,12 +1,11 @@
 import request, { Response, SuperAgentTest } from "supertest";
 import App from "../../app";
-import userModel from "@models/user";
-import UserController from "@controllers/user";
-import AuthenticationController from "@authentication/index";
-import StatusCode from "@utils/statusCodes";
+import { userModel } from "@models";
+import { UserController, AuthenticationController } from "@controllers";
+import { StatusCode } from "@utils";
 import { PaginateResult, Types } from "mongoose";
 import type { Application } from "express";
-import type { ModifyUser, User } from "@interfaces/user";
+import type { ModifyUser, User } from "@interfaces";
 
 describe("USERS", () => {
     let app: Application;

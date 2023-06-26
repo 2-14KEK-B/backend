@@ -1,14 +1,11 @@
 import request, { Response, SuperAgentTest } from "supertest";
 import App from "../../app";
-import userModel from "@models/user";
-import messageModel from "@models/message";
-import MessageController from "@controllers/message";
-import AuthenticationController from "@authentication/index";
-import StatusCode from "@utils/statusCodes";
+import { userModel, messageModel } from "@models";
+import { MessageController, AuthenticationController } from "@controllers";
+import { StatusCode } from "@utils";
 import { PaginateResult, Types } from "mongoose";
 import type { Application } from "express";
-import type { Message, MessageContent } from "@interfaces/message";
-import type { User } from "@interfaces/user";
+import type { Message, MessageContent, User } from "@interfaces";
 
 describe("MESSAGES", () => {
     let app: Application;

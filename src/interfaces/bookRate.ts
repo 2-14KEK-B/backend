@@ -1,4 +1,4 @@
-import type ID from "./id";
+import type { ID } from ".";
 
 interface BookRate {
     _id?: ID;
@@ -18,4 +18,4 @@ interface ModifyBookRate {
     comment?: string;
 }
 
-export { BookRate, CreateBookRate, ModifyBookRate };
+export type { BookRate, CreateBookRate, ModifyBookRate };

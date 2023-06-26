@@ -1,5 +1,5 @@
 import { IsMongoId, ArrayMinSize, IsOptional } from "class-validator";
-import type { CreateBorrow, ModifyBorrow } from "@interfaces/borrow";
+import type { CreateBorrow, ModifyBorrow } from "@interfaces";
 
 class CreateBorrowDto implements CreateBorrow {
     @IsMongoId()

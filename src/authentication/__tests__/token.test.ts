@@ -1,10 +1,10 @@
-import request, { Response, SuperAgentTest } from "supertest";
+import request, { type Response, type SuperAgentTest } from "supertest";
 import App from "../../app";
-import AuthenticationController from "@authentication/index";
-import userModel from "@models/user";
-import StatusCode from "@utils/statusCodes";
+import { AuthenticationController } from "@controllers";
+import { userModel } from "@models";
+import { StatusCode } from "@utils";
 import type { Application } from "express";
-import type { User } from "@interfaces/user";
+import type { User } from "@interfaces";
 
 describe("POST /auth", () => {
     let app: Application;
